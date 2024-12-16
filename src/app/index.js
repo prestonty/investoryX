@@ -1,10 +1,10 @@
 "use client";
-import Button from "../../components/Button";
-import "../../styles/animations.css";
+import Button from "../components/Button";
+import "../styles/animations.css";
 
 import React, { useState, useEffect } from "react";
 
-export default function LandingPage() {
+export default function Landing() {
     return (
         <div>
             {/* This should be the same size as the window height (triangle) */}
@@ -44,12 +44,12 @@ export default function LandingPage() {
                     <div className="w-[80%] m-auto">
                         <Button
                             className="w-100 text-center text-3xl border-[#fff] py-2 mb-[15%]"
-                            route="/Pages/Dashboard"
+                            route="/dashboard"
                             text="Get Started"
                         ></Button>
                         <Button
                             className="w-100 text-center text-3xl border-[#fff] py-2 my-4"
-                            route="Pages/Login"
+                            route="/login"
                             text="Login"
                         ></Button>
                     </div>
