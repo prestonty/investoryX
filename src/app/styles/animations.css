@@ -1,0 +1,40 @@
+/* Animations for blue triangle */
+.blue-in {
+    animation-duration: 1.2s;
+    animation-delay: 0.3s;
+    animation-fill-mode: both; /* Hide the element during the delay */
+    animation-name: spring-top-right;
+}
+
+.black-in {
+    animation-duration: 1.5s;
+    animation-name: spring-top-left;
+}
+
+@keyframes spring-top-right {
+    0% {
+        transform: translate(-200vw, 450vh) rotate(60deg);
+    }
+
+    50% {
+        transform: translate(-110vw, 425vh) rotate(60deg);
+    }
+
+    100% {
+        transform: translate(-110vw, 437.5vh) rotate(60deg);
+    }
+}
+
+@keyframes spring-top-left {
+    0% {
+        transform: translate(100vw, 100vh) rotate(60deg);
+    }
+
+    50% {
+        transform: translate(-2vw, -2vh) rotate(60deg);
+    }
+
+    100% {
+        transform: translate(0vw, 0vh) rotate(60deg);
+    }
+}
