@@ -1,0 +1,9 @@
+div.google-container > div {
+    border-radius: 30px !important;
+    background-color: #fff !important; /* 181d2a */
+}
+
+div.google-container > div > div {
+    border-radius: 30px !important;
+    color: #000 !important;
+}

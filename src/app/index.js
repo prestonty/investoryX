@@ -8,7 +8,7 @@ export default function Landing() {
     return (
         <div>
             {/* This should be the same size as the window height (triangle) */}
-            <div className="fixed h-full w-screen bg-[#e8ebed]">
+            <div className="fixed h-full w-screen bg-light">
                 <div className="absolute inset-0 overflow-hidden">
                     {/* Holy fuck I stole this from spellbrush's source code */}
                     {/* They did not use SVG, they decided to rotate a div */}
@@ -31,24 +31,24 @@ export default function Landing() {
                     <div
                         className="black-in absolute bottom-0 left-[12%] h-[200vmax]
                     w-[200vmax] origin-bottom-left rotate-[30deg]
-                    bg-[#181D2A] md:rotate-[60deg] black-triangle"
+                    bg-dark md:rotate-[60deg] black-triangle"
                     ></div>
                     {/* </motion.div> */}
 
                     {/* Blue Triangle */}
-                    <div className="blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-[#748EFE] outline-dashed outline-offset-[-3.25px] outline-[#748EFE] md:block"></div>
+                    <div className="blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-[#748EFE] md:block"></div>
                 </div>
 
-                <div className="absolute text-[#fff] bottom-[5%] right-[7%] h-[50%]">
+                <div className="absolute text-white bottom-[5%] right-[7%] h-[50%]">
                     <h1 className="text-8xl mb-[40%]">Investory</h1>
                     <div className="w-[80%] m-auto">
                         <Button
-                            className="w-100 text-center text-3xl border-[#fff] py-2 mb-[15%]"
+                            className="w-100 text-center text-3xl border-white py-2 mb-[15%]"
                             route="/dashboard"
                             text="Get Started"
                         ></Button>
                         <Button
-                            className="w-100 text-center text-3xl border-[#fff] py-2 my-4"
+                            className="w-100 text-center text-3xl border-white py-2 my-4"
                             route="/login"
                             text="Login"
                         ></Button>
