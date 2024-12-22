@@ -16,6 +16,9 @@ export default {
                 background: "var(--background)",
                 foreground: "var(--foreground)",
             },
+            gridTemplateColumns: {
+                "12-5": "12fr 5fr",
+            },
         },
     },
     plugins: [],
