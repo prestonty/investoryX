@@ -1,5 +1,5 @@
 "use client";
-import Button from "../components/Button";
+import NavButton from "../components/NavButton";
 import "../styles/animations.css";
 
 import React, { useState, useEffect } from "react";
@@ -41,17 +41,17 @@ export default function Landing() {
 
                 <div className="absolute text-white bottom-[5%] right-[7%] h-[50%]">
                     <h1 className="text-8xl mb-[40%]">Investory</h1>
-                    <div className="w-[80%] m-auto">
-                        <Button
+                    <div className="w-[80%] m-auto flex flex-col">
+                        <NavButton
                             className="w-100 text-center text-3xl border-white py-2 mb-[15%]"
                             route="/dashboard"
                             text="Get Started"
-                        ></Button>
-                        <Button
+                        ></NavButton>
+                        <NavButton
                             className="w-100 text-center text-3xl border-white py-2 my-4"
                             route="/login"
                             text="Login"
-                        ></Button>
+                        ></NavButton>
                     </div>
                 </div>
             </div>
