@@ -10,8 +10,8 @@ import axios from "axios";
 import { dateConverter } from "Utilities/helper";
 
 export default function LatestNews() {
-    const [news, setNews] = useState([]);
-    const [indices, setIndices] = useState([]);
+    const [news, setNews] = useState();
+    const [indices, setIndices] = useState();
 
     useEffect(() => {
         const fetchNew = async () => {
@@ -61,7 +61,7 @@ export default function LatestNews() {
                             <h2 className="text-dark text-2xl">Latest News</h2>
 
                             <div className="h-fit">
-                                {Array.isArray(news) ? (
+                                {news != null ? (
                                     news.map((article, index) => (
                                         <a key={index} href={article.url} target="_blank" rel="noopener noreferrer">
                                             <div className="flex my-4">
@@ -97,7 +97,7 @@ export default function LatestNews() {
                             <h2 className="text-dark text-2xl">Market Indexes</h2>
 
                             <div className="h-fit">
-                                {Array.isArray(indices) ? (
+                                {indices != null ? (
                                     indices.map((stockIndex, index) => (
                                         <div key={index} className="flex">
                                             <p className="text-dark">Placeholder Index Name</p>

@@ -6,8 +6,11 @@ import Link from "next/link";
 export default function Navbar() {
     return(
         <div className="flex justify-between items-center px-[4%]">
-            {/* <img src="" className="" alt="article thumbnail"/> */}
-
+            <div className="flex items-center">
+                <img src="/format-investory-logo.png" width={60} className="" alt="article thumbnail"/>
+                <p className="text-dark text-center text-4xl font-semibold">Investory</p>
+            </div>
+            
             <div className="flex w-[22rem] justify-between">
                 <Link
                     className="w-100 text-center text-dark text-xl"
