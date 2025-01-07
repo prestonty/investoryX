@@ -14,9 +14,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const fetchNew = async () => {
-            // hard coded for now
             try {
-                // ${process.env._URL}
                 const result = await axios(`${process.env.NEXT_PUBLIC_URL}/getNews`);
                 setNews(result.data);
             } catch (error) {
@@ -51,9 +49,12 @@ export default function Dashboard() {
                                         />
 
                                         <div className="ml-4 flex flex-col justify-between pb-2">
-                                            <p className="text-dark text-xl font-medium">
-                                                {article.headline}
-                                            </p>
+                                            <div>
+                                                <p className="text-dark text-xl font-medium">
+                                                    {article.headline}
+                                                </p>
+                                                <p className="text-dark">{article.source}</p>
+                                            </div>
 
                                             <p className="text-dark">
                                                 {dateConverter(

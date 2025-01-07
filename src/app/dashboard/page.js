@@ -1,17 +1,18 @@
 "use client";
 
-import { React, useState, useEffect } from "react";
-import { FourSquare } from "react-loading-indicators"
-
+import axios from "axios";
 import Navbar from "components/Navbar";
 
-import axios from "axios";
-
+import { React, useState, useEffect } from "react";
+import { FourSquare } from "react-loading-indicators"
 import { dateConverter } from "Utilities/helper";
 
 export default function LatestNews() {
     const [news, setNews] = useState();
     const [indices, setIndices] = useState();
+    const [gainers, setGainers] = useState();
+    const [losers, setLosers] = useState();
+    
 
     useEffect(() => {
         const fetchNew = async () => {
@@ -36,8 +37,25 @@ export default function LatestNews() {
             }
         };
 
+        const fetchTopGainersLosers = async () => {
+            try {
+                // 
+                const result = await axios(`${process.env.NEXT_PUBLIC_URL}/getTopGainersLosers`);
+                setGainers(result.data.top_gainers);
+                setLosers(result.data.top_losers);
+                console.log("Starting here");
+                console.log(result.data);
+                // console.log(result.top_losers);
+            } catch (error) {
+                console.error("Error fetching top gainers and losers: ", error);
+                // setGainers([]);
+                // setLosers([]);
+            }
+        };
+
         fetchNew();
-        fetchIndices();
+        // fetchIndices();
+        fetchTopGainersLosers();
     }, []);
 
     return (
@@ -57,6 +75,7 @@ export default function LatestNews() {
                 <div className="grid grid-cols-12-5 h-[70%]">
                     <div className="content-between mr-6">
                         {/* h-[58%] */}
+                        {/* Latest News ------------------------------------------------------------------------------------------------------------ */}
                         <div className="h-fit bg-white rounded-[30px] shadow-dark-md px-10 py-6 mb-6">
                             <h2 className="text-dark text-2xl">Latest News</h2>
 
@@ -93,6 +112,7 @@ export default function LatestNews() {
                             </div>
                         </div>
 
+                    {/* Market Indexes ------------------------------------------------------------------------------------------------------------ */}
                         <div className="h-[40%] bg-white rounded-[30px] shadow-dark-md px-10 py-6">
                             <h2 className="text-dark text-2xl">Market Indexes</h2>
 
@@ -115,8 +135,56 @@ export default function LatestNews() {
                         </div>
                     </div>
 
+                    {/* Trending ------------------------------------------------------------------------------------------------------------ */}
+
                     <div className="bg-white rounded-[30px] shadow-dark-md px-10 py-6">
                         <p className="text-dark text-2xl">Trending</p>
+                        <div className="flex flex-col h-[100%] mt-[8%]">
+                            <div className="flex flex-col justify-evenly h-[30%]">
+                            {gainers != null ? (
+                                gainers.map((gainer, index) => (
+                                    <div key={index} className="flex justify-between">
+                                        <div className="flex flex-col">
+                                            <p className="text-dark text-xl">{gainer.ticker}</p>
+                                            {/* <p className="text-dark text-xl">{"$" + gainer.price}</p> */}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <p className="text-green text-xl">{"+" + gainer.change_percentage}</p>
+                                            {/* <p className="text-green text-xl">{"+" + gainer.change_amount}</p> */}
+                                        </div>
+                                    </div>
+                            ))
+                            ) : (
+                                <div className="flex h-[80%] justify-center align-center content-center items-center">
+                                    <FourSquare color="#181D2A" size="medium" text="" textColor="" />
+                                </div>
+                            )}
+                            </div>
+
+                            <hr className="my-4" />
+
+                            <div className="flex flex-col justify-evenly h-[30%]">
+                            {losers != null ? (
+                                losers.map((loser, index) => (
+                                    <div key={index} className="flex justify-between">
+                                        <div className="flex flex-col">
+                                            <p className="text-dark text-xl">{loser.ticker}</p>
+                                            {/* <p className="text-dark text-xl">{"$" + loser.price}</p> */}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <p className="text-red text-xl">{loser.change_percentage}</p>
+                                            {/* <p className="text-red text-xl">{loser.change_amount}</p> */}
+                                        </div>
+                                    </div>
+                            ))
+                            ) : (
+                                <div className="flex h-[80%] justify-center align-center content-center items-center">
+                                    <FourSquare color="#181D2A" size="medium" text="" textColor="" />
+                                </div>
+                            )}
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
