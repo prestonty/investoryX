@@ -28,11 +28,11 @@ export default function Landing() {
                             route="/dashboard"
                             text="Get Started"
                         ></NavButton>
-                        <NavButton
+                        {/* <NavButton
                             className="w-100 text-center text-3xl border-white py-2 my-4"
                             route="/login"
                             text="Login"
-                        ></NavButton>
+                        ></NavButton> */}
                     </div>
                 </div>
             </div>
