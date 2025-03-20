@@ -1,18 +1,20 @@
 "use client";
 
 import axios from "axios";
-import Navbar from "components/Navbar";
-
-import { React, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import { dateConverter } from "Utilities/helper";
+import Navbar from "components/Navbar";
+import { Article } from "types/article";
+import { Index } from "types/index";
+import { TopStock } from "types/topStock";
 
 export default function LatestNews() {
-    const [news, setNews] = useState();
-    const [indices, setIndices] = useState();
-    const [gainers, setGainers] = useState();
-    const [losers, setLosers] = useState();
-    const [mostTraded, setMostTraded] = useState();
+    const [news, setNews] = useState<Article[] | null>(null);
+    const [indices, setIndices] = useState<Index[] | null>(null);
+    const [gainers, setGainers] = useState<TopStock[] | null>(null);
+    const [losers, setLosers] = useState<TopStock[] | null>(null);
+    const [mostTraded, setMostTraded] = useState<TopStock[] | null>();
 
     useEffect(() => {
         const fetchNew = async () => {
@@ -24,7 +26,7 @@ export default function LatestNews() {
                 setNews(result.data);
             } catch (error) {
                 console.error("Error fetching news: ", error);
-                setNews([]);
+                setNews([] as Article[]); // set to null article
             }
         };
 

@@ -2,7 +2,7 @@
 import NavButton from "../components/NavButton";
 import "../styles/animations.css";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export default function Landing() {
     return (
