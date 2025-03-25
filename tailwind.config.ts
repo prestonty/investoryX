@@ -1,5 +1,7 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+import type { Config } from "tailwindcss";
+
+// /** @type {import('tailwindcss').Config} */
+const config: Config = {
     content: [
         "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
         "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -22,12 +24,14 @@ export default {
                 "12-5": "12fr 5fr",
             },
             boxShadow: {
-                'dark-sm': '0 1px 2px rgba(0, 0, 0, 0.3)',
-                'dark-md': '0 4px 6px rgba(20, 20, 20, 0.3)',
-                'dark-lg': '0 10px 15px rgba(0, 0, 0, 0.3)',
-                'dark-xl': '0 20px 25px rgba(0, 0, 0, 0.4)',
-              },
+                "dark-sm": "0 1px 2px rgba(0, 0, 0, 0.3)",
+                "dark-md": "0 4px 6px rgba(20, 20, 20, 0.3)",
+                "dark-lg": "0 10px 15px rgba(0, 0, 0, 0.3)",
+                "dark-xl": "0 20px 25px rgba(0, 0, 0, 0.4)",
+            },
         },
     },
     plugins: [],
 };
+
+export default config;

@@ -66,7 +66,7 @@ export default function Login() {
                     <div className="w-[50%] mt-16">
                         <button className="bg-white w-[100%] h-[100%] rounded-[30px] shadow-md flex flex-col justify-center items-center">
                             <p className="text-xl text-dark text-center">
-                                Don't Have an Account?
+                                {"Don't Have an Account?"}
                             </p>
                             <p className="text-xl text-dark mt-4 text-center">
                                 Sign Up!
