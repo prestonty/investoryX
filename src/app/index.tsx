@@ -1,8 +1,9 @@
 "use client";
-import NavButton from "../components/NavButton";
+import NavButton from "@/components/NavButton";
 import "../styles/animations.css";
 
 import { useState, useEffect } from "react";
+import MagneticWrapper from "@/components/MagneticWrapper";
 
 export default function Landing() {
     return (
@@ -19,6 +20,10 @@ export default function Landing() {
                     {/* Blue Triangle */}
                     <div className="blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-[#748EFE] md:block"></div>
                 </div>
+
+                <MagneticWrapper>
+                    <img className="ml-[18rem] mt-[5rem] w-[18%]" src="/ani-bull.png" />
+                </MagneticWrapper>
 
                 <div className="absolute text-white bottom-[5%] right-[7%] h-[50%]">
                     <h1 className="text-8xl mb-[40%]">Investory</h1>
