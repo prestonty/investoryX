@@ -36,7 +36,6 @@ export default function Landing() {
                     <h1 className="text-8xl mb-[40%]">Investory</h1>
                     <div className="w-[80%] m-auto flex flex-col">
                         <NavButton
-                            className="w-100 text-center text-3xl border-white py-2 mb-[15%]"
                             route="/dashboard"
                             text="Get Started"
                         ></NavButton>

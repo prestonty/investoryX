@@ -83,15 +83,14 @@ export default function LatestNews() {
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
             <Navbar />
             {/* justify-center */}
-            <div className="w-[94%] mx-auto flex flex-col h-[92vh]">
-                <div className="h-[10%] bg-white rounded-[30px] shadow-dark-md px-10 flex items-center mb-6">
+            <div className="w-[94%] mx-auto flex flex-col mt-[4rem]">
+                <div className="h-[5rem] bg-white rounded-[30px] shadow-dark-md px-10 flex items-center mb-6">
                     {/* Search bar component? */}
                     <p className="text-dark">Search Bar</p>
                 </div>
 
-                <div className="grid grid-cols-12-5 h-[70%]">
+                <div className="grid grid-cols-12-5">
                     <div className="content-between mr-6">
-                        {/* h-[58%] */}
                         {/* Latest News ------------------------------------------------------------------------------------------------------------ */}
                         <div className="h-fit bg-white rounded-[30px] shadow-dark-md px-10 py-6 mb-6">
                             <h2 className="text-dark text-2xl">Latest News</h2>
@@ -146,7 +145,7 @@ export default function LatestNews() {
                         </div>
 
                         {/* Market Indexes ------------------------------------------------------------------------------------------------------------ */}
-                        <div className="h-[40%] bg-white rounded-[30px] shadow-dark-md px-10 py-6">
+                        <div className="bg-white rounded-[30px] shadow-dark-md px-10 py-6">
                             <h2 className="text-dark text-2xl">
                                 Market Indexes
                             </h2>
@@ -172,12 +171,29 @@ export default function LatestNews() {
                                     ))
                                 ) : (
                                     <div className="flex h-100 justify-center align-center content-center items-center">
-                                        <FourSquare
+                                        {/* <FourSquare
                                             color="#181D2A"
                                             size="medium"
                                             text=""
                                             textColor=""
-                                        />
+                                        /> */}
+                                        <div>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        <p>asdasd</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -186,10 +202,10 @@ export default function LatestNews() {
 
                     {/* Trending ------------------------------------------------------------------------------------------------------------ */}
 
-                    <div className="bg-white rounded-[30px] shadow-dark-md px-10 py-6">
+                    <div className="bg-white rounded-[30px] w-100 shadow-dark-md px-10 py-6">
                         <p className="text-dark text-2xl">Trending</p>
                         <hr className="h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]" />
-                        <div className="flex flex-col h-[100%] mt-[8%]">
+                        <div className="flex flex-col h-full mt-[8%]">
                             <div className="flex flex-col justify-evenly h-[12%]">
                                 <p className="text-dark text-lg mb-2 underline">
                                     Top Gainers

@@ -9,7 +9,7 @@ export default function Navbar() {
     const router = useRouter();
 
     return (
-        <div className="flex justify-between items-center px-[4%] gap-x-[4rem] h-[4rem]">
+        <div className="flex justify-between items-center px-[3%] h-[4rem]">
             <Link className="w-fit flex-none" type="button" href="/">
                 <div className="w-fit flex items-center">
                     <img
