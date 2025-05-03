@@ -4,10 +4,10 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import { dateConverter } from "Utilities/helper";
-import Navbar from "components/Navbar";
 import { Article } from "types/article";
 import { Index } from "types/index";
 import { TopStock } from "types/topStock";
+import Navbar from "@/components/Navbar";
 
 export default function LatestNews() {
     const [news, setNews] = useState<Article[] | null>(null);
@@ -81,10 +81,7 @@ export default function LatestNews() {
 
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
-            <div className="h-[6vh] flex flex-col justify-evenly mb-[2vh]">
-                <Navbar />
-            </div>
-
+            <Navbar />
             {/* justify-center */}
             <div className="w-[94%] mx-auto flex flex-col h-[92vh]">
                 <div className="h-[10%] bg-white rounded-[30px] shadow-dark-md px-10 flex items-center mb-6">

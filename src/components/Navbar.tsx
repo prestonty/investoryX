@@ -9,9 +9,9 @@ export default function Navbar() {
     const router = useRouter();
 
     return (
-        <div className="flex justify-between items-center px-[4%]">
-            <button type="button" onClick={() => router.push("/")}>
-                <div className="flex items-center">
+        <div className="flex justify-between items-center px-[4%] gap-x-[4rem] h-[4rem]">
+            <Link className="w-fit flex-none" type="button" href="/">
+                <div className="w-fit flex items-center">
                     <img
                         src="/format-investory-logo.png"
                         width={60}
@@ -22,9 +22,9 @@ export default function Navbar() {
                         Investory
                     </p>
                 </div>
-            </button>
+            </Link>
 
-            <div className="flex w-[22rem] justify-between">
+            <div className="flex w-full justify-center gap-x-[3rem]">
                 <Link className="w-100 text-dark text-xl" href="/latest-news">
                     Latest News
                 </Link>
@@ -38,7 +38,7 @@ export default function Navbar() {
             </div>
 
             {/* It should display log out or log in */}
-            <div className="flex">
+            <div className="flex-none">
                 <p className="text-dark text-dark text-xl">Log Out</p>
             </div>
         </div>
