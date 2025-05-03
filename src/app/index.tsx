@@ -3,7 +3,7 @@ import NavButton from "@/components/NavButton";
 import "../styles/animations.css";
 
 import { useState, useEffect } from "react";
-import MagneticWrapper from "@/components/MagneticWrapper";
+import MagneticWrapper from "@/components/animations/MagneticWrapper";
 import { motion } from "framer-motion"
 
 export default function Landing() {
