@@ -11,7 +11,7 @@ export default function Navbar() {
     const router = useRouter();
 
     return (
-        <div className="flex justify-between items-center px-[3%] h-[4rem] py-10">
+        <div className="flex justify-between items-center px-[3%] h-[4rem] py-10 relative">
             <motion.div
             initial={{scale: 1}}
             whileHover={{scale: 1.1 }}
@@ -31,7 +31,7 @@ export default function Navbar() {
                 </Link>
             </motion.div>
 
-            <div className="flex w-full justify-center gap-x-[3rem]">
+            <div className="flex justify-center gap-x-[3rem] absolute left-1/2 transform -translate-x-1/2">
                 <UnderlineWrapper>
                     <Link className="w-100 text-dark text-xl" href="/latest-news">
                         Latest News
@@ -45,7 +45,7 @@ export default function Navbar() {
                 </UnderlineWrapper>
 
                 <UnderlineWrapper>
-                    <Link className="w-100 text-dark text-xl" href="/watch-list">
+                    <Link className="w-100 text-dark text-xl" href="/watchlist">
                         Watch List
                     </Link>
                 </UnderlineWrapper>
@@ -54,6 +54,7 @@ export default function Navbar() {
             {/* It should display log out or log in */}
             <div className="flex-none">
                 <UnderlineWrapper>
+                    {/* This needs to be a button (TODO) */}
                     <p className="text-dark text-dark text-xl">Log Out</p>
                 </UnderlineWrapper>
             </div>
