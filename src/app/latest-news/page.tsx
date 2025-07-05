@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
-import { dateConverter } from "Utilities/helper";
+import { dateConverter } from "@/utils/helper";
 
-import Navbar from "components/Navbar";
-import { Article } from "types/article";
+import Navbar from "@/components/Navbar";
+import { Article } from "@/types/article";
 
 export default function Dashboard() {
     const [news, setNews] = useState<Article[] | null>(null);

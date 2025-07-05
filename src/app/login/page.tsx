@@ -2,6 +2,7 @@
 // Show both sign in and login using if statements
 import GoogleButton from "react-google-button";
 import "./login.css";
+import { google } from "@/lib/googleClient";
 
 export default function Login() {
     return (
@@ -15,7 +16,7 @@ export default function Login() {
                 <div className="google-container flex justify-center mt-[8%] mr-[2rem]">
                     <GoogleButton
                         onClick={() => {
-                            console.log("Google button clicked");
+                            google.signIn();
                         }}
                     />
                     <p className="relative top-[28%] ml-[-11rem] text-dark">

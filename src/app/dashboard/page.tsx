@@ -3,11 +3,11 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
-import { dateConverter } from "Utilities/helper";
-import Navbar from "components/Navbar";
-import { Article } from "types/article";
-import { Index } from "types/index";
-import { TopStock } from "types/topStock";
+import { dateConverter } from "@/utils/helper";
+import Navbar from "@/components/Navbar";
+import { Article } from "@/types/article";
+import { Index } from "@/types/index";
+import { TopStock } from "@/types/topStock";
 
 export default function LatestNews() {
     const [news, setNews] = useState<Article[] | null>(null);
