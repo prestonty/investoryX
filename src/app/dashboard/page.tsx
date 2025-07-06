@@ -178,21 +178,21 @@ export default function LatestNews() {
                                             textColor=""
                                         /> */}
                                         <div>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
-                                        <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
+                                            <p>asdasd</p>
                                         </div>
                                     </div>
                                 )}
