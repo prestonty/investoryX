@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
-import { dateConverter } from "@/utils/helper";
+import { dateConverter } from "utils/helper";
 
 import Navbar from "@/components/Navbar";
 import { Article } from "@/types/article";

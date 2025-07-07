@@ -22,7 +22,7 @@ export function dateConverter(UNIX_timestamp) {
     // var sec = a.getSeconds();
 
     if (min < 10) {
-        min += "0";
+        (min as any) += "0";
     }
 
     var midday = "am";
