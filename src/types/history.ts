@@ -1,32 +1,44 @@
 export const Interval = {
-    MINUTE_1: "1m",
-    MINUTE_2: "2m",
-    MINUTE_5: "5m",
-    MINUTE_15: "15m",
-    MINUTE_30: "30m",
-    MINUTE_60: "60m",
-    MINUTE_90: "90m",
-    HOUR_1: "1h",
-    DAY_1: "1d",
-    DAY_5: "5d",
-    WEEK_1: "1wk",
-    MONTH_1: "1mo",
-    MONTH_3: "3mo",
+    "1 Minute": "1m",
+    "2 Minute": "2m",
+    "5 Minute": "5m",
+    "15 Minute": "15m",
+    "30 Minute": "30m",
+    "60 Minute": "60m",
+    "90 Minute": "90m",
+    "1 Hour": "1h",
+    "1 Day": "1d",
+    "5 Day": "5d",
+    "1 Week": "1wk",
+    "1 Month": "1mo",
+    "3 Month": "3mo",
 };
 
 export const Period = {
-    DAY_1: "1d",
-    DAY_5: "5d",
-    MONTH_1: "1mo",
-    MONTH_3: "3mo",
-    MONTH_6: "6mo",
-    YEAR_1: "1y",
-    YEAR_2: "2y",
-    YEAR_5: "5y",
-    YEAR_10: "10y",
-    YEAR_TO_DATE: "ytd",
-    MAX: "max",
+    "1 Day": "1d",
+    "5 Day": "5d",
+    "1 Month": "1mo",
+    "3 Month": "3mo",
+    "6 Month": "6mo",
+    "1 Year": "1y",
+    "2 Year": "2y",
+    "5 Year": "5y",
+    "10 Year": "10y",
+    "Year to Date": "ytd",
+    Max: "max",
 };
+
+export const IntervalOptions: { label: string; value: IntervalType }[] =
+    Object.entries(Interval).map(([key, value]) => ({
+        label: key,
+        value,
+    }));
+
+export const PeriodOptions: { label: string; value: PeriodType }[] =
+    Object.entries(Period).map(([key, value]) => ({
+        label: key,
+        value,
+    }));
 
 export type IntervalType = (typeof Interval)[keyof typeof Interval];
 export type PeriodType = (typeof Period)[keyof typeof Period];
