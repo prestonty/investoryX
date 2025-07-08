@@ -1,7 +1,8 @@
 export type Article = {
+    headline: string;
     url: string;
     image: string;
-    headline: string;
     source: string;
     datetime: string;
+    tickers: string[];
 };

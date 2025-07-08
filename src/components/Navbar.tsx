@@ -11,11 +11,12 @@ export default function Navbar() {
     const router = useRouter();
 
     return (
-        <div className="flex justify-between items-center px-[3%] h-[4rem] py-10 relative">
+        <div className="flex justify-between items-center px-[3%] min-h-[2rem] py-2 relative">
             <motion.div
-            initial={{scale: 1}}
-            whileHover={{scale: 1.1 }}
-            transition={{ duration: 0.3 }}>
+                initial={{ scale: 1 }}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.3 }}
+            >
                 <Link className="w-fit flex-none" type="button" href="/">
                     <div className="w-fit flex items-center">
                         <img
@@ -33,11 +34,14 @@ export default function Navbar() {
 
             <div className="flex justify-center gap-x-[3rem] absolute left-1/2 transform -translate-x-1/2">
                 <UnderlineWrapper>
-                    <Link className="w-100 text-dark text-xl" href="/latest-news">
+                    <Link
+                        className="w-100 text-dark text-xl"
+                        href="/latest-news"
+                    >
                         Latest News
                     </Link>
                 </UnderlineWrapper>
-                
+
                 <UnderlineWrapper>
                     <Link className="w-100 text-dark text-xl" href="/dashboard">
                         Dashboard

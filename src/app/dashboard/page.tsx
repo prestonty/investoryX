@@ -16,12 +16,14 @@ export default function LatestNews() {
     const [losers, setLosers] = useState<TopStock[] | null>(null);
     const [mostTraded, setMostTraded] = useState<TopStock[] | null>();
 
+    const MAX_ARTICLES = 3;
+
     useEffect(() => {
         const fetchNew = async () => {
             try {
                 //
                 const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/getTopNews`
+                    `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`
                 );
                 setNews(result.data);
             } catch (error) {
@@ -81,9 +83,11 @@ export default function LatestNews() {
 
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
-            <Navbar />
+            <div className="mb-4">
+                <Navbar />
+            </div>
             {/* justify-center */}
-            <div className="w-[94%] mx-auto flex flex-col mt-[4rem]">
+            <div className="w-[94%] mx-auto flex flex-col">
                 <div className="h-[5rem] bg-white rounded-[30px] shadow-dark-md px-10 flex items-center mb-6">
                     {/* Search bar component? */}
                     <p className="text-dark">Search Bar</p>
@@ -122,11 +126,16 @@ export default function LatestNews() {
                                                         </p>
                                                     </div>
 
-                                                    <p className="text-dark">
-                                                        {dateConverter(
-                                                            article.datetime
-                                                        )}
-                                                    </p>
+                                                    <div className="flex flex-col">
+                                                        <p className="text-dark">
+                                                            {`Relevant Tickers: ${article.tickers.join(
+                                                                ", "
+                                                            )}`}
+                                                        </p>
+                                                        <p className="text-dark">
+                                                            {article.datetime}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </a>

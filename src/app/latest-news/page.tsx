@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
-import { dateConverter } from "utils/helper";
+import { dateConverter } from "@/utils/helper";
+import Image from "next/image";
 
 import Navbar from "@/components/Navbar";
 import { Article } from "@/types/article";
@@ -15,7 +16,7 @@ export default function Dashboard() {
         const fetchNew = async () => {
             try {
                 const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/getNews`
+                    `${process.env.NEXT_PUBLIC_URL}/stock-news`
                 );
                 setNews(result.data);
             } catch (error) {
@@ -27,7 +28,7 @@ export default function Dashboard() {
 
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)] mb-6">
-            <div className="h-[6vh] flex flex-col justify-evenly mb-[2vh]">
+            <div className="mb-4">
                 <Navbar />
             </div>
 
@@ -46,9 +47,11 @@ export default function Dashboard() {
                                     rel="noopener noreferrer"
                                 >
                                     <div className="flex my-4">
-                                        <img
+                                        <Image
                                             src={article.image}
-                                            className="w-[20%]"
+                                            className="min-w-[50px] max-w-[400px]"
+                                            width={400}
+                                            height={0}
                                             alt="article thumbnail"
                                         />
 
@@ -61,12 +64,16 @@ export default function Dashboard() {
                                                     {article.source}
                                                 </p>
                                             </div>
-
-                                            <p className="text-dark">
-                                                {dateConverter(
-                                                    article.datetime
-                                                )}
-                                            </p>
+                                            <div className="flex flex-col gap-y-2">
+                                                <p className="text-dark">
+                                                    {`Relevant Tickers: ${article.tickers.join(
+                                                        ", "
+                                                    )}`}
+                                                </p>
+                                                <p className="text-dark">
+                                                    {article.datetime}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
