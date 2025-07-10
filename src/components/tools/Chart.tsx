@@ -51,13 +51,13 @@ export default function CandlestickChart(chartData: ChartProps) {
                 title={title}
                 layout={{
                     title: {
-                        text: title, // ✅ your title text here
+                        text: title,
                         font: {
                             size: 16,
                             color: "#333",
                         },
                         xref: "paper",
-                        x: 0.05, // align left (use 0.5 for center)
+                        x: 0.05,
                     },
                     dragmode: "zoom",
                     margin: {
