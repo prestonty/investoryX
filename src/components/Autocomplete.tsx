@@ -19,8 +19,8 @@ export default function Autocomplete(props: AutocompleteProps) {
                         ...provided,
                         borderRadius: "100px",
                         borderWidth: "2px",
-                        borderColor: state.isFocused ? "#748EFE" : "white", // tailwind: border-gray-300
-                        backgroundColor: state.isFocused ? "white" : "white",
+                        borderColor: state.isFocused ? "#748EFE" : "white",
+                        backgroundColor: "white",
                         paddingLeft: "1rem",
                         boxShadow: state.isFocused
                             ? "0 4px 4px rgba(0,0,0,0.45)"

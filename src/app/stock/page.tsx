@@ -47,7 +47,7 @@ export default function Stock() {
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)] h-screen flex flex-col">
             <div className="flex flex-col justify-evenly mb-4">
-                <Navbar />
+                <Navbar search={true} />
             </div>
 
             <div className="grid grid-cols-5 grid-rows-12 gap-10 flex-1 px-16 pt-4 pb-10">
