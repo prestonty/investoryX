@@ -84,7 +84,7 @@ export default function LatestNews() {
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
             <div className="mb-4">
-                <Navbar />
+                <Navbar search={true} />
             </div>
             {/* justify-center */}
             <div className="w-[94%] mx-auto flex flex-col">

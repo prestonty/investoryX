@@ -1,7 +1,9 @@
 "use client";
-import React from "react";
-import Select, { components } from "react-select";
+import React, { useState, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
+
+import axios from "axios";
+import { Item } from "@/types/item";
 
 interface SearchbarProps {
     options: { value: string; label: string }[];
@@ -11,79 +13,89 @@ interface SearchbarProps {
 // TODO recreate this component using a better component not a select!!!
 
 export default function Searchbar(props: SearchbarProps) {
+    const [filterString, setFilterString] = useState<string>("");
+    const [results, setResults] = useState<Item[]>([]);
+
+    const [isFocused, setIsFocused] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+
+    useEffect(() => {
+        // Make API call every 0.3 sceonds after input is changed
+        const controller = new AbortController();
+
+        const delayDebounce = setTimeout(() => {
+            const handleSearch = async () => {
+                if (!filterString.trim()) {
+                    setResults([]);
+                    return;
+                }
+                try {
+                    const res = await axios.get(
+                        `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
+                        {
+                            signal: controller.signal,
+                        }
+                    );
+                    setResults(res.data);
+                } catch (error: any) {
+                    if (axios.isCancel(error)) {
+                        console.log("Request canceled:", error.message);
+                    } else {
+                        console.error("Search error:", error);
+                    }
+                }
+            };
+
+            handleSearch();
+        }, 300);
+
+        // Cleanup: cancel timeout AND request
+        return () => {
+            clearTimeout(delayDebounce);
+            controller.abort(); // cancel the Axios request if input changes to avoid spamming old requests
+        };
+    }, [filterString]);
+
+    const borderColor = isFocused
+        ? "border-blue"
+        : isHovered
+        ? "border-lightblue"
+        : "border-black";
+
+    const iconColor = isFocused
+        ? "text-blue"
+        : isHovered
+        ? "text-lightblue"
+        : "text-black";
+
     return (
-        <div className="min-w-52 flex justify-center items-center w-fit">
-            <Select
-                options={props.options}
-                onChange={props.onChange}
-                className="w-full max-w-52"
-                placeholder="Search stocks"
-                components={{
-                    DropdownIndicator: () => null,
-                    IndicatorSeparator: () => null,
-                    Control: (controlProps) => {
-                        // TODO add animations to this icon (rotation, colour change, etc.)
-                        return (
-                            <components.Control {...controlProps}>
-                                <FaSearch className="text-black" size={24} />
-                                {controlProps.children}
-                            </components.Control>
-                        );
-                    },
-                }}
-                styles={{
-                    control: (provided: any, state: any) => ({
-                        ...provided,
-                        borderRadius: "100px",
-                        borderWidth: "2px",
-                        borderColor: state.isFocused
-                            ? "#748EFE"
-                            : "transparent",
-                        backgroundColor: "transparent",
-                        paddingLeft: "1rem",
-                        minHeight: "3rem",
-                        fontSize: "1rem",
-                        overflowX: "auto",
-                        scrollbarWidth: "none",
-                    }),
-                    valueContainer: (provided) => ({
-                        ...provided,
-                        flexWrap: "nowrap",
-                        overflowX: "auto",
-                        scrollbarWidth: "none",
-                    }),
-                    input: (provided) => ({
-                        ...provided,
-                        overflowX: "auto",
-                        maxWidth: "100%",
-                        scrollbarWidth: "none",
-                    }),
-                    placeholder: (provided: any) => ({
-                        ...provided,
-                        color: "black", // tailwind: text-gray-500
-                        fontSize: "1.3rem",
-                    }),
-                    dropdownIndicator: (provided: any) => ({
-                        ...provided,
-                        padding: "0.5rem",
-                    }),
-                    indicatorSeparator: () => ({
-                        display: "none",
-                    }),
-                    menu: (provided: any) => ({
-                        ...provided,
-                        borderRadius: 12,
-                        color: "black",
-                        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                        width: "100%",
-                    }),
-                    menuPortal: (provided: any) => ({
-                        ...provided,
-                        width: "100%",
-                        zIndex: 9999,
-                    }),
-                }}
-            />
+        <div
+            className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full px-4 py-2 transition-colors duration-500 outline-none`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <div className="relative w-full flex gap-x-2 pl-6 items-center">
+                <FaSearch
+                    className={`absolute -left-1 text-black w-5 h-5 transition-colors duration-500 ${iconColor}`}
+                />
+                <input
+                    type="text"
+                    value={filterString}
+                    onChange={(e) => setFilterString(e.target.value)}
+                    placeholder="Search items..."
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    className="text-lg w-full text-black border-none focus:outline-none focus:ring-0"
+                />
+            </div>
+
+            <ul className="absolute top-12 bg-white rounded-xl py-2 px-4 overflow-y-scroll max-h-60">
+                {results.map((item, index) => (
+                    <li className="text-black py-1" key={index}>
+                        {item.label}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }
