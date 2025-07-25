@@ -1,9 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { FaSearch } from "react-icons/fa";
-
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import axios from "axios";
 import { Item } from "@/types/item";
+
+import { FaSearch } from "react-icons/fa";
+import defaultOptions from "@/lib/defaults/search_stock_defaults.json";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SearchbarProps {
     options: { value: string; label: string }[];
@@ -13,11 +17,27 @@ interface SearchbarProps {
 // TODO recreate this component using a better component not a select!!!
 
 export default function Searchbar(props: SearchbarProps) {
+    const router = useRouter();
+
     const [filterString, setFilterString] = useState<string>("");
     const [results, setResults] = useState<Item[]>([]);
 
     const [isFocused, setIsFocused] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+
+    const borderColor = isFocused
+        ? "border-blue"
+        : isHovered
+        ? "border-lightblue"
+        : "border-black";
+
+    const iconColor = isFocused
+        ? "text-blue"
+        : isHovered
+        ? "text-lightblue"
+        : "text-black";
+
+    const optionsToShow = results.length > 0 ? results : defaultOptions;
 
     useEffect(() => {
         // Make API call every 0.3 sceonds after input is changed
@@ -56,18 +76,14 @@ export default function Searchbar(props: SearchbarProps) {
         };
     }, [filterString]);
 
-    const borderColor = isFocused
-        ? "border-blue"
-        : isHovered
-        ? "border-lightblue"
-        : "border-black";
+    const navigateToStock = (ticker: string) => {
+        router.push(`/stock/${ticker}`);
+    };
 
-    const iconColor = isFocused
-        ? "text-blue"
-        : isHovered
-        ? "text-lightblue"
-        : "text-black";
-
+    // TODO:
+    // Add clickable button to list items (to change to that page)
+    // Add default values when user clicks on Search bar (read from JSON with default stock search options)
+    // fix the max height of options
     return (
         <div
             className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full px-4 py-2 transition-colors duration-500 outline-none`}
@@ -89,13 +105,46 @@ export default function Searchbar(props: SearchbarProps) {
                 />
             </div>
 
-            <ul className="absolute top-12 bg-white rounded-xl py-2 px-4 overflow-y-scroll max-h-60">
-                {results.map((item, index) => (
-                    <li className="text-black py-1" key={index}>
-                        {item.label}
-                    </li>
-                ))}
-            </ul>
+            <AnimatePresence>
+                {isFocused && (
+                    <motion.ul
+                        className="absolute top-12 w-full bg-white rounded-xl overflow-y-scroll max-h-60"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {optionsToShow.map((item, index) => (
+                            <motion.li
+                                className="text-black w-full border-b-2 border-light"
+                                key={index}
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                transition={{
+                                    duration: 0.15,
+                                    delay: index * 0.02,
+                                }}
+                            >
+                                {/* <button
+                                    className="text-left hover:bg-light w-full px-4 py-1"
+                                    onClick={() => {
+                                        navigateToStock(item.value);
+                                    }}
+                                >
+                                    {item.label}
+                                </button> */}
+                                <Link
+                                    className="text-left hover:bg-light w-full px-4 py-1"
+                                    href={`/stock/${item.value}`}
+                                >
+                                    {item.label}
+                                </Link>
+                            </motion.li>
+                        ))}
+                    </motion.ul>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

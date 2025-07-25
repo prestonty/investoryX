@@ -21,7 +21,6 @@ export default function LatestNews() {
     useEffect(() => {
         const fetchNew = async () => {
             try {
-                //
                 const result = await axios(
                     `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`
                 );

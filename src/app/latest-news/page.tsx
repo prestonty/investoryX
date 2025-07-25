@@ -46,7 +46,7 @@ export default function Dashboard() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <div className="flex my-4">
+                                    <div className="flex my-4 hover:bg-light transition-colors duration-1000">
                                         <Image
                                             src={article.image}
                                             className="min-w-[50px] max-w-[400px]"

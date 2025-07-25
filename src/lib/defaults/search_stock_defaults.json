@@ -1,26 +1,26 @@
 [
     {
-        "ticker": "NVDA",
-        "name": "NVIDIA Corporation"
+        "label": "NVDA - NVIDIA Corporation",
+        "value": "NVDA"
     },
     {
-        "ticker": "GOOGL",
-        "name": "Alphabet Inc Class A"
+        "label": "GOOGL - Alphabet Inc Class A",
+        "value": "GOOGL"
     },
     {
-        "ticker": "META",
-        "name": "Meta Platforms, Inc."
+        "label": "META - Meta Platforms, Inc.",
+        "value": "META"
     },
     {
-        "ticker": "SHOP",
-        "name": "Shopify Inc."
+        "label": "SHOP - Shopify Inc.",
+        "value": "SHOP"
     },
     {
-        "ticker": "MSFT",
-        "name": "Microsoft Corporation"
+        "label": "MSFT - Microsoft Corporation",
+        "value": "MSFT"
     },
     {
-        "ticker": "HOOD",
-        "name": "Robinhood Markets, Inc."
+        "label": "HOOD - Robinhood Markets, Inc.",
+        "value": "HOOD"
     }
 ]

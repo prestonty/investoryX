@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
 import { dateConverter } from "@/utils/helper";
@@ -25,9 +26,10 @@ interface ChartProps {
     title?: string;
 }
 
-export default function Stock() {
+export default async function StockClient({ ticker }: { ticker: string }) {
+    const params = useParams();
+
     const [chartData, setChartData] = useState<ChartProps>(null);
-    const [ticker, setTicker] = useState("aapl");
     const [period, setPeriod] = useState<PeriodType>("1mo");
     const [interval, setInterval] = useState<IntervalType>("1d");
 
@@ -82,7 +84,7 @@ export default function Stock() {
                     <div className="flex flex-col h-full py-4 px-8">
                         <h2 className="text-black text-2xl">Chart</h2>
                         <hr className="bg-black rounded-full border-none h-0.5 px-4 my-2" />
-                        <div className="mt-4">
+                        {/* <div className="mt-4">
                             {chartData === null ? (
                                 <div className="flex justify-center items-center h-[20rem]">
                                     <FourSquare
@@ -113,7 +115,7 @@ export default function Stock() {
                                     }
                                 />
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
