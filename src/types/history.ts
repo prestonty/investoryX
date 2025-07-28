@@ -1,3 +1,5 @@
+// History is used for the interval and period parameters for candle stick charts
+
 export const Interval = {
     "1 Minute": "1m",
     "2 Minute": "2m",

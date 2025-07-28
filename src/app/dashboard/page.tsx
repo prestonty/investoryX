@@ -31,52 +31,52 @@ export default function LatestNews() {
             }
         };
 
-        const fetchIndices = async () => {
-            try {
-                const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/getIndices`
-                );
-                setIndices(result.data);
-            } catch (error) {
-                console.error("Error fetching indices: ", error);
-            }
-        };
+        // const fetchIndices = async () => {
+        //     try {
+        //         const result = await axios(
+        //             `${process.env.NEXT_PUBLIC_URL}/getIndices`
+        //         );
+        //         setIndices(result.data);
+        //     } catch (error) {
+        //         console.error("Error fetching indices: ", error);
+        //     }
+        // };
 
-        const fetchTopGainersLosers = async () => {
-            try {
-                //
-                const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/getTopGainersLosers`
-                );
-                setGainers(result.data.top_gainers);
-                setLosers(result.data.top_losers);
-                setMostTraded(result.data.most_actively_traded);
-            } catch (error) {
-                console.error("Error fetching top gainers and losers: ", error);
-            }
-        };
+        // const fetchTopGainersLosers = async () => {
+        //     try {
+        //         //
+        //         const result = await axios(
+        //             `${process.env.NEXT_PUBLIC_URL}/getTopGainersLosers`
+        //         );
+        //         setGainers(result.data.top_gainers);
+        //         setLosers(result.data.top_losers);
+        //         setMostTraded(result.data.most_actively_traded);
+        //     } catch (error) {
+        //         console.error("Error fetching top gainers and losers: ", error);
+        //     }
+        // };
 
-        const fetchCompanyData = async () => {
-            console.log("start here");
-            try {
-                const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/getCompanyData`,
-                    {
-                        params: {
-                            searchPrompt: "IXIC",
-                        },
-                    }
-                );
-                setIndices(result.data);
-                console.log(result.data);
-            } catch (error) {
-                console.error("Error fetching company data:", error);
-            }
-        };
+        // const fetchCompanyData = async () => {
+        //     console.log("start here");
+        //     try {
+        //         const result = await axios(
+        //             `${process.env.NEXT_PUBLIC_URL}/getCompanyData`,
+        //             {
+        //                 params: {
+        //                     searchPrompt: "IXIC",
+        //                 },
+        //             }
+        //         );
+        //         setIndices(result.data);
+        //         console.log(result.data);
+        //     } catch (error) {
+        //         console.error("Error fetching company data:", error);
+        //     }
+        // };
 
         fetchNew();
         // // fetchIndices();
-        fetchTopGainersLosers();
+        // fetchTopGainersLosers();
         // fetchCompanyData();
     }, []);
 

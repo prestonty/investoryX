@@ -37,7 +37,7 @@ export default function Dashboard() {
                     <div className="mb-12">
                         <h2 className="text-dark text-2xl">Latest News</h2>
                     </div>
-                    <div className="h-fit">
+                    <div className="h-fit min-h-screen">
                         {news != null ? (
                             news.map((article, index) => (
                                 <a

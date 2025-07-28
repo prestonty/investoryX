@@ -5,9 +5,11 @@ import Link from "next/link";
 import axios from "axios";
 import { Item } from "@/types/item";
 
+import { ClipLoader } from "react-spinners";
 import { FaSearch } from "react-icons/fa";
 import defaultOptions from "@/lib/defaults/search_stock_defaults.json";
 import { motion, AnimatePresence } from "framer-motion";
+import { css } from "@emotion/react";
 
 interface SearchbarProps {
     options: { value: string; label: string }[];
@@ -24,18 +26,19 @@ export default function Searchbar(props: SearchbarProps) {
 
     const [isFocused, setIsFocused] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const borderColor = isFocused
         ? "border-blue"
         : isHovered
         ? "border-lightblue"
-        : "border-black";
+        : "border-dark";
 
     const iconColor = isFocused
         ? "text-blue"
         : isHovered
         ? "text-lightblue"
-        : "text-black";
+        : "text-dark";
 
     const optionsToShow = results.length > 0 ? results : defaultOptions;
 
@@ -77,23 +80,30 @@ export default function Searchbar(props: SearchbarProps) {
     }, [filterString]);
 
     const navigateToStock = (ticker: string) => {
-        router.push(`/stock/${ticker}`);
+        setLoading(true);
+        router.push(`/stocks/${ticker}`);
     };
 
-    // TODO:
-    // Add clickable button to list items (to change to that page)
-    // Add default values when user clicks on Search bar (read from JSON with default stock search options)
-    // fix the max height of options
     return (
         <div
-            className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full px-4 py-2 transition-colors duration-500 outline-none`}
+            className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full ml-6 px-4 py-2 transition-colors duration-500 outline-none`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             <div className="relative w-full flex gap-x-2 pl-6 items-center">
-                <FaSearch
-                    className={`absolute -left-1 text-black w-5 h-5 transition-colors duration-500 ${iconColor}`}
-                />
+                {loading ? (
+                    <ClipLoader
+                        loading={true}
+                        size={20}
+                        color="#748EFE"
+                        className={`absolute -left-1 text-dark w-5 h-5 transition-colors duration-500`}
+                    />
+                ) : (
+                    // replace
+                    <FaSearch
+                        className={`absolute -left-1 text-dark w-5 h-5 transition-colors duration-500 ${iconColor}`}
+                    />
+                )}
                 <input
                     type="text"
                     value={filterString}
@@ -101,7 +111,7 @@ export default function Searchbar(props: SearchbarProps) {
                     placeholder="Search items..."
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className="text-lg w-full text-black border-none focus:outline-none focus:ring-0"
+                    className="text-lg w-full text-dark border-none focus:outline-none focus:ring-0"
                 />
             </div>
 
@@ -116,7 +126,7 @@ export default function Searchbar(props: SearchbarProps) {
                     >
                         {optionsToShow.map((item, index) => (
                             <motion.li
-                                className="text-black w-full border-b-2 border-light"
+                                className="text-dark w-full border-b-2 border-light"
                                 key={index}
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -126,20 +136,20 @@ export default function Searchbar(props: SearchbarProps) {
                                     delay: index * 0.02,
                                 }}
                             >
-                                {/* <button
+                                <button
                                     className="text-left hover:bg-light w-full px-4 py-1"
                                     onClick={() => {
                                         navigateToStock(item.value);
                                     }}
                                 >
                                     {item.label}
-                                </button> */}
-                                <Link
+                                </button>
+                                {/* <Link
                                     className="text-left hover:bg-light w-full px-4 py-1"
-                                    href={`/stock/${item.value}`}
+                                    href={`/stocks/${item.value}`}
                                 >
                                     {item.label}
-                                </Link>
+                                </Link> */}
                             </motion.li>
                         ))}
                     </motion.ul>
