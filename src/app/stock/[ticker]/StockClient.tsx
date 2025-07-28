@@ -156,6 +156,23 @@ export default function StockClient({
                     <div className="flex flex-col h-full py-4 px-8">
                         <h2 className="text-dark text-2xl">Chart</h2>
                         <hr className="bg-dark rounded-full border-none h-0.5 px-4 my-2" />
+                        <div className="grid grid-cols-2 grid-rows-2 gap-x-4 m-10">
+                            <p className="text-lg text-dark">Period:</p>
+                            <p className="text-lg text-dark">Interval:</p>
+                            <Autocomplete
+                                options={PeriodOptions}
+                                onChange={(selectedOption) =>
+                                    setPeriod(selectedOption?.value)
+                                }
+                            />
+                            <Autocomplete
+                                options={IntervalOptions}
+                                onChange={(selectedOption) =>
+                                    setInterval(selectedOption?.value)
+                                }
+                            />
+                        </div>
+
                         <div className="mt-4">
                             {chartData === null ? (
                                 <div className="flex justify-center items-center h-[20rem]">
@@ -172,23 +189,6 @@ export default function StockClient({
                                     title={chartData.title}
                                 />
                             )}
-
-                            <div className="grid grid-cols-2 grid-rows-2 gap-x-4 m-10">
-                                <p className="text-lg text-dark">Period:</p>
-                                <p className="text-lg text-dark">Interval:</p>
-                                <Autocomplete
-                                    options={PeriodOptions}
-                                    onChange={(selectedOption) =>
-                                        setPeriod(selectedOption?.value)
-                                    }
-                                />
-                                <Autocomplete
-                                    options={IntervalOptions}
-                                    onChange={(selectedOption) =>
-                                        setInterval(selectedOption?.value)
-                                    }
-                                />
-                            </div>
                         </div>
                     </div>
                 </div>

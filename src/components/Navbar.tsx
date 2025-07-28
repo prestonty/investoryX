@@ -67,7 +67,7 @@ export default function Navbar(props: NavbarProps) {
                         className="w-100 text-dark text-md text-nowrap lg:text-xl"
                         href="/latest-news"
                     >
-                        Latest News
+                        News
                     </Link>
                 </UnderlineWrapper>
 
@@ -85,7 +85,7 @@ export default function Navbar(props: NavbarProps) {
                         className="w-100 text-dark text-md text-nowrap lg:text-xl"
                         href="/watchlist"
                     >
-                        Watch List
+                        Watchlist
                     </Link>
                 </UnderlineWrapper>
             </div>

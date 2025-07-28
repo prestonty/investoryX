@@ -1,18 +1,14 @@
 "use client";
-// Show both sign in and login using if statements
-import GoogleButton from "react-google-button";
+
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import "./login.css";
-// import { google } from "@/lib/googleClient";
-
-export default function Login() {
+export default function Register() {
     return (
         <div className="bg-light my-auto h-[100vh]">
             <div className="h-[80%] w-[50%] mx-auto my-auto flex flex-col">
                 <h1 className="text-dark text-6xl font-extrabold text-center mt-[8%]">
-                    Login
+                    Register
                 </h1>
 
                 {/* Google Button (adding nested tags may affect css styling in login.css) */}
@@ -29,18 +25,20 @@ export default function Login() {
 
                 <hr className="h-[2px] mt-16 text-gray" />
 
-                {/* Login Form */}
+                {/* Register Form */}
                 <div className="flex justify-between gap-x-4">
                     <div className="w-1/2 mt-10">
                         <form className="text-dark flex flex-col">
-                            {/* <label className="text-lg">Name</label>
-                        <input
-                            className="border-2 border-gray px-4 py-2 rounded-[30px] bg-transparent"
-                            type="text"
-                            id="name"
-                            name="name"
-                        /> */}
-                            <label className="text-lg text-dark">Email</label>
+                            <label className="text-lg">Name</label>
+                            <input
+                                className="border-2 border-gray px-4 py-2 rounded-[30px] bg-transparent"
+                                type="text"
+                                id="name"
+                                name="name"
+                            />
+                            <label className="text-lg text-dark mt-4">
+                                Email
+                            </label>
                             <input
                                 className="border-2 border-gray px-4 py-2 rounded-[30px] bg-transparent"
                                 type="text"
@@ -62,7 +60,7 @@ export default function Login() {
                             <input
                                 type="submit"
                                 className="border-2 border-gray px-4 py-2 rounded-[30px] bg-transparent mt-8 w-[50%] text-lg text-dark hover:text-white hover:bg-gray transition-colors duration-500"
-                                value="Login"
+                                value="Register"
                             />
                         </form>
                     </div>
@@ -85,14 +83,15 @@ export default function Login() {
                                 width={300}
                                 height={300}
                                 alt="bull logo"
+                                className="scale-x-[-1]"
                             />
                         </motion.div>
                         <div className="flex justify-center">
                             <Link
                                 className="w-fit px-4 py-2 m-2 rounded-[30px] border-2 border-gray text-dark text-xl text-center hover:text-white hover:bg-gray transition-colors duration-500"
-                                href="/register"
+                                href="/login"
                             >
-                                Register
+                                Back to login
                             </Link>
                         </div>
                     </div>
