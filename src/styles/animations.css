@@ -1,4 +1,4 @@
-/* Animations for blue triangle */
+/* Landing Page Animation */
 .blue-in {
     animation-duration: 1.2s;
     animation-delay: 0.3s;
@@ -11,6 +11,36 @@
     animation-name: spring-top-left;
 }
 
+/* Login Page animation */
+.login-top-black-tri {
+    animation-duration: 1.5s;
+    animation-name: proper-spring-top-left;
+}
+
+.login-bot-black-tri {
+    animation-duration: 1.5s;
+    animation-name: proper-spring-bottom-right;
+}
+
+.login-top-blue-tri {
+    animation-duration: 1.5s;
+    animation-name: proper-spring-top-right;
+}
+
+.login-bot-blue-tri {
+    animation-duration: 1.5s;
+    animation-name: proper-spring-bottom-left;
+}
+
+.tri-fly-out {
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(-100px) scale(0.8) rotate(30deg);
+    pointer-events: none;
+}
+
+/* Landing Page Animations */
 @keyframes spring-top-right {
     0% {
         transform: translate(-80%, 150%) rotate(60deg);
@@ -37,5 +67,58 @@
 
     100% {
         transform: translate(0%, 0%) rotate(60deg);
+    }
+}
+
+/* Login Page Animations */
+@keyframes proper-spring-top-left {
+    0% {
+        transform: translate(-50%, -50%) rotate(76deg);
+    }
+    70% {
+        /* Overshoot slightly past the target */
+        transform: translate(2%, 2%) rotate(76deg);
+    }
+    100% {
+        transform: translate(0%, 0%) rotate(76deg);
+    }
+}
+
+@keyframes proper-spring-bottom-right {
+    0% {
+        transform: translate(50%, 50%) rotate(76deg);
+    }
+    70% {
+        /* Overshoot slightly past the target */
+        transform: translate(-2%, -2%) rotate(76deg);
+    }
+    100% {
+        transform: translate(0%, 0%) rotate(76deg);
+    }
+}
+
+@keyframes proper-spring-top-right {
+    0% {
+        transform: translate(50%, -50%) rotate(14deg);
+    }
+    70% {
+        /* Overshoot slightly past the target */
+        transform: translate(2%, 10%) rotate(14deg);
+    }
+    100% {
+        transform: translate(0%, 0%) rotate(14deg);
+    }
+}
+
+@keyframes proper-spring-bottom-left {
+    0% {
+        transform: translate(-50%, 50%) rotate(14deg);
+    }
+    70% {
+        /* Overshoot slightly past the target */
+        transform: translate(-2%, -10%) rotate(14deg);
+    }
+    100% {
+        transform: translate(0%, 0%) rotate(14deg);
     }
 }

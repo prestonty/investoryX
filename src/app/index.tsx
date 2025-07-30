@@ -1,10 +1,10 @@
 "use client";
 import NavButton from "@/components/NavButton";
-import "../styles/animations.css";
+import "@/styles/animations.css";
 
 import { useState, useEffect } from "react";
 import MagneticWrapper from "@/components/animations/MagneticWrapper";
-import { motion } from "framer-motion"
+import { motion } from "framer-motion";
 
 export default function Landing() {
     return (
@@ -23,12 +23,18 @@ export default function Landing() {
                 </div>
 
                 <MagneticWrapper>
-                    <motion.img 
-                    className="ml-[18rem] mt-[5rem] w-[18%]"
-                    src="/ani-bull.png"
-                    initial={{scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.7, duration: 0.35, type: "spring", stiffness: 200, damping: 16, }}
+                    <motion.img
+                        className="ml-[18rem] mt-[5rem] w-[18%]"
+                        src="/ani-bull.png"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{
+                            delay: 0.7,
+                            duration: 0.35,
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 16,
+                        }}
                     />
                 </MagneticWrapper>
 
