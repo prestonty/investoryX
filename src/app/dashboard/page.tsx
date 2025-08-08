@@ -129,11 +129,6 @@ export default function LatestNews() {
             </div>
             {/* justify-center */}
             <div className="w-[94%] mx-auto flex flex-col">
-                <div className="h-[5rem] bg-white rounded-[30px] shadow-dark-md px-10 flex items-center mb-6">
-                    {/* Search bar component? */}
-                    <p className="text-dark">Search Bar</p>
-                </div>
-
                 <div className="grid grid-cols-12-5">
                     <div className="content-between mr-6">
                         {/* Latest News ------------------------------------------------------------------------------------------------------------ */}

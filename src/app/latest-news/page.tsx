@@ -29,7 +29,7 @@ export default function Dashboard() {
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)] mb-6">
             <div className="mb-4">
-                <Navbar />
+                <Navbar search={true} />
             </div>
 
             <div className="w-[94%] mx-auto flex flex-col h-[92vh] mb-6">

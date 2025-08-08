@@ -6,7 +6,7 @@ import StockWatchItem from "@/components/StockWatchItem";
 export default function WatchList() {
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
-            <Navbar />
+            <Navbar search={true} />
 
             {/* Make the search bar a component them reuse it in dashboard and watchlist (Give it an array to pass into with all possible options) */}
 
@@ -15,7 +15,7 @@ export default function WatchList() {
             <div className="flex-col w-2/5 mx-auto min-w-[30rem]">
                 <div className="h-[4rem] bg-white rounded-[30px] shadow-dark-md px-10 flex items-center mb-6">
                     {/* Search bar component? */}
-                    <p className="text-dark">Search Bar</p>
+                    <p className="text-dark">Search Watchlist Items</p>
                 </div>
 
                 <div className="h-full bg-white rounded-[30px] shadow-dark-md px-10 py-6 flex items-center mb-6">
