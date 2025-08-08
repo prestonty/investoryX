@@ -81,7 +81,7 @@ export default function Searchbar(props: SearchbarProps) {
 
     const navigateToStock = (ticker: string) => {
         setLoading(true);
-        router.push(`/stocks/${ticker}`);
+        router.push(`/stock/${ticker}`);
     };
 
     return (

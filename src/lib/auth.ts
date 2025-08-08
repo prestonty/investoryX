@@ -1,53 +1,50 @@
-import { NextAuthOptions, User, getServerSession } from "next-auth";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+// Authentication utility functions
+import { getCurrentUser, type UserResponse } from "./api";
 
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import GithubProvider from "next-auth/providers/github";
+// Re-export UserResponse type for convenience
+export type { UserResponse };
 
-export const authConfig: NextAuthOptions = {
-    providers: [
-        CredentialsProvider({
-            name: "Sign in",
-            credentials: {
-                email: {
-                    label: "Email",
-                    type: "email",
-                    placeholder: "example@example.com",
-                },
-                password: {
-                    label: "Password",
-                    type: "password",
-                },
-            },
-            async authorize(credentials) {
-                // Retrieve their stuff from database
+// Check if user is authenticated
+export function isAuthenticated(): boolean {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("access_token");
+}
 
-                // source - https://www.youtube.com/watch?v=AbUVY16P4Ys
-                // finish this after SQL is implemented
+// Get stored token
+export function getToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("access_token");
+}
 
-                if (
-                    !credentials ||
-                    !credentials.email ||
-                    !credentials.password
-                ) {
-                    return null; // if nothing found, then return nothing
-                }
+// Clear authentication data
+export function logout(): void {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("access_token");
+    // Redirect to login page
+    window.location.href = "/login";
+}
 
-                // find them in the database (E.g. postgres)
+// Get current user data
+export async function getCurrentUserData(): Promise<UserResponse | null> {
+    const token = getToken();
+    if (!token) return null;
 
-                // unencrypt the password and then check to see if passwords match
-                // Use "bcrypt" to unencrypt it
-            },
-        }),
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-        GithubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        }),
-    ],
-};
+    try {
+        return await getCurrentUser(token);
+    } catch (error) {
+        // Token might be expired or invalid
+        logout();
+        return null;
+    }
+}
+
+// Check if user should be redirected to login
+export function requireAuth(): boolean {
+    if (!isAuthenticated()) {
+        if (typeof window !== "undefined") {
+            window.location.href = "/login";
+        }
+        return false;
+    }
+    return true;
+}

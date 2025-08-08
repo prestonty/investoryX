@@ -45,11 +45,16 @@ export default function CandlestickChart(chartData: ChartProps) {
     };
 
     return (
-        <div className="h-fit w-full">
+        // Parent container must provide a height for full responsiveness
+        <div className="w-full h-full">
             <Plot
                 data={[trace]}
                 title={title}
+                useResizeHandler
+                style={{ width: "100%", height: "100%" }}
+                config={{ responsive: true }}
                 layout={{
+                    autosize: true,
                     title: {
                         text: title,
                         font: {

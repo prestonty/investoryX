@@ -7,6 +7,7 @@ import UnderlineWrapper from "@/components/animations/UnderlineWrapper";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Searchbar from "@/components/Searchbar";
+import { logout, isAuthenticated } from "@/lib/auth";
 
 interface NavbarProps {
     search?: boolean;
@@ -15,11 +16,20 @@ interface NavbarProps {
 export default function Navbar(props: NavbarProps) {
     const router = useRouter();
     const { search = false } = props;
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const [searchStock, setSearchStock] = useState<{
         label: string;
         value: string;
     } | null>(null);
+
+    useEffect(() => {
+        setIsLoggedIn(isAuthenticated());
+    }, []);
+
+    const handleLogout = () => {
+        logout();
+    };
     const stockList = [
         { label: "APPL", value: "appl" },
         { label: "NVDA", value: "nvda" },
@@ -96,9 +106,25 @@ export default function Navbar(props: NavbarProps) {
                 )}
 
                 <div className="flex-none">
-                    <UnderlineWrapper>
-                        <p className="text-dark text-dark text-xl">Log Out</p>
-                    </UnderlineWrapper>
+                    {isLoggedIn ? (
+                        <UnderlineWrapper>
+                            <button
+                                onClick={handleLogout}
+                                className="text-dark text-xl hover:text-blue transition-colors duration-300"
+                            >
+                                Log Out
+                            </button>
+                        </UnderlineWrapper>
+                    ) : (
+                        <UnderlineWrapper>
+                            <Link
+                                href="/login"
+                                className="text-dark text-xl hover:text-blue transition-colors duration-300"
+                            >
+                                Login
+                            </Link>
+                        </UnderlineWrapper>
+                    )}
                 </div>
             </div>
         </div>

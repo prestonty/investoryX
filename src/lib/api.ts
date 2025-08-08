@@ -47,3 +47,87 @@ export async function getStockOverview(ticker: string) {
 
     return res.json();
 }
+
+// AUTH API FUNCTIONS
+
+export interface RegisterData {
+    Name: string;
+    email: string;
+    password: string;
+}
+
+export interface LoginData {
+    username: string; // FastAPI OAuth2PasswordRequestForm expects 'username' field
+    password: string;
+}
+
+export interface AuthResponse {
+    access_token: string;
+    token_type: string;
+}
+
+export interface UserResponse {
+    UserId: number;
+    Name: string;
+    email: string;
+    is_active: boolean;
+}
+
+// Register a new user
+export async function registerUser(
+    userData: RegisterData
+): Promise<UserResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/auth/register`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userData),
+        }
+    );
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Registration failed");
+    }
+
+    return res.json();
+}
+
+// Login user and get access token
+export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
+    // FastAPI OAuth2PasswordRequestForm expects form data, not JSON
+    const formData = new FormData();
+    formData.append("username", loginData.username);
+    formData.append("password", loginData.password);
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/token`, {
+        method: "POST",
+        body: formData,
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Login failed");
+    }
+
+    return res.json();
+}
+
+// Get current user info (requires token)
+export async function getCurrentUser(token: string): Promise<UserResponse> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/me`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to get user info");
+    }
+
+    return res.json();
+}

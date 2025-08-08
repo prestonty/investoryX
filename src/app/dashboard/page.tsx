@@ -2,12 +2,18 @@
 
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FourSquare } from "react-loading-indicators";
 import { dateConverter } from "@/utils/helper";
 import Navbar from "@/components/Navbar";
 import { Article } from "@/types/article";
 import { Index } from "@/types/index";
 import { TopStock } from "@/types/topStock";
+import {
+    isAuthenticated,
+    getCurrentUserData,
+    type UserResponse,
+} from "@/lib/auth";
 
 export default function LatestNews() {
     const [news, setNews] = useState<Article[] | null>(null);
@@ -15,70 +21,106 @@ export default function LatestNews() {
     const [gainers, setGainers] = useState<TopStock[] | null>(null);
     const [losers, setLosers] = useState<TopStock[] | null>(null);
     const [mostTraded, setMostTraded] = useState<TopStock[] | null>();
+    const [user, setUser] = useState<UserResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
+    const router = useRouter();
     const MAX_ARTICLES = 3;
 
     useEffect(() => {
-        const fetchNew = async () => {
+        // Check authentication first
+        const checkAuth = async () => {
+            if (!isAuthenticated()) {
+                router.push("/login");
+                return;
+            }
+
             try {
-                const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`
-                );
-                setNews(result.data);
+                const userData = await getCurrentUserData();
+                setUser(userData);
+                setIsLoading(false);
             } catch (error) {
-                console.error("Error fetching news: ", error);
-                setNews([] as Article[]); // set to null article
+                console.error("Auth error:", error);
+                router.push("/login");
             }
         };
 
-        // const fetchIndices = async () => {
-        //     try {
-        //         const result = await axios(
-        //             `${process.env.NEXT_PUBLIC_URL}/getIndices`
-        //         );
-        //         setIndices(result.data);
-        //     } catch (error) {
-        //         console.error("Error fetching indices: ", error);
-        //     }
-        // };
+        checkAuth();
+    }, [router]);
 
-        // const fetchTopGainersLosers = async () => {
-        //     try {
-        //         //
-        //         const result = await axios(
-        //             `${process.env.NEXT_PUBLIC_URL}/getTopGainersLosers`
-        //         );
-        //         setGainers(result.data.top_gainers);
-        //         setLosers(result.data.top_losers);
-        //         setMostTraded(result.data.most_actively_traded);
-        //     } catch (error) {
-        //         console.error("Error fetching top gainers and losers: ", error);
-        //     }
-        // };
+    useEffect(() => {
+        if (!isLoading && user) {
+            // Only fetch data after user is authenticated
+            fetchNews();
+        }
+    }, [isLoading, user]);
 
-        // const fetchCompanyData = async () => {
-        //     console.log("start here");
-        //     try {
-        //         const result = await axios(
-        //             `${process.env.NEXT_PUBLIC_URL}/getCompanyData`,
-        //             {
-        //                 params: {
-        //                     searchPrompt: "IXIC",
-        //                 },
-        //             }
-        //         );
-        //         setIndices(result.data);
-        //         console.log(result.data);
-        //     } catch (error) {
-        //         console.error("Error fetching company data:", error);
-        //     }
-        // };
+    const fetchNews = async () => {
+        try {
+            const result = await axios(
+                `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`
+            );
+            setNews(result.data);
+        } catch (error) {
+            console.error("Error fetching news: ", error);
+            setNews([] as Article[]); // set to null article
+        }
+    };
 
-        fetchNew();
-        // // fetchIndices();
-        // fetchTopGainersLosers();
-        // fetchCompanyData();
-    }, []);
+    // const fetchIndices = async () => {
+    //     try {
+    //         const result = await axios(
+    //             `${process.env.NEXT_PUBLIC_URL}/getIndices`
+    //         );
+    //         setIndices(result.data);
+    //     } catch (error) {
+    //         console.error("Error fetching indices: ", error);
+    //     }
+    // };
+
+    // const fetchTopGainersLosers = async () => {
+    //     try {
+    //         //
+    //         const result = await axios(
+    //             `${process.env.NEXT_PUBLIC_URL}/getTopGainersLosers`
+    //         );
+    //         setGainers(result.data.top_gainers);
+    //         setLosers(result.data.top_losers);
+    //         setMostTraded(result.data.most_actively_traded);
+    //     } catch (error) {
+    //         console.error("Error fetching top gainers and losers: ", error);
+    //     }
+    // };
+
+    // const fetchCompanyData = async () => {
+    //     console.log("start here");
+    //     try {
+    //         const result = await axios(
+    //             `${process.env.NEXT_PUBLIC_URL}/getCompanyData`,
+    //             {
+    //                 params: {
+    //                     searchPrompt: "IXIC",
+    //                 },
+    //             }
+    //         );
+    //         setIndices(result.data);
+    //         console.log(result.data);
+    //     } catch (error) {
+    //         console.error("Error fetching company data:", error);
+    //     }
+    // };
+
+    // fetchIndices();
+    // fetchTopGainersLosers();
+    // fetchCompanyData();
+
+    // if (isLoading) {
+    //     return (
+    //         <div className="bg-light min-h-screen flex items-center justify-center">
+    //             <FourSquare color="#181D2A" size="large" text="" textColor="" />
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
