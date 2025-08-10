@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FourSquare } from "react-loading-indicators";
 import { dateConverter } from "@/utils/helper";
@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import { Article } from "@/types/article";
 import { Index } from "@/types/index";
 import { TopStock } from "@/types/topStock";
+
 import {
     isAuthenticated,
     getCurrentUserData,
@@ -25,7 +26,10 @@ export default function LatestNews() {
     const [isLoading, setIsLoading] = useState(true);
 
     const router = useRouter();
-    const MAX_ARTICLES = 3;
+    const MAX_ARTICLES = 2;
+
+    // Market Indexes
+    const etfData = useRef(null);
 
     useEffect(() => {
         // Check authentication first
@@ -58,7 +62,7 @@ export default function LatestNews() {
     const fetchNews = async () => {
         try {
             const result = await axios(
-                `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`
+                `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`,
             );
             setNews(result.data);
         } catch (error) {
@@ -67,16 +71,16 @@ export default function LatestNews() {
         }
     };
 
-    // const fetchIndices = async () => {
-    //     try {
-    //         const result = await axios(
-    //             `${process.env.NEXT_PUBLIC_URL}/getIndices`
-    //         );
-    //         setIndices(result.data);
-    //     } catch (error) {
-    //         console.error("Error fetching indices: ", error);
-    //     }
-    // };
+    const fetchIndices = async () => {
+        try {
+            const result = await axios(
+                `${process.env.NEXT_PUBLIC_URL}/getIndices`,
+            );
+            setIndices(result.data);
+        } catch (error) {
+            console.error("Error fetching indices: ", error);
+        }
+    };
 
     // const fetchTopGainersLosers = async () => {
     //     try {
@@ -123,52 +127,57 @@ export default function LatestNews() {
     // }
 
     return (
-        <div className="bg-light font-[family-name:var(--font-geist-sans)]">
-            <div className="mb-4">
+        <div className='bg-light font-[family-name:var(--font-geist-sans)]'>
+            <div className='mb-4'>
                 <Navbar search={true} />
             </div>
             {/* justify-center */}
-            <div className="w-[94%] mx-auto flex flex-col">
-                <div className="grid grid-cols-12-5">
-                    <div className="content-between mr-6">
+            <div className='w-[94%] mx-auto flex flex-col'>
+                <div className='grid grid-cols-1 xl:grid-cols-2-1 gap-6'>
+                    <div className='space-y-6'>
                         {/* Latest News ------------------------------------------------------------------------------------------------------------ */}
-                        <div className="h-fit bg-white rounded-[30px] shadow-dark-md px-10 py-6 mb-6">
-                            <h2 className="text-dark text-2xl">Latest News</h2>
-                            <hr className="h-[4px] border-none bg-blue mt-1 text-blue rounded-[4px]" />
+                        <div className='h-fit bg-white rounded-[30px] shadow-dark-md px-10 py-6'>
+                            <h2 className='text-dark text-2xl'>Latest News</h2>
+                            <hr className='h-[4px] border-none bg-blue mt-1 text-blue rounded-[4px]' />
 
-                            <div className="h-fit">
+                            <div className='h-fit'>
                                 {news != null ? (
                                     news.map((article, index) => (
                                         <a
                                             key={index}
                                             href={article.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            target='_blank'
+                                            rel='noopener noreferrer'
                                         >
-                                            <div className="flex my-4">
+                                            <div className='flex my-4'>
                                                 <img
                                                     src={article.image}
-                                                    className="w-[20%]"
-                                                    alt="article thumbnail"
+                                                    className='w-[20%]'
+                                                    alt='article thumbnail'
                                                 />
 
-                                                <div className="ml-4 flex flex-col justify-between pb-2">
+                                                <div className='ml-4 flex flex-col justify-between pb-2'>
                                                     <div>
-                                                        <p className="text-dark text-xl font-medium">
+                                                        <p className='text-dark text-xl font-medium'>
                                                             {article.headline}
                                                         </p>
-                                                        <p className="text-dark">
+                                                        <p className='text-dark'>
                                                             {article.source}
                                                         </p>
                                                     </div>
 
-                                                    <div className="flex flex-col">
-                                                        <p className="text-dark">
-                                                            {`Relevant Tickers: ${article.tickers.join(
-                                                                ", "
-                                                            )}`}
+                                                    <div className='flex flex-col'>
+                                                        <p className='text-dark'>
+                                                            {`Relevant Tickers: ${
+                                                                article?.tickers
+                                                                    ?.length
+                                                                    ? article.tickers.join(
+                                                                          ", ",
+                                                                      )
+                                                                    : "N/A"
+                                                            }`}
                                                         </p>
-                                                        <p className="text-dark">
+                                                        <p className='text-dark'>
                                                             {article.datetime}
                                                         </p>
                                                     </div>
@@ -177,12 +186,12 @@ export default function LatestNews() {
                                         </a>
                                     ))
                                 ) : (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <FourSquare
-                                            color="#181D2A"
-                                            size="medium"
-                                            text=""
-                                            textColor=""
+                                            color='#181D2A'
+                                            size='medium'
+                                            text=''
+                                            textColor=''
                                         />
                                     </div>
                                 )}
@@ -190,32 +199,32 @@ export default function LatestNews() {
                         </div>
 
                         {/* Market Indexes ------------------------------------------------------------------------------------------------------------ */}
-                        <div className="bg-white rounded-[30px] shadow-dark-md px-10 py-6">
-                            <h2 className="text-dark text-2xl">
+                        <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6'>
+                            <h2 className='text-dark text-2xl'>
                                 Market Indexes
                             </h2>
-                            <hr className="h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]" />
+                            <hr className='h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]' />
 
-                            <div className="h-fit">
+                            <div className='h-fit'>
                                 {indices != null ? (
                                     indices.map((stockIndex, index) => (
-                                        <div key={index} className="flex">
-                                            <p className="text-dark">
+                                        <div key={index} className='flex'>
+                                            <p className='text-dark'>
                                                 Placeholder Index Name
                                             </p>
-                                            <p className="text-dark">
+                                            <p className='text-dark'>
                                                 {stockIndex.c}
                                             </p>
-                                            <p className="text-dark">
+                                            <p className='text-dark'>
                                                 {stockIndex.d}
                                             </p>
-                                            <p className="text-dark">
+                                            <p className='text-dark'>
                                                 {stockIndex.dp}%
                                             </p>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex h-100 justify-center align-center content-center items-center">
+                                    <div className='flex h-100 justify-center align-center content-center items-center'>
                                         {/* <FourSquare
                                             color="#181D2A"
                                             size="medium"
@@ -247,12 +256,12 @@ export default function LatestNews() {
 
                     {/* Trending ------------------------------------------------------------------------------------------------------------ */}
 
-                    <div className="bg-white rounded-[30px] w-100 shadow-dark-md px-10 py-6">
-                        <p className="text-dark text-2xl">Trending</p>
-                        <hr className="h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]" />
-                        <div className="flex flex-col h-full mt-[8%]">
-                            <div className="flex flex-col justify-evenly h-[12%]">
-                                <p className="text-dark text-lg mb-2 underline">
+                    <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6 order-2 xl:order-2'>
+                        <p className='text-dark text-2xl'>Trending</p>
+                        <hr className='h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]' />
+                        <div className='flex flex-col h-full mt-[8%]'>
+                            <div className='flex flex-col justify-evenly h-[12%]'>
+                                <p className='text-dark text-lg mb-2 underline'>
                                     Top Gainers
                                 </p>
 
@@ -260,16 +269,16 @@ export default function LatestNews() {
                                     gainers.map((gainer, index) => (
                                         <div
                                             key={index}
-                                            className="flex justify-between"
+                                            className='flex justify-between'
                                         >
-                                            <div className="flex flex-col">
-                                                <p className="text-dark text-xl">
+                                            <div className='flex flex-col'>
+                                                <p className='text-dark text-xl'>
                                                     {gainer.ticker}
                                                 </p>
                                                 {/* <p className="text-dark text-xl">{"$" + gainer.price}</p> */}
                                             </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-green text-xl">
+                                            <div className='flex flex-col'>
+                                                <p className='text-green text-xl'>
                                                     {"+" +
                                                         gainer.change_percentage}
                                                 </p>
@@ -278,44 +287,44 @@ export default function LatestNews() {
                                         </div>
                                     ))
                                 ) : gainers != null && gainers.length === 0 ? (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
-                                        <p className="text-dark">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
+                                        <p className='text-dark'>
                                             No gainers available - ran out of
                                             API credits
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <FourSquare
-                                            color="#181D2A"
-                                            size="medium"
-                                            text=""
-                                            textColor=""
+                                            color='#181D2A'
+                                            size='medium'
+                                            text=''
+                                            textColor=''
                                         />
                                     </div>
                                 )}
                             </div>
 
-                            <hr className="my-4" />
+                            <hr className='my-4' />
 
-                            <div className="flex flex-col justify-evenly h-[12%]">
-                                <p className="text-dark text-lg mb-2 underline">
+                            <div className='flex flex-col justify-evenly h-[12%]'>
+                                <p className='text-dark text-lg mb-2 underline'>
                                     Top Losers
                                 </p>
                                 {losers != null && losers.length > 0 ? (
                                     losers.map((loser, index) => (
                                         <div
                                             key={index}
-                                            className="flex justify-between"
+                                            className='flex justify-between'
                                         >
-                                            <div className="flex flex-col">
-                                                <p className="text-dark text-xl">
+                                            <div className='flex flex-col'>
+                                                <p className='text-dark text-xl'>
                                                     {loser.ticker}
                                                 </p>
                                                 {/* <p className="text-dark text-xl">{"$" + loser.price}</p> */}
                                             </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-red text-xl">
+                                            <div className='flex flex-col'>
+                                                <p className='text-red text-xl'>
                                                     {loser.change_percentage}
                                                 </p>
                                                 {/* <p className="text-red text-xl">{loser.change_amount}</p> */}
@@ -323,42 +332,42 @@ export default function LatestNews() {
                                         </div>
                                     ))
                                 ) : losers != null && losers.length === 0 ? (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
-                                        <p className="text-dark">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
+                                        <p className='text-dark'>
                                             No losers available - ran out of API
                                             credits
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <FourSquare
-                                            color="#181D2A"
-                                            size="medium"
-                                            text=""
-                                            textColor=""
+                                            color='#181D2A'
+                                            size='medium'
+                                            text=''
+                                            textColor=''
                                         />
                                     </div>
                                 )}
                             </div>
 
-                            <hr className="my-4" />
+                            <hr className='my-4' />
 
-                            <p className="text-dark text-lg mb-2 underline">
+                            <p className='text-dark text-lg mb-2 underline'>
                                 Most Actively Traded
                             </p>
-                            <div className="flex flex-col justify-evenly h-[30%]">
+                            <div className='flex flex-col justify-evenly h-[30%]'>
                                 {mostTraded != null && mostTraded.length > 0 ? (
                                     mostTraded.map((traded, index) => (
                                         <div
                                             key={index}
-                                            className="flex justify-between"
+                                            className='flex justify-between'
                                         >
-                                            <p className="text-dark text-xl">
+                                            <p className='text-dark text-xl'>
                                                 {traded.ticker}
                                             </p>
 
-                                            <div className="flex justify-between w-[75%]">
-                                                <p className="text-dark text-lg">
+                                            <div className='flex justify-between w-[75%]'>
+                                                <p className='text-dark text-lg'>
                                                     {"$" + traded.price}
                                                 </p>
                                                 <p
@@ -380,19 +389,19 @@ export default function LatestNews() {
                                     ))
                                 ) : mostTraded != null &&
                                   mostTraded.length === 0 ? (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
-                                        <p className="text-dark">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
+                                        <p className='text-dark'>
                                             No data available - ran out of API
                                             credits
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="flex h-[80%] justify-center align-center content-center items-center">
+                                    <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <FourSquare
-                                            color="#181D2A"
-                                            size="medium"
-                                            text=""
-                                            textColor=""
+                                            color='#181D2A'
+                                            size='medium'
+                                            text=''
+                                            textColor=''
                                         />
                                     </div>
                                 )}

@@ -57,7 +57,7 @@ export default function Searchbar(props: SearchbarProps) {
                         `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
                         {
                             signal: controller.signal,
-                        }
+                        },
                     );
                     setResults(res.data);
                 } catch (error: any) {
@@ -90,12 +90,12 @@ export default function Searchbar(props: SearchbarProps) {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            <div className="relative w-full flex gap-x-2 pl-6 items-center">
+            <div className='relative w-full flex gap-x-2 pl-6 items-center'>
                 {loading ? (
                     <ClipLoader
                         loading={true}
                         size={20}
-                        color="#748EFE"
+                        color='#748EFE'
                         className={`absolute -left-1 text-dark w-5 h-5 transition-colors duration-500`}
                     />
                 ) : (
@@ -105,20 +105,20 @@ export default function Searchbar(props: SearchbarProps) {
                     />
                 )}
                 <input
-                    type="text"
+                    type='text'
                     value={filterString}
                     onChange={(e) => setFilterString(e.target.value)}
-                    placeholder="Search items..."
+                    placeholder='Search items...'
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className="text-lg w-full text-dark border-none focus:outline-none focus:ring-0"
+                    className='text-lg w-full text-dark border-none focus:outline-none focus:ring-0'
                 />
             </div>
 
             <AnimatePresence>
                 {isFocused && (
                     <motion.ul
-                        className="absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll max-h-60 z-[400] shadow-lg border border-light"
+                        className='absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll max-h-60 z-[400] shadow-lg border border-light'
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -126,7 +126,7 @@ export default function Searchbar(props: SearchbarProps) {
                     >
                         {optionsToShow.map((item, index) => (
                             <motion.li
-                                className="text-dark w-full border-b-2 border-light z-2"
+                                className='text-dark w-full border-b-2 border-light z-2'
                                 key={index}
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -137,7 +137,7 @@ export default function Searchbar(props: SearchbarProps) {
                                 }}
                             >
                                 <button
-                                    className="text-left hover:bg-light w-full px-4 py-1"
+                                    className='text-left hover:bg-light w-full px-4 py-1'
                                     onClick={() => {
                                         navigateToStock(item.value);
                                     }}

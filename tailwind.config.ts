@@ -26,6 +26,7 @@ const config: Config = {
             },
             gridTemplateColumns: {
                 "12-5": "12fr 5fr",
+                "2-1": "2fr 1fr",
             },
             boxShadow: {
                 "dark-sm": "0 1px 2px rgba(0, 0, 0, 0.3)",
