@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FourSquare } from "react-loading-indicators";
 import { dateConverter } from "@/utils/helper";
@@ -18,7 +18,6 @@ import {
 
 export default function LatestNews() {
     const [news, setNews] = useState<Article[] | null>(null);
-    const [indices, setIndices] = useState<Index[] | null>(null);
     const [gainers, setGainers] = useState<TopStock[] | null>(null);
     const [losers, setLosers] = useState<TopStock[] | null>(null);
     const [mostTraded, setMostTraded] = useState<TopStock[] | null>();
@@ -29,7 +28,7 @@ export default function LatestNews() {
     const MAX_ARTICLES = 2;
 
     // Market Indexes
-    const etfData = useRef(null);
+    const [etfData, setEtfData] = useState<any[]>([]);
 
     useEffect(() => {
         // Check authentication first
@@ -56,6 +55,7 @@ export default function LatestNews() {
         if (!isLoading && user) {
             // Only fetch data after user is authenticated
             fetchNews();
+            fetchEtfs();
         }
     }, [isLoading, user]);
 
@@ -71,12 +71,12 @@ export default function LatestNews() {
         }
     };
 
-    const fetchIndices = async () => {
+    const fetchEtfs = async () => {
         try {
             const result = await axios(
-                `${process.env.NEXT_PUBLIC_URL}/getIndices`,
+                `${process.env.NEXT_PUBLIC_URL}/get-default-indexes`,
             );
-            setIndices(result.data);
+            setEtfData(result.data);
         } catch (error) {
             console.error("Error fetching indices: ", error);
         }
@@ -93,24 +93,6 @@ export default function LatestNews() {
     //         setMostTraded(result.data.most_actively_traded);
     //     } catch (error) {
     //         console.error("Error fetching top gainers and losers: ", error);
-    //     }
-    // };
-
-    // const fetchCompanyData = async () => {
-    //     console.log("start here");
-    //     try {
-    //         const result = await axios(
-    //             `${process.env.NEXT_PUBLIC_URL}/getCompanyData`,
-    //             {
-    //                 params: {
-    //                     searchPrompt: "IXIC",
-    //                 },
-    //             }
-    //         );
-    //         setIndices(result.data);
-    //         console.log(result.data);
-    //     } catch (error) {
-    //         console.error("Error fetching company data:", error);
     //     }
     // };
 
@@ -206,48 +188,89 @@ export default function LatestNews() {
                             <hr className='h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]' />
 
                             <div className='h-fit'>
-                                {indices != null ? (
-                                    indices.map((stockIndex, index) => (
-                                        <div key={index} className='flex'>
-                                            <p className='text-dark'>
-                                                Placeholder Index Name
+                                {etfData.length > 0 && (
+                                    <div className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-y-4 p-4'>
+                                        <p className='text-dark'>ETF Name</p>
+                                        <p className='text-dark'>Price</p>
+                                        <p className='text-dark'>
+                                            Price Change
+                                        </p>
+                                        <p className='text-dark'>
+                                            Price Change %
+                                        </p>
+                                    </div>
+                                )}
+                                {etfData.length > 0 ? (
+                                    etfData.map((category, index) => (
+                                        <div
+                                            key={index}
+                                            className='flex flex-col gap-y-4 border-2 p-4'
+                                        >
+                                            <p className='text-dark text-xl font-medium'>
+                                                {category.title}
                                             </p>
-                                            <p className='text-dark'>
-                                                {stockIndex.c}
-                                            </p>
-                                            <p className='text-dark'>
-                                                {stockIndex.d}
-                                            </p>
-                                            <p className='text-dark'>
-                                                {stockIndex.dp}%
-                                            </p>
+                                            {category.etfs.map(
+                                                (stockIndex, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-y-4'
+                                                    >
+                                                        <p className='text-dark'>
+                                                            {stockIndex.name} (
+                                                            {stockIndex.ticker})
+                                                        </p>
+                                                        <p className='text-dark'>
+                                                            {stockIndex.price}
+                                                        </p>
+                                                        <p
+                                                            className={
+                                                                Number(
+                                                                    stockIndex.priceChange,
+                                                                ) < 0
+                                                                    ? "text-red"
+                                                                    : Number(
+                                                                          stockIndex.priceChange,
+                                                                      ) > 0
+                                                                    ? "text-green"
+                                                                    : "text-gray"
+                                                            }
+                                                        >
+                                                            {
+                                                                stockIndex.priceChange
+                                                            }
+                                                        </p>
+
+                                                        <p
+                                                            className={
+                                                                Number(
+                                                                    stockIndex.priceChangePercent,
+                                                                ) < 0
+                                                                    ? "text-red"
+                                                                    : Number(
+                                                                          stockIndex.priceChangePercent,
+                                                                      ) > 0
+                                                                    ? "text-green"
+                                                                    : "text-gray"
+                                                            }
+                                                        >
+                                                            {
+                                                                stockIndex.priceChangePercent
+                                                            }
+                                                            %
+                                                        </p>
+                                                    </div>
+                                                ),
+                                            )}
                                         </div>
                                     ))
                                 ) : (
                                     <div className='flex h-100 justify-center align-center content-center items-center'>
-                                        {/* <FourSquare
-                                            color="#181D2A"
-                                            size="medium"
-                                            text=""
-                                            textColor=""
-                                        /> */}
-                                        <div>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                            <p>asdasd</p>
-                                        </div>
+                                        <FourSquare
+                                            color='#181D2A'
+                                            size='medium'
+                                            text=''
+                                            textColor=''
+                                        />
                                     </div>
                                 )}
                             </div>

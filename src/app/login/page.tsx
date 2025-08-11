@@ -79,22 +79,22 @@ export default function Login() {
 
     return (
         <>
-            <div className="relative bg-light h-screen flex items-center justify-center">
+            <div className='relative bg-light h-screen flex items-center justify-center font-[family-name:var(--font-geist-sans)]'>
                 {/* Triangle Animations */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className='absolute inset-0 overflow-hidden pointer-events-none'>
                     {/* Blue triangles */}
                     {password !== "" && (
                         <>
                             <div
-                                className="login-top-blue-tri absolute -top-12 -right-20 h-[16vmax]
+                                className='login-top-blue-tri absolute -top-12 -right-20 h-[16vmax]
                     w-[60vmax] origin-top-right
-                    bg-blue rotate-[14deg] blue-triangle"
+                    bg-blue rotate-[14deg] blue-triangle'
                             ></div>
 
                             <div
-                                className="login-bot-blue-tri absolute -bottom-12 -left-20 h-[16vmax]
+                                className='login-bot-blue-tri absolute -bottom-12 -left-20 h-[16vmax]
                     w-[60vmax] origin-bottom-left
-                    bg-blue rotate-[14deg] blue-triangle"
+                    bg-blue rotate-[14deg] blue-triangle'
                             ></div>
                         </>
                     )}
@@ -103,15 +103,15 @@ export default function Login() {
                     {email !== "" && (
                         <>
                             <div
-                                className="login-bot-black-tri absolute -bottom-10 right-56 h-[86vmax]
+                                className='login-bot-black-tri absolute -bottom-10 right-56 h-[86vmax]
                     w-[50vmax] origin-bottom-left
-                    bg-dark rotate-[76deg] black-triangle"
+                    bg-dark rotate-[76deg] black-triangle'
                             ></div>
 
                             <div
-                                className="login-top-black-tri absolute -top-10 left-56 h-[86vmax]
+                                className='login-top-black-tri absolute -top-10 left-56 h-[86vmax]
                     w-[50vmax] origin-top-right
-                    bg-dark rotate-[76deg] black-triangle"
+                    bg-dark rotate-[76deg] black-triangle'
                             ></div>
                         </>
                     )}
@@ -119,10 +119,10 @@ export default function Login() {
 
                 {/* Toast */}
                 <Toaster
-                    position="top-center"
+                    position='top-center'
                     reverseOrder={false}
                     gutter={8}
-                    containerClassName=""
+                    containerClassName=''
                     containerStyle={{}}
                     toastOptions={{
                         // Define default options
@@ -152,8 +152,8 @@ export default function Login() {
                     }}
                 />
 
-                <div className="w-3/4 xl:w-1/2 mx-auto flex flex-col justify-center z-5">
-                    <h1 className="text-dark text-6xl font-extrabold text-center">
+                <div className='w-3/4 xl:w-1/2 mx-auto flex flex-col justify-center z-5'>
+                    <h1 className='text-dark text-6xl font-extrabold text-center'>
                         Login
                     </h1>
 
@@ -169,22 +169,22 @@ export default function Login() {
                     </p>
                 </div> */}
 
-                    <hr className="h-[2px] mt-16 bg-livid" />
+                    <hr className='h-[2px] mt-16 bg-livid' />
 
                     {/* Error Message */}
                     {error && (
-                        <div className="w-full max-w-md mx-auto mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                        <div className='w-full max-w-md mx-auto mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
                             {error}
                         </div>
                     )}
 
                     {/* Login Form */}
-                    <div className="flex flex-col items-center gap-x-4 mt-10">
+                    <div className='flex flex-col items-center gap-x-4 mt-10'>
                         <form
                             onSubmit={handleSubmit}
-                            className="w-full text-dark flex flex-col items-center gap-y-4"
+                            className='w-full text-dark flex flex-col items-center gap-y-4'
                         >
-                            <div className="flex flex-col text-dark">
+                            <div className='flex flex-col text-dark'>
                                 <label
                                     className={`text-lg pl-4 ${
                                         isEmailFocused ? "text-blue" : ""
@@ -193,10 +193,10 @@ export default function Login() {
                                     Email
                                 </label>
                                 <input
-                                    className="w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500"
-                                    type="text"
-                                    id="email"
-                                    name="email"
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    type='text'
+                                    id='email'
+                                    name='email'
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     onFocus={() => {
@@ -207,7 +207,7 @@ export default function Login() {
                                     }}
                                 />
                             </div>
-                            <div className="flex flex-col">
+                            <div className='flex flex-col'>
                                 <label
                                     className={`text-lg pl-4 ${
                                         isPasswordFocused ? "text-blue" : ""
@@ -217,10 +217,10 @@ export default function Login() {
                                 </label>
 
                                 <input
-                                    className="w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500"
-                                    type="password"
-                                    id="password"
-                                    name="password"
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    type='password'
+                                    id='password'
+                                    name='password'
                                     value={password}
                                     onChange={(e) =>
                                         setPassword(e.target.value)
@@ -235,7 +235,7 @@ export default function Login() {
                             </div>
 
                             <input
-                                type="submit"
+                                type='submit'
                                 disabled={loading}
                                 className={`w-40 px-4 py-2 mt-8 rounded-[30px] text-lg transition-colors duration-500 ${
                                     loading
@@ -245,13 +245,13 @@ export default function Login() {
                                 value={loading ? "Logging in..." : "Login"}
                             />
                         </form>
-                        <div className="flex justify-center items-center gap-2 text-xl mt-8">
-                            <p className="text-dark m-0">
+                        <div className='flex justify-center items-center gap-2 text-xl mt-8'>
+                            <p className='text-dark m-0'>
                                 Don't have an account?
                             </p>
                             <Link
-                                className="text-blue text-center hover:text-darkblue transition-colors duration-500"
-                                href="/sign-up"
+                                className='text-blue text-center hover:text-darkblue transition-colors duration-500'
+                                href='/sign-up'
                             >
                                 Sign Up
                             </Link>

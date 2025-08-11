@@ -85,7 +85,7 @@ export default function Register() {
     };
 
     return (
-        <>
+        <div className='font-[family-name:var(--font-geist-sans)]'>
             <Toaster
                 position='top-center'
                 reverseOrder={false}
@@ -287,6 +287,6 @@ export default function Register() {
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
