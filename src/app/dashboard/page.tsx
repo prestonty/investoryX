@@ -2,21 +2,16 @@
 
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { FourSquare } from "react-loading-indicators";
-import { dateConverter } from "@/utils/helper";
+import { dateConverter } from "@/lib/utils/helper";
 import Navbar from "@/components/Navbar";
 import { Article } from "@/types/article";
 import { Index } from "@/types/index";
 import { TopStock } from "@/types/topStock";
 
-import {
-    isAuthenticated,
-    getCurrentUserData,
-    type UserResponse,
-} from "@/lib/auth";
+import { getCurrentUserData, type UserResponse } from "@/lib/auth";
 
-export default function LatestNews() {
+export default function Dashboard() {
     const [news, setNews] = useState<Article[] | null>(null);
     const [gainers, setGainers] = useState<TopStock[] | null>(null);
     const [losers, setLosers] = useState<TopStock[] | null>(null);
@@ -24,40 +19,34 @@ export default function LatestNews() {
     const [user, setUser] = useState<UserResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const router = useRouter();
     const MAX_ARTICLES = 2;
 
     // Market Indexes
     const [etfData, setEtfData] = useState<any[]>([]);
 
     useEffect(() => {
-        // Check authentication first
-        const checkAuth = async () => {
-            if (!isAuthenticated()) {
-                router.push("/login");
-                return;
-            }
-
+        // Get user data and fetch dashboard data
+        const initializeDashboard = async () => {
             try {
                 const userData = await getCurrentUserData();
                 setUser(userData);
                 setIsLoading(false);
             } catch (error) {
-                console.error("Auth error:", error);
-                router.push("/login");
+                console.error("Error getting user data:", error);
+                setIsLoading(false);
             }
         };
 
-        checkAuth();
-    }, [router]);
+        initializeDashboard();
+    }, []);
 
     useEffect(() => {
-        if (!isLoading && user) {
-            // Only fetch data after user is authenticated
+        if (!isLoading) {
+            // Fetch data after user is loaded
             fetchNews();
             fetchEtfs();
         }
-    }, [isLoading, user]);
+    }, [isLoading]);
 
     const fetchNews = async () => {
         try {
@@ -189,7 +178,7 @@ export default function LatestNews() {
 
                             <div className='h-fit'>
                                 {etfData.length > 0 && (
-                                    <div className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-y-4 p-4'>
+                                    <div className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-y-4 p-4 mt-4 border-2 border-dark'>
                                         <p className='text-dark'>ETF Name</p>
                                         <p className='text-dark'>Price</p>
                                         <p className='text-dark'>
@@ -204,7 +193,7 @@ export default function LatestNews() {
                                     etfData.map((category, index) => (
                                         <div
                                             key={index}
-                                            className='flex flex-col gap-y-4 border-2 p-4'
+                                            className='flex flex-col gap-y-4 p-4 border-2 border-dark border-t-0'
                                         >
                                             <p className='text-dark text-xl font-medium'>
                                                 {category.title}

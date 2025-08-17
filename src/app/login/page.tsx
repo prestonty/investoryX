@@ -10,6 +10,7 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState, useEffect } from "react";
 import { loginUser, type LoginData } from "@/lib/api";
+import { setAuthToken } from "@/lib/auth";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Login() {
@@ -22,6 +23,20 @@ export default function Login() {
     const [password, setPassword] = useState<string>("");
 
     const router = useRouter();
+
+    // Get redirect URL from query params
+    const [redirectTo, setRedirectTo] = useState<string>("/dashboard");
+
+    useEffect(() => {
+        // Check for redirect parameter in URL
+        if (typeof window !== "undefined") {
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get("redirectTo");
+            if (redirect) {
+                setRedirectTo(redirect);
+            }
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,15 +58,15 @@ export default function Login() {
 
             const authResponse = await loginUser(loginData);
 
-            // Store the token in localStorage (in production, consider more secure storage)
-            localStorage.setItem("access_token", authResponse.access_token);
+            // Store the token in cookies using the new auth utility
+            setAuthToken(authResponse.access_token);
 
             // Show success message
             toast.success("Login successful! Redirecting...");
 
             // Small delay for user to see the success message
             setTimeout(() => {
-                router.push("/dashboard");
+                router.push(redirectTo);
             }, 1000);
         } catch (error) {
             const errorMessage =

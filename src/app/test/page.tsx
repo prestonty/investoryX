@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
-import { dateConverter } from "@/utils/helper";
+import { dateConverter } from "@/lib/utils/helper";
 import type { PeriodType, IntervalType } from "@/types/history";
 import { PeriodOptions, IntervalOptions } from "@/types/history";
 import Navbar from "@/components/Navbar";
@@ -35,7 +35,7 @@ export default function Test() {
         const fetchData = async () => {
             try {
                 const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/stock-history/${ticker}?period=${period}&interval=${interval}`
+                    `${process.env.NEXT_PUBLIC_URL}/stock-history/${ticker}?period=${period}&interval=${interval}`,
                 );
                 setChartData(result.data);
             } catch (error) {
@@ -45,12 +45,12 @@ export default function Test() {
         fetchData();
     }, [ticker, period, interval]);
     return (
-        <div className="bg-light font-[family-name:var(--font-geist-sans)] mb-6">
-            <div className="h-[6vh] flex flex-col justify-evenly mb-[2vh]">
+        <div className='bg-light font-[family-name:var(--font-geist-sans)] mb-6'>
+            <div className='h-[6vh] flex flex-col justify-evenly mb-[2vh]'>
                 <Navbar />
             </div>
 
-            <div className="flex gap-x-4 m-10">
+            <div className='flex gap-x-4 m-10'>
                 <Autocomplete
                     options={PeriodOptions}
                     onChange={(selectedOption) =>
@@ -65,14 +65,14 @@ export default function Test() {
                 />
             </div>
 
-            <div className="">
+            <div className=''>
                 {chartData === null ? (
-                    <div className="flex justify-center items-center h-[80vh]">
+                    <div className='flex justify-center items-center h-[80vh]'>
                         <FourSquare
-                            color="#181D2A"
-                            size="medium"
-                            text=""
-                            textColor=""
+                            color='#181D2A'
+                            size='medium'
+                            text=''
+                            textColor=''
                         />
                     </div>
                 ) : (

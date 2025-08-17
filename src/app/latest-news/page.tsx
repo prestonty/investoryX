@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
-import { dateConverter } from "@/utils/helper";
+import { dateConverter } from "@/lib/utils/helper";
 import Image from "next/image";
 
 import Navbar from "@/components/Navbar";
@@ -32,7 +32,7 @@ export default function Dashboard() {
                 <Navbar search={true} />
             </div>
 
-            <div className='w-[94%] mx-auto flex flex-col h-[92vh] mb-6'>
+            <div className='w-[94%] mx-auto flex flex-col mb-6'>
                 <div className='h-100 bg-white rounded-[30px] shadow-dark-md px-10 mb-6 py-6'>
                     <div className='mb-12'>
                         <h2 className='text-dark text-2xl'>Latest News</h2>

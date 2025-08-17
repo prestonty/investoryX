@@ -51,15 +51,15 @@ export default function Navbar(props: NavbarProps) {
                 transition={{ duration: 0.3 }}
                 className={search ? "mr-10" : ""}
             >
-                <Link className="w-fit flex-none" type="button" href="/">
-                    <div className="w-fit flex items-center">
+                <Link className='w-fit flex-none' type='button' href='/'>
+                    <div className='w-fit flex items-center'>
                         <img
-                            src="/format-investory-logo.png"
+                            src='/format-investory-logo.webp'
                             width={60}
-                            className=""
-                            alt="article thumbnail"
+                            className=''
+                            alt='article thumbnail'
                         />
-                        <p className="text-dark text-center text-4xl font-semibold">
+                        <p className='text-dark text-center text-4xl font-semibold'>
                             Investory
                         </p>
                     </div>
@@ -74,8 +74,8 @@ export default function Navbar(props: NavbarProps) {
             >
                 <UnderlineWrapper>
                     <Link
-                        className="w-100 text-dark text-md text-nowrap lg:text-xl"
-                        href="/latest-news"
+                        className='w-100 text-dark text-md text-nowrap lg:text-xl'
+                        href='/latest-news'
                     >
                         News
                     </Link>
@@ -83,8 +83,8 @@ export default function Navbar(props: NavbarProps) {
 
                 <UnderlineWrapper>
                     <Link
-                        className="w-100 text-dark text-md text-nowrap lg:text-xl"
-                        href="/dashboard"
+                        className='w-100 text-dark text-md text-nowrap lg:text-xl'
+                        href='/dashboard'
                     >
                         Dashboard
                     </Link>
@@ -92,25 +92,25 @@ export default function Navbar(props: NavbarProps) {
 
                 <UnderlineWrapper>
                     <Link
-                        className="w-100 text-dark text-md text-nowrap lg:text-xl"
-                        href="/watchlist"
+                        className='w-100 text-dark text-md text-nowrap lg:text-xl'
+                        href='/watchlist'
                     >
                         Watchlist
                     </Link>
                 </UnderlineWrapper>
             </div>
 
-            <div className="flex items-center gap-x-4 w-fit ml-auto">
+            <div className='flex items-center gap-x-4 w-fit ml-auto'>
                 {search && (
                     <Searchbar options={stockList} onChange={setSearchStock} />
                 )}
 
-                <div className="flex-none">
+                <div className='flex-none'>
                     {isLoggedIn ? (
                         <UnderlineWrapper>
                             <button
                                 onClick={handleLogout}
-                                className="text-dark text-xl hover:text-blue transition-colors duration-300"
+                                className='text-dark text-xl hover:text-blue transition-colors duration-300'
                             >
                                 Log Out
                             </button>
@@ -118,8 +118,8 @@ export default function Navbar(props: NavbarProps) {
                     ) : (
                         <UnderlineWrapper>
                             <Link
-                                href="/login"
-                                className="text-dark text-xl hover:text-blue transition-colors duration-300"
+                                href='/login'
+                                className='text-dark text-xl hover:text-blue transition-colors duration-300'
                             >
                                 Login
                             </Link>
