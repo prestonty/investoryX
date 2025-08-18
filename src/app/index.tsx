@@ -24,7 +24,7 @@ export default function Landing() {
 
                 <MagneticWrapper>
                     <motion.img
-                        className='ml-[18rem] mt-[5rem] w-[18%]'
+                        className='ml-[18rem] mt-[5rem] w-[18%] z-10'
                         src='/landing/ani-bull.webp'
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
