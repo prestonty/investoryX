@@ -60,7 +60,7 @@ export default function Navbar(props: NavbarProps) {
                             alt='article thumbnail'
                         />
                         <p className='text-dark text-center text-4xl font-semibold'>
-                            Investory
+                            InvestoryX
                         </p>
                     </div>
                 </Link>

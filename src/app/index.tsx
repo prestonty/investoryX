@@ -39,7 +39,7 @@ export default function Landing() {
                 </MagneticWrapper>
 
                 <div className='absolute text-white bottom-[5%] right-[7%] h-[50%]'>
-                    <h1 className='text-8xl mb-[40%]'>Investory</h1>
+                    <h1 className='text-8xl mb-[40%]'>InvestoryX</h1>
                     <div className='w-[80%] m-auto flex flex-col'>
                         <NavButton
                             route='/dashboard'

@@ -4,13 +4,13 @@
 export async function getStockHistory(
     ticker: string,
     period: string = "1mo",
-    interval: string = "1d"
+    interval: string = "1d",
 ) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/stock-history/${ticker}?period=${period}&interval=${interval}`,
         {
             cache: "no-store",
-        }
+        },
     );
 
     if (!res.ok) {
@@ -38,7 +38,7 @@ export async function getStockOverview(ticker: string) {
         `${process.env.NEXT_PUBLIC_URL}/stock-overview/${ticker}`,
         {
             cache: "no-store",
-        }
+        },
     );
 
     if (!res.ok) {
@@ -75,7 +75,7 @@ export interface UserResponse {
 
 // Register a new user
 export async function registerUser(
-    userData: RegisterData
+    userData: RegisterData,
 ): Promise<UserResponse> {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/auth/register`,
@@ -85,12 +85,70 @@ export async function registerUser(
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(userData),
-        }
+        },
     );
 
     if (!res.ok) {
         const error = await res.json();
         throw new Error(error.detail || "Registration failed");
+    }
+
+    const user = await res.json();
+
+    // Send verification email after successful registration
+    try {
+        await sendVerificationEmail(userData.email, userData.Name);
+    } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // Don't fail registration if email fails, just log it
+    }
+    return user;
+}
+
+// Send verification email
+export async function sendVerificationEmail(
+    email: string,
+    firstName: string,
+): Promise<void> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/send-sign-up-email`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email,
+                first_name: firstName,
+                verification_url: `${
+                    process.env.NEXT_PUBLIC_URL
+                }/verify-email?email=${encodeURIComponent(email)}`,
+            }),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to send verification email");
+    }
+}
+
+// Verify email with token
+export async function verifyEmail(token: string): Promise<{ message: string }> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/auth/verify-email`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Email verification failed");
     }
 
     return res.json();

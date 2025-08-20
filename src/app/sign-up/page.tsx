@@ -53,16 +53,18 @@ export default function Register() {
 
             const user = await registerUser(userData);
 
-            // Show success toast
+            // Show success toast with email verification info
             toast.success(
-                "Account created successfully! Redirecting to login...",
+                "Account created successfully! Please check your email to verify your account.",
             );
-            setSuccess("Registration successful! Redirecting to login...");
+            setSuccess(
+                "Registration successful! Please check your email to verify your account.",
+            );
 
             // Redirect to login page after successful registration
             setTimeout(() => {
                 router.push("/login");
-            }, 2000);
+            }, 3000); // Give user more time to read the message
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : "Registration failed";
@@ -278,7 +280,7 @@ export default function Register() {
                                 Already have an account?
                             </p>
                             <Link
-                                className='text-blue text-center hover:text-darkblue transition-colors duration-500'
+                                className='text-blue text-center font-normal hover:font-medium hover:text-darkblue transition-all duration-500'
                                 href='/login'
                             >
                                 Sign In

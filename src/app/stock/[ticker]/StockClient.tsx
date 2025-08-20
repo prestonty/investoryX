@@ -140,9 +140,19 @@ export default function StockClient({
                         <button className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-light hover:text-dark transition-all duration-500'>
                             Add to Watchlist
                         </button>
-                        <button className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-light hover:text-dark transition-all duration-500'>
-                            Sentimental Analysis
-                        </button>
+                        <div className='relative group w-fit h-fit'>
+                            <button
+                                disabled
+                                className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                            >
+                                Sentimental Analysis
+                            </button>
+
+                            {/* Tooltip */}
+                            <span className='absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-dark text-white text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+                                Coming soon
+                            </span>
+                        </div>
                     </div>
                 </div>
 

@@ -1,4 +1,0 @@
-i might need 2/3 layouts:
-
-1. without navbar (Landing page)
-2. with navbar (In navbar, have a boolean to show the search bar or not)

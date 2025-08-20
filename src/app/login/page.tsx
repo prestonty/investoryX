@@ -265,7 +265,7 @@ export default function Login() {
                                 Don't have an account?
                             </p>
                             <Link
-                                className='text-blue text-center hover:text-darkblue transition-colors duration-500'
+                                className='text-blue text-center font-normal hover:font-medium hover:text-darkblue transition-all duration-500'
                                 href='/sign-up'
                             >
                                 Sign Up
