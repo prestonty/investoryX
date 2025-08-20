@@ -109,9 +109,9 @@ export default function StockClient({
                 <Navbar search={true} />
             </div>
 
-            <div className='mx-[6%] grid gap-10 flex-1 px-4 sm:px-8 lg:px-16 pt-4 pb-10 max-[1400px]:grid-cols-1 min-[1400px]:[grid-template-columns:minmax(600px,3fr)_minmax(200px,2fr)]'>
+            <div className='mx-[6%] grid gap-10 flex-1 px-4 sm:px-8 lg:px-16 pt-4 pb-10 max-[1580px]:grid-cols-1 min-[1580px]:[grid-template-columns:minmax(600px,3fr)_minmax(200px,2fr)]'>
                 {/* Top left */}
-                <div className='bg-white rounded-[30px] shadow-dark-md min-[1400px]:col-start-1 min-[1400px]:col-end-2 min-[1400px]:row-start-1 min-[1400px]:row-end-4'>
+                <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-1 min-[1580px]:col-end-2 min-[1580px]:row-start-1 min-[1580px]:row-end-4'>
                     <div className='flex flex-col justify-center h-full py-4 px-8'>
                         <h1 className='text-3xl text-dark font-medium'>
                             {basicStockData.companyName} ({ticker})
@@ -135,7 +135,7 @@ export default function StockClient({
                 </div>
 
                 {/* Top right */}
-                <div className='bg-white rounded-[30px] shadow-dark-md min-[1400px]:col-start-2 min-[1400px]:col-end-3 min-[1400px]:row-start-1 min-[1400px]:row-end-3'>
+                <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-2 min-[1580px]:col-end-3 min-[1580px]:row-start-1 min-[1580px]:row-end-3'>
                     <div className='flex flex-col sm:flex-row justify-evenly items-center gap-y-4 h-full py-4 px-2 text-md md:text-xl xl:text-lg'>
                         <button className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-light hover:text-dark transition-all duration-500'>
                             Add to Watchlist
@@ -157,7 +157,7 @@ export default function StockClient({
                 </div>
 
                 {/* Bottom left */}
-                <div className='bg-white rounded-[30px] shadow-dark-md min-[1400px]:col-start-1 min-[1400px]:col-end-2 min-[1400px]:row-start-4 min-[1400px]:row-end-13 min-[1400px]:[min-width:750px]'>
+                <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-1 min-[1580px]:col-end-2 min-[1580px]:row-start-4 min-[1580px]:row-end-13 min-[1580px]:[min-width:750px]'>
                     <div className='flex flex-col h-full py-4 px-8'>
                         <h2 className='text-dark text-2xl'>Chart</h2>
                         <hr className='bg-dark rounded-full border-none h-0.5 px-4 my-2' />
@@ -201,7 +201,7 @@ export default function StockClient({
                 </div>
 
                 {/* Bottom right */}
-                <div className='bg-white rounded-[30px] shadow-dark-md min-[1400px]:col-start-2 min-[1400px]:col-end-3 min-[1400px]:row-start-3 min-[1400px]:row-end-13'>
+                <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-2 min-[1580px]:col-end-3 min-[1580px]:row-start-3 min-[1580px]:row-end-13'>
                     <div className='flex flex-col h-full py-4 px-8'>
                         <h2 className='text-dark text-2xl'>
                             Additional Information
