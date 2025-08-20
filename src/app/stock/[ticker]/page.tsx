@@ -1,4 +1,9 @@
-import { getStockPrice, getStockOverview, getStockHistory } from "@/lib/api";
+import {
+    getStockPrice,
+    getStockOverview,
+    getStockHistory,
+    getStockInfo,
+} from "@/lib/api";
 import { Suspense } from "react";
 import StockClient from "./StockClient";
 
@@ -8,6 +13,8 @@ export default async function Stock({
     params: Promise<{ ticker: string }>;
 }) {
     const { ticker } = await params;
+    const stockInfo = await getStockInfo(ticker);
+    const stock_id = stockInfo.stock_id;
     const basicStockData = await getStockPrice(ticker);
     const advancedStockData = await getStockOverview(ticker);
     const initialChartData = await getStockHistory(ticker);
@@ -17,6 +24,7 @@ export default async function Stock({
             <Suspense fallback={<p>Loading feed...</p>}>
                 <StockClient
                     ticker={ticker}
+                    stock_id={stock_id}
                     initialChartData={initialChartData}
                     basicStockData={basicStockData}
                     advancedStockData={advancedStockData}

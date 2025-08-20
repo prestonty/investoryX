@@ -10,7 +10,10 @@ import { PeriodOptions, IntervalOptions } from "@/types/history";
 import Navbar from "@/components/Navbar";
 import CandlestickChart from "@/components/tools/Chart";
 import Autocomplete from "@/components/Autocomplete";
-import Button from "@/components/Button";
+import toast, { Toaster } from "react-hot-toast";
+
+import { addToWatchlist, getStockHistory } from "@/lib/api";
+import { getTokenWithRefresh } from "@/lib/auth";
 
 type OHLC = {
     date: string;
@@ -58,11 +61,13 @@ interface AdvanceStockData {
 
 export default function StockClient({
     ticker,
+    stock_id,
     initialChartData,
     basicStockData,
     advancedStockData,
 }: {
     ticker: string;
+    stock_id: number;
     initialChartData: ChartProps;
     basicStockData: BasicStockData;
     advancedStockData: AdvanceStockData;
@@ -82,9 +87,7 @@ export default function StockClient({
         if (period === "1mo" && interval === "1d") return; // Already have initial data
         const fetchData = async () => {
             try {
-                const result = await axios(
-                    `${process.env.NEXT_PUBLIC_URL}/stock-history/${ticker}?period=${period}&interval=${interval}`,
-                );
+                const result = await getStockHistory(ticker, period, interval);
                 setChartData(result.data);
             } catch (error) {
                 console.error("Error fetching stock data: ", error);
@@ -98,16 +101,60 @@ export default function StockClient({
     const firstFourAdvanced = advancedEntries.slice(0, 4);
     const remainingAdvanced = advancedEntries.slice(4);
 
-    // useEffect(() => {
-    //     console.log(advancedStockData);
-    //     console.log(advancedStockData["Market Cap"]);
-    // }, [advancedStockData]);
+    const handleAddToWatchlist = async (stock_id: number) => {
+        try {
+            const token = await getTokenWithRefresh();
+            if (!token) {
+                alert("You must be logged in to add to watchlist.");
+                return;
+            }
+            await addToWatchlist(stock_id, token);
+            toast.success("Added to Watchlist");
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            toast.error(msg);
+        }
+    };
 
     return (
         <div className='bg-light font-[family-name:var(--font-geist-sans)] h-screen flex flex-col'>
             <div className='flex flex-col justify-evenly mb-4'>
                 <Navbar search={true} />
             </div>
+            {/* Toast */}
+            <Toaster
+                position='top-center'
+                reverseOrder={false}
+                gutter={8}
+                containerClassName=''
+                containerStyle={{}}
+                toastOptions={{
+                    // Define default options
+                    className: "",
+                    duration: 5000,
+                    removeDelay: 1000,
+                    style: {
+                        background: "#fff",
+                        color: "#181D2A",
+                    },
+
+                    // Default options for specific types
+                    success: {
+                        duration: 3000,
+                        iconTheme: {
+                            primary: "green",
+                            secondary: "white",
+                        },
+                    },
+                    error: {
+                        duration: 3000,
+                        iconTheme: {
+                            primary: "red",
+                            secondary: "white",
+                        },
+                    },
+                }}
+            />
 
             <div className='mx-[6%] grid gap-10 flex-1 px-4 sm:px-8 lg:px-16 pt-4 pb-10 max-[1580px]:grid-cols-1 min-[1580px]:[grid-template-columns:minmax(600px,3fr)_minmax(200px,2fr)]'>
                 {/* Top left */}
@@ -137,7 +184,10 @@ export default function StockClient({
                 {/* Top right */}
                 <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-2 min-[1580px]:col-end-3 min-[1580px]:row-start-1 min-[1580px]:row-end-3'>
                     <div className='flex flex-col sm:flex-row justify-evenly items-center gap-y-4 h-full py-4 px-2 text-md md:text-xl xl:text-lg'>
-                        <button className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-light hover:text-dark transition-all duration-500'>
+                        <button
+                            className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-light hover:text-dark transition-all duration-500'
+                            onClick={() => handleAddToWatchlist(stock_id)}
+                        >
                             Add to Watchlist
                         </button>
                         <div className='relative group w-fit h-fit'>

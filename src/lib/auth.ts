@@ -43,9 +43,23 @@ export function getToken(): string | null {
 }
 
 // Clear authentication data
-export function logout(): void {
+export async function logout(): Promise<void> {
     if (typeof window === "undefined") return;
+
+    try {
+        // Call backend logout endpoint to clear cookies
+        await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/logout`, {
+            method: "POST",
+            credentials: "include",
+        });
+    } catch (error) {
+        console.error("Failed to call logout endpoint:", error);
+    }
+
+    // Also clear frontend cookies as backup
     deleteCookie("access_token");
+    deleteCookie("refresh_token");
+
     // Redirect to login page
     window.location.href = "/login";
 }
@@ -78,4 +92,42 @@ export function requireAuth(): boolean {
 // Set authentication token (used after successful login)
 export function setAuthToken(token: string): void {
     setCookie("access_token", token, 7); // 7 days expiry
+}
+
+// Refresh access token using refresh token
+export async function refreshToken(): Promise<string | null> {
+    try {
+        const response = await fetch(
+            `${process.env.NEXT_PUBLIC_URL}/api/auth/refresh`,
+            {
+                method: "POST",
+                credentials: "include", // Include cookies
+            },
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.access_token;
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to refresh token:", error);
+        return null;
+    }
+}
+
+// Enhanced getToken function that attempts to refresh if needed
+export async function getTokenWithRefresh(): Promise<string | null> {
+    const token = getToken();
+    if (token) {
+        return token;
+    }
+
+    // Try to refresh the token
+    const newToken = await refreshToken();
+    if (newToken) {
+        return newToken;
+    }
+
+    return null;
 }

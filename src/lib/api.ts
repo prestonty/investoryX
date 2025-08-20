@@ -33,6 +33,22 @@ export async function getStockPrice(ticker: string) {
     return res.json();
 }
 
+// Fetch stock information from database by ticker (includes stock_id)
+export async function getStockInfo(ticker: string) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/stocks/ticker/${ticker}`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch stock info");
+    }
+
+    return res.json();
+}
+
 export async function getStockOverview(ticker: string) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/stock-overview/${ticker}`,
@@ -57,7 +73,7 @@ export interface RegisterData {
 }
 
 export interface LoginData {
-    username: string; // FastAPI OAuth2PasswordRequestForm expects 'username' field
+    username: string;
     password: string;
 }
 
@@ -188,4 +204,26 @@ export async function getCurrentUser(token: string): Promise<UserResponse> {
     }
 
     return res.json();
+}
+
+// Watchlist
+export async function addToWatchlist(
+    stockId: number,
+    token: string,
+): Promise<void> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ stock_id: stockId }),
+    });
+
+    const data = await res.json().catch(() => null); // read once
+    if (!res.ok) {
+        const msg = data?.detail ?? data?.message ?? `Failed: ${res.status}`;
+        throw new Error(msg); // <-- carries "Stock already in watchlist"
+    }
+    return data;
 }
