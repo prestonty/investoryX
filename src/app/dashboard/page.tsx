@@ -180,12 +180,12 @@ export default function Dashboard() {
                                 {etfData.length > 0 && (
                                     <div className='grid grid-cols-[3fr_1fr_1fr_1fr] gap-y-4 p-4 mt-4 border-2 border-dark'>
                                         <p className='text-dark'>ETF Name</p>
-                                        <p className='text-dark'>Price</p>
+                                        <p className='text-dark'>Price ($)</p>
                                         <p className='text-dark'>
-                                            Price Change
+                                            Price Change ($)
                                         </p>
                                         <p className='text-dark'>
-                                            Price Change %
+                                            Price Change
                                         </p>
                                     </div>
                                 )}
