@@ -262,7 +262,7 @@ export default function Login() {
                         </form>
                         <div className='flex justify-center items-center gap-2 text-xl mt-8'>
                             <p className='text-dark m-0'>
-                                Don't have an account?
+                                {"Don't forget to log in"}
                             </p>
                             <Link
                                 className='text-blue text-center font-normal hover:font-medium hover:text-darkblue transition-all duration-500'

@@ -3,11 +3,10 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
-import { dateConverter } from "@/lib/utils/helper";
 import Navbar from "@/components/Navbar";
 import { Article } from "@/types/article";
-import { Index } from "@/types/index";
 import { TopStock } from "@/types/topStock";
+import Image from "next/image";
 
 import { getCurrentUserData, type UserResponse } from "@/lib/auth";
 
@@ -121,8 +120,10 @@ export default function Dashboard() {
                                             rel='noopener noreferrer'
                                         >
                                             <div className='flex my-4'>
-                                                <img
+                                                <Image
                                                     src={article.image}
+                                                    width={200}
+                                                    height={200}
                                                     className='w-[20%]'
                                                     alt='article thumbnail'
                                                 />

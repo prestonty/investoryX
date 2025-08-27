@@ -1,9 +1,9 @@
-"use client";
+// "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
+// import { signIn, signOut, useSession } from "next-auth/react";
 
-export function GoogleLogin() {
-    const { data: session } = useSession();
+// export function GoogleLogin() {
+//     const { data: session } = useSession();
 
-    return <div></div>;
-}
+//     return <div></div>;
+// }
