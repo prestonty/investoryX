@@ -4,6 +4,8 @@ A modern, responsive financial analytics platform built with Next.js 15 and
 TypeScript, designed to provide comprehensive stock market insights and
 portfolio management capabilities.
 
+Here's the link to [InvestoryX Backend](https://github.com/prestonty/investoryX-backend)
+
 ## Architecture Overview
 
 This frontend application follows a **Backend for Frontend (BFF)** architecture
