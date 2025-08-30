@@ -136,9 +136,7 @@ export async function sendVerificationEmail(
             body: JSON.stringify({
                 email,
                 first_name: firstName,
-                verification_url: `${
-                    process.env.NEXT_PUBLIC_URL
-                }/verify-email?email=${encodeURIComponent(email)}`,
+                verification_url: `${process.env.NEXT_PUBLIC_URL}/verify-email`, // Backend will add the token
             }),
         },
     );
@@ -152,13 +150,11 @@ export async function sendVerificationEmail(
 // Verify email with token
 export async function verifyEmail(token: string): Promise<{ message: string }> {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/auth/verify-email`,
+        `${
+            process.env.NEXT_PUBLIC_URL
+        }/api/auth/verify-email?token=${encodeURIComponent(token)}`,
         {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ token }),
+            method: "GET",
         },
     );
 
@@ -184,6 +180,14 @@ export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
 
     if (!res.ok) {
         const error = await res.json();
+
+        // Check for specific email verification error
+        if (error.detail && error.detail.includes("Email not verified")) {
+            throw new Error(
+                "Email not verified. A new verification email has been sent to your inbox.",
+            );
+        }
+
         throw new Error(error.detail || "Login failed");
     }
 
