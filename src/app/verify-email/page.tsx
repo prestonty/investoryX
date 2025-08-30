@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import VerifyEmailClient from "./VerifyEmailClient";
 
+// Force dynamic rendering to prevent prerendering issues with useSearchParams
+export const dynamic = "force-dynamic";
+
 export default function VerifyEmail() {
     return (
         <Suspense
