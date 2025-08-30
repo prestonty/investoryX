@@ -94,6 +94,32 @@ export default function Login() {
 
     return (
         <>
+            <Toaster
+                position='top-center'
+                reverseOrder={false}
+                gutter={8}
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: "#363636",
+                        color: "#fff",
+                    },
+                    success: {
+                        duration: 3000,
+                        iconTheme: {
+                            primary: "green",
+                            secondary: "white",
+                        },
+                    },
+                    error: {
+                        duration: 4000,
+                        iconTheme: {
+                            primary: "red",
+                            secondary: "white",
+                        },
+                    },
+                }}
+            />
             <div className='relative bg-light h-screen flex items-center justify-center font-[family-name:var(--font-geist-sans)]'>
                 {/* Triangle Animations */}
                 <div className='absolute inset-0 overflow-hidden pointer-events-none'>
@@ -186,13 +212,6 @@ export default function Login() {
 
                     <hr className='h-[2px] mt-16 bg-livid' />
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className='w-full max-w-md mx-auto mt-4 p-3 text-red font-semibold rounded'>
-                            {error}
-                        </div>
-                    )}
-
                     {/* Login Form */}
                     <div className='flex flex-col items-center gap-x-4 mt-10'>
                         <form
@@ -262,7 +281,7 @@ export default function Login() {
                         </form>
                         <div className='flex justify-center items-center gap-2 text-xl mt-8'>
                             <p className='text-dark m-0'>
-                                {"Don't forget to log in"}
+                                {"Don't have an account?"}
                             </p>
                             <Link
                                 className='text-blue text-center font-normal hover:font-medium hover:text-darkblue transition-all duration-500'

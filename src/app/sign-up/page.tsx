@@ -65,8 +65,12 @@ export default function Register() {
                 router.push("/login");
             }, 3000); // Give user more time to read the message
         } catch (error) {
+            console.error("Registration error:", error);
+
             const errorMessage =
                 error instanceof Error ? error.message : "Registration failed";
+
+            console.log("Error message:", errorMessage);
 
             // Show specific error messages
             if (errorMessage.includes("Email already registered")) {
@@ -75,6 +79,12 @@ export default function Register() {
                 );
             } else if (errorMessage.includes("email")) {
                 toast.error("Please enter a valid email address.");
+            } else if (errorMessage.includes("name")) {
+                toast.error("Please enter a valid name.");
+            } else if (errorMessage.includes("password")) {
+                toast.error("Please enter a valid password.");
+            } else if (errorMessage.includes("required")) {
+                toast.error("All fields are required.");
             } else {
                 toast.error("Registration failed. Please try again.");
             }
@@ -172,18 +182,6 @@ export default function Register() {
 
                     <hr className='h-[2px] mt-16 bg-livid' />
 
-                    {/* Error/Success Messages */}
-                    {error && (
-                        <div className='w-full max-w-md mx-auto mt-4 p-3 text-red font-semibold text-center'>
-                            {error}
-                        </div>
-                    )}
-                    {success && (
-                        <div className='w-full max-w-md mx-auto mt-4 p-3 text-green font-semibold text-center'>
-                            {success}
-                        </div>
-                    )}
-
                     {/* Login Form */}
                     <div className='flex flex-col items-center gap-x-4 mt-10'>
                         <form
@@ -265,11 +263,20 @@ export default function Register() {
 
                             <input
                                 type='submit'
-                                disabled={loading}
+                                disabled={
+                                    loading ||
+                                    !name.trim() ||
+                                    !email.trim() ||
+                                    !password.trim()
+                                }
                                 className={`w-40 px-4 py-2 mt-8 rounded-[30px] text-lg transition-colors duration-500 ${
                                     loading
-                                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                                        : "bg-dark text-white hover:text-light hover:bg-blue cursor-pointer"
+                                        ? "bg-gray-400 text-gray-600 cursor-not-allowed border-2 border-gray-400"
+                                        : !name.trim() ||
+                                          !email.trim() ||
+                                          !password.trim()
+                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed border-2 border-gray-300"
+                                        : "bg-dark text-white hover:text-light hover:bg-blue cursor-pointer border-2 border-dark hover:border-blue"
                                 }`}
                                 value={loading ? "Creating..." : "Continue"}
                             />

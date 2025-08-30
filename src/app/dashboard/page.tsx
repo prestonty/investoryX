@@ -1,6 +1,5 @@
 "use client";
 
-import axios from "axios";
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import Navbar from "@/components/Navbar";
@@ -9,6 +8,13 @@ import { TopStock } from "@/types/topStock";
 import Image from "next/image";
 
 import { getCurrentUserData, type UserResponse } from "@/lib/auth";
+import {
+    getTopGainers,
+    getTopLosers,
+    getMostActive,
+    getStockNews,
+    getDefaultIndexes,
+} from "@/lib/api";
 
 export default function Dashboard() {
     const [news, setNews] = useState<Article[] | null>(null);
@@ -44,15 +50,16 @@ export default function Dashboard() {
             // Fetch data after user is loaded
             fetchNews();
             fetchEtfs();
+            fetchTopGainers();
+            fetchTopLosers();
+            fetchMostActive();
         }
     }, [isLoading]);
 
     const fetchNews = async () => {
         try {
-            const result = await axios(
-                `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${MAX_ARTICLES}`,
-            );
-            setNews(result.data);
+            const result = await getStockNews(MAX_ARTICLES);
+            setNews(result);
         } catch (error) {
             console.error("Error fetching news: ", error);
             setNews([] as Article[]); // set to null article
@@ -61,40 +68,42 @@ export default function Dashboard() {
 
     const fetchEtfs = async () => {
         try {
-            const result = await axios(
-                `${process.env.NEXT_PUBLIC_URL}/get-default-indexes`,
-            );
-            setEtfData(result.data);
+            const result = await getDefaultIndexes();
+            setEtfData(result);
         } catch (error) {
             console.error("Error fetching indices: ", error);
         }
     };
 
-    // const fetchTopGainersLosers = async () => {
-    //     try {
-    //         //
-    //         const result = await axios(
-    //             `${process.env.NEXT_PUBLIC_URL}/getTopGainersLosers`
-    //         );
-    //         setGainers(result.data.top_gainers);
-    //         setLosers(result.data.top_losers);
-    //         setMostTraded(result.data.most_actively_traded);
-    //     } catch (error) {
-    //         console.error("Error fetching top gainers and losers: ", error);
-    //     }
-    // };
+    const fetchTopGainers = async () => {
+        try {
+            const result = await getTopGainers(5);
+            setGainers(result);
+        } catch (error) {
+            console.error("Error fetching top gainers: ", error);
+            setGainers([]);
+        }
+    };
 
-    // fetchIndices();
-    // fetchTopGainersLosers();
-    // fetchCompanyData();
+    const fetchTopLosers = async () => {
+        try {
+            const result = await getTopLosers(5);
+            setLosers(result);
+        } catch (error) {
+            console.error("Error fetching top losers: ", error);
+            setLosers([]);
+        }
+    };
 
-    // if (isLoading) {
-    //     return (
-    //         <div className="bg-light min-h-screen flex items-center justify-center">
-    //             <FourSquare color="#181D2A" size="large" text="" textColor="" />
-    //         </div>
-    //     );
-    // }
+    const fetchMostActive = async () => {
+        try {
+            const result = await getMostActive(5);
+            setMostTraded(result);
+        } catch (error) {
+            console.error("Error fetching most active stocks: ", error);
+            setMostTraded([]);
+        }
+    };
 
     return (
         <div className='bg-light font-[family-name:var(--font-geist-sans)]'>
@@ -288,22 +297,26 @@ export default function Dashboard() {
                                                 <p className='text-dark text-xl'>
                                                     {gainer.ticker}
                                                 </p>
-                                                {/* <p className="text-dark text-xl">{"$" + gainer.price}</p> */}
+                                                <p className='text-dark text-lg'>
+                                                    {"$" + gainer.price}
+                                                </p>
                                             </div>
                                             <div className='flex flex-col'>
                                                 <p className='text-green text-xl'>
                                                     {"+" +
-                                                        gainer.change_percentage}
+                                                        gainer.changePercent +
+                                                        "%"}
                                                 </p>
-                                                {/* <p className="text-green text-xl">{"+" + gainer.change_amount}</p> */}
+                                                <p className='text-green text-lg'>
+                                                    {"+" + gainer.change}
+                                                </p>
                                             </div>
                                         </div>
                                     ))
                                 ) : gainers != null && gainers.length === 0 ? (
                                     <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <p className='text-dark'>
-                                            No gainers available - ran out of
-                                            API credits
+                                            No gainers available
                                         </p>
                                     </div>
                                 ) : (
@@ -334,21 +347,24 @@ export default function Dashboard() {
                                                 <p className='text-dark text-xl'>
                                                     {loser.ticker}
                                                 </p>
-                                                {/* <p className="text-dark text-xl">{"$" + loser.price}</p> */}
+                                                <p className='text-dark text-lg'>
+                                                    {"$" + loser.price}
+                                                </p>
                                             </div>
                                             <div className='flex flex-col'>
                                                 <p className='text-red text-xl'>
-                                                    {loser.change_percentage}
+                                                    {loser.changePercent + "%"}
                                                 </p>
-                                                {/* <p className="text-red text-xl">{loser.change_amount}</p> */}
+                                                <p className='text-red text-lg'>
+                                                    {loser.change}
+                                                </p>
                                             </div>
                                         </div>
                                     ))
                                 ) : losers != null && losers.length === 0 ? (
                                     <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <p className='text-dark'>
-                                            No losers available - ran out of API
-                                            credits
+                                            No losers available
                                         </p>
                                     </div>
                                 ) : (
@@ -386,16 +402,16 @@ export default function Dashboard() {
                                                 <p
                                                     className={
                                                         "text-dark text-xl " +
-                                                        (traded.change_amount >=
-                                                        0
+                                                        (traded.change >= 0
                                                             ? "text-green"
                                                             : "text-red")
                                                     }
                                                 >
-                                                    {(traded.change_amount > 0
+                                                    {(traded.change > 0
                                                         ? "+"
                                                         : "") +
-                                                        traded.change_percentage}
+                                                        traded.changePercent +
+                                                        "%"}
                                                 </p>
                                             </div>
                                         </div>
@@ -404,8 +420,7 @@ export default function Dashboard() {
                                   mostTraded.length === 0 ? (
                                     <div className='flex h-[80%] justify-center align-center content-center items-center'>
                                         <p className='text-dark'>
-                                            No data available - ran out of API
-                                            credits
+                                            No data available
                                         </p>
                                     </div>
                                 ) : (

@@ -49,6 +49,88 @@ export async function getStockInfo(ticker: string) {
     return res.json();
 }
 
+// MARKET MOVERS API FUNCTIONS
+
+// Fetch top gainers (stocks with highest percentage gains)
+export async function getTopGainers(limit: number = 5) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch top gainers");
+    }
+
+    return res.json();
+}
+
+// Fetch top losers (stocks with highest percentage losses)
+export async function getTopLosers(limit: number = 5) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch top losers");
+    }
+
+    return res.json();
+}
+
+// Fetch most actively traded stocks (highest volume)
+export async function getMostActive(limit: number = 5) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch most active stocks");
+    }
+
+    return res.json();
+}
+
+// Fetch stock news
+export async function getStockNews(maxArticles: number = 20) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${maxArticles}`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch stock news");
+    }
+
+    return res.json();
+}
+
+// Fetch default market indexes/ETFs
+export async function getDefaultIndexes() {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/get-default-indexes`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch default indexes");
+    }
+
+    return res.json();
+}
+
 export async function getStockOverview(ticker: string) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/stock-overview/${ticker}`,
