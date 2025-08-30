@@ -1,13 +1,12 @@
 "use client";
 // Show both sign in and login using if statements
 import GoogleButton from "react-google-button";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "@/styles/animations.css";
 
 // import { google } from "@/lib/googleClient";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { registerUser, type RegisterData } from "@/lib/api";
 import toast, { Toaster } from "react-hot-toast";
 
