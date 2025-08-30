@@ -188,7 +188,7 @@ export default function Login() {
 
                     {/* Error Message */}
                     {error && (
-                        <div className='w-full max-w-md mx-auto mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
+                        <div className='w-full max-w-md mx-auto mt-4 p-3 text-red font-semibold rounded'>
                             {error}
                         </div>
                     )}

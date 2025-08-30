@@ -174,12 +174,12 @@ export default function Register() {
 
                     {/* Error/Success Messages */}
                     {error && (
-                        <div className='w-full max-w-md mx-auto mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
+                        <div className='w-full max-w-md mx-auto mt-4 p-3 text-red font-semibold text-center'>
                             {error}
                         </div>
                     )}
                     {success && (
-                        <div className='w-full max-w-md mx-auto mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded'>
+                        <div className='w-full max-w-md mx-auto mt-4 p-3 text-green font-semibold text-center'>
                             {success}
                         </div>
                     )}

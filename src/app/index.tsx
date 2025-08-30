@@ -13,18 +13,18 @@ export default function Landing() {
                 <div className='absolute inset-0 overflow-hidden'>
                     {/* Black Triangle */}
                     <div
-                        className='black-in absolute bottom-0 left-[12%] h-[200vmax]
+                        className='z-1 black-in absolute bottom-0 left-[12%] h-[200vmax]
                     w-[200vmax] origin-bottom-left rotate-[30deg]
                     bg-dark md:rotate-[60deg] black-triangle'
                     ></div>
 
                     {/* Blue Triangle */}
-                    <div className='blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-[#748EFE] md:block'></div>
+                    <div className='z-2 blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-[#748EFE] md:block'></div>
                 </div>
 
                 <MagneticWrapper>
                     <motion.img
-                        className='ml-[18rem] mt-[5rem] w-[18%] z-10'
+                        className='ml-[18rem] mt-[5rem] w-[18%] z-20'
                         src='/landing/ani-bull.webp'
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
