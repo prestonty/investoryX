@@ -282,7 +282,7 @@ export default function Dashboard() {
                         <p className='text-dark text-2xl'>Trending</p>
                         <hr className='h-[4px] border-none bg-blue text-blue mt-1 rounded-[4px]' />
                         <div className='flex flex-col h-full mt-[8%]'>
-                            <div className='flex flex-col justify-evenly h-[12%]'>
+                            <div className='flex flex-col justify-evenly'>
                                 <p className='text-dark text-lg mb-2 underline'>
                                     Top Gainers
                                 </p>
