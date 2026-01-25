@@ -52,7 +52,7 @@ export default function Navbar(props: NavbarProps) {
 
     return (
         <div
-            className={`flex items-center px-[3%] min-h-[2rem] py-2 relative ${
+            className={`flex items-center px-[3%] min-h-[2rem] py-2 relative isolate ${
                 search ? "" : "justify-between"
             }`}
         >
@@ -155,7 +155,10 @@ export default function Navbar(props: NavbarProps) {
 
             <div className='flex items-center gap-x-4 w-fit ml-auto'>
                 {search && (
-                    <Searchbar options={stockList} onChange={setSearchStock} />
+                    <Searchbar
+                        options={stockList}
+                        onChange={setSearchStock}
+                    />
                 )}
 
                 {/* Mobile Drawer Button - Visible on md and below */}

@@ -19,10 +19,10 @@ interface SearchbarProps {
 // TODO recreate this component using a better component not a select!!!
 
 export default function Searchbar({
-  placeholder = "Search",
-  options,
-  onChange,
-  onSelect,
+    placeholder = "Search",
+    options,
+    onChange,
+    onSelect,
 }: SearchbarProps) {
     const router = useRouter();
 
@@ -105,7 +105,7 @@ export default function Searchbar({
 
     return (
         <div
-            className={`min-w-24 flex justify-center items-center fit relative z-10 bg-white border-2 ${borderColor} rounded-full ml-6 px-4 py-2 transition-colors duration-500 outline-none`}
+            className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full ml-6 px-4 py-2 transition-colors duration-500 outline-none`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -137,7 +137,7 @@ export default function Searchbar({
             <AnimatePresence>
                 {isFocused && (
                     <motion.ul
-                        className='absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll max-h-60 z-[400] shadow-lg border border-light'
+                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-20 max-h-60 shadow-lg border border-light`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
