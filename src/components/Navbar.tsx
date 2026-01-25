@@ -106,11 +106,15 @@ export default function Navbar(props: NavbarProps) {
                         transition={{ duration: 0.2 }}
                         className='lg:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50'
                     >
-                        <div className='px-[3%] py-4 space-y-4'>
-                            {navigationItems.map((item) => (
+                        <div className='px-[3%] py-3'>
+                            {navigationItems.map((item, index) => (
                                 <div
                                     key={item.href}
-                                    className='border-b border-gray-100 pb-2 last:border-b-0'
+                                    className={`py-2 ${
+                                        index < navigationItems.length - 1
+                                            ? "border-b border-gray-100"
+                                            : ""
+                                    }`}
                                 >
                                     <Link
                                         className='block text-dark text-lg font-medium hover:text-blue transition-colors duration-300'
@@ -123,7 +127,7 @@ export default function Navbar(props: NavbarProps) {
                             ))}
 
                             {/* Logout/Login in mobile drawer */}
-                            <div className='border-t border-gray-200 pt-4 mt-4'>
+                            <div className='border-t border-gray-200 pt-3'>
                                 {isLoggedIn ? (
                                     <button
                                         onClick={() => {

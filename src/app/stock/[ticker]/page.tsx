@@ -16,19 +16,20 @@ export default async function Stock({
 }) {
     try {
         const { ticker } = await params;
+        const normalizedTicker = ticker.toUpperCase();
 
         const [stockInfo, basicStockData, advancedStockData, initialChartData] =
             await Promise.all([
-                getStockInfo(ticker),
-                getStockPrice(ticker),
-                getStockOverview(ticker),
-                getStockHistory(ticker),
+                getStockInfo(normalizedTicker),
+                getStockPrice(normalizedTicker),
+                getStockOverview(normalizedTicker),
+                getStockHistory(normalizedTicker),
             ]);
 
         return (
             <section>
                 <StockClient
-                    ticker={ticker}
+                    ticker={normalizedTicker}
                     stock_id={stockInfo.stock_id}
                     initialChartData={initialChartData}
                     basicStockData={basicStockData}

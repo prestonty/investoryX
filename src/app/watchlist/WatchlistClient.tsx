@@ -110,6 +110,7 @@ export default function WatchlistClient({
                 }}
             />
             <Searchbar
+                placeholder="Add to Watchlist"
                 options={[]}
                 onChange={() => {}}
                 onSelect={handleAddFromSearch}

@@ -1,6 +1,8 @@
 "use client";
 
 import type { WatchlistQuoteItem } from "@/lib/api";
+import Link from "next/link";
+import { FaTrash } from "react-icons/fa";
 
 function formatPrice(value: number | null) {
     if (value === null || Number.isNaN(value)) {
@@ -41,28 +43,38 @@ export default function StockWatchItem({
     const changePillClass = isPositive
         ? "bg-lightgreen text-light"
         : "bg-red text-white";
+    const stockHref = `/stock/${item.ticker.toLowerCase()}`;
 
     return (
         <div className="flex flex-col text-dark gap-y-2">
             <div className="flex justify-between items-center">
-                <p className="font-semibold text-lg">{item.ticker}</p>
+                <Link
+                    href={stockHref}
+                    className="font-semibold text-lg hover:text-blue transition-colors"
+                >
+                    {item.ticker}
+                </Link>
                 <div className="flex items-center gap-x-3">
-                    <p>{formatPrice(item.stockPrice)}</p>
+                    <p className="font-bold">{formatPrice(item.stockPrice)}</p>
                     <button
                         type="button"
                         onClick={() => onRemove(item.watchlist_id)}
                         disabled={isRemoving}
-                        className="text-sm px-3 py-1 rounded-full border border-dark text-dark hover:bg-dark hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label={`Remove ${item.ticker} from watchlist`}
+                        className="p-2 rounded-full border border-dark text-dark hover:bg-dark hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Remove
+                        <FaTrash className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
             <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500">
-                    Watchlist item #{item.watchlist_id}
-                </p>
+                <Link
+                    href={stockHref}
+                    className="text-sm text-gray-500 hover:text-blue transition-colors"
+                >
+                    {item.company_name}
+                </Link>
                 <div
                     className={`${changePillClass} rounded-[16px] py-2 px-4 min-w-[7.5rem] text-center`}
                 >

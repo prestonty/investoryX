@@ -10,6 +10,7 @@ import defaultOptions from "@/lib/defaults/search_stock_defaults.json";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface SearchbarProps {
+    placeholder?: string;
     options: { value: string; label: string }[];
     onChange: (selectedOption: { value: string; label: string } | null) => void;
     onSelect?: (item: { value: string; label: string }) => void;
@@ -17,9 +18,13 @@ interface SearchbarProps {
 
 // TODO recreate this component using a better component not a select!!!
 
-export default function Searchbar(props: SearchbarProps) {
+export default function Searchbar({
+  placeholder = "Search",
+  options,
+  onChange,
+  onSelect,
+}: SearchbarProps) {
     const router = useRouter();
-    const { options, onChange, onSelect } = props;
 
     const [filterString, setFilterString] = useState<string>("");
     const [results, setResults] = useState<Item[]>([]);
@@ -122,7 +127,7 @@ export default function Searchbar(props: SearchbarProps) {
                     type='text'
                     value={filterString}
                     onChange={(e) => setFilterString(e.target.value)}
-                    placeholder='Search'
+                    placeholder={placeholder}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className='text-lg w-full text-dark border-none focus:outline-none focus:ring-0'

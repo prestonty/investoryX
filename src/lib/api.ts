@@ -183,6 +183,7 @@ export interface WatchlistQuoteItem {
     stock_id: number;
     user_id: number;
     ticker: string;
+    company_name: string;
     stockPrice: number | null;
     priceChange: number | null;
     priceChangePercent: number | null;
