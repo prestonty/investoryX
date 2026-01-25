@@ -35,14 +35,21 @@ export async function getStockPrice(ticker: string) {
 
 // Fetch stock information from database by ticker (includes stock_id)
 export async function getStockInfo(ticker: string) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/stocks/ticker/${ticker}`,
-        {
-            cache: "no-store",
-        },
-    );
+    const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/ticker/${ticker}`;
+    const res = await fetch(url, {
+        cache: "no-store",
+    });
+
 
     if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        const details = {
+            url,
+            status: res.status,
+            statusText: res.statusText,
+            body,
+        };
+        console.error("getStockInfo failed:", JSON.stringify(details));
         throw new Error("Failed to fetch stock info");
     }
 
@@ -165,8 +172,8 @@ export interface AuthResponse {
 }
 
 export interface UserResponse {
-    UserId: number;
-    Name: string;
+    user_id: number;
+    name: string;
     email: string;
     is_active: boolean;
 }

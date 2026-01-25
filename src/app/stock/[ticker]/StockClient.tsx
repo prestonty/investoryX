@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
 import { FourSquare } from "react-loading-indicators";
-import axios from "axios";
 import { dateConverter } from "@/lib/utils/helper";
 import type { PeriodType, IntervalType } from "@/types/history";
 import { PeriodOptions, IntervalOptions } from "@/types/history";
@@ -68,19 +66,25 @@ export default function StockClient({
 }: {
     ticker: string;
     stock_id: number;
-    initialChartData: ChartProps;
+    initialChartData: ChartProps | null;
     basicStockData: BasicStockData;
     advancedStockData: AdvanceStockData;
 }) {
-    const [chartData, setChartData] = useState<ChartProps>(initialChartData);
+    const [chartData, setChartData] =
+        useState<ChartProps | null>(initialChartData);
     const [period, setPeriod] = useState<PeriodType>("1mo");
     const [interval, setInterval] = useState<IntervalType>("1d");
+    const [isMounted, setIsMounted] = useState(false);
 
     const priceDirection = basicStockData.priceChange.includes("-")
         ? false
         : true;
     const priceChangeColor = priceDirection ? "text-green" : "text-red";
     const directionSymbol = priceDirection ? "+" : "";
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         // Only fetch if period/interval changes from initial values
@@ -288,11 +292,13 @@ export default function StockClient({
                                         {key === "Ex-Dividend Date" ||
                                         key === "Earnings Date" ? (
                                             <p className='text-md text-dark'>
-                                                {dateConverter(
-                                                    advancedStockData[
-                                                        key as keyof AdvanceStockData
-                                                    ],
-                                                ) ?? "N/A"}
+                                                {isMounted
+                                                    ? dateConverter(
+                                                          advancedStockData[
+                                                              key as keyof AdvanceStockData
+                                                          ],
+                                                      )
+                                                    : "N/A"}
                                             </p>
                                         ) : (
                                             <p className='text-md text-dark'>
