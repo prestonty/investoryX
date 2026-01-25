@@ -178,6 +178,17 @@ export interface UserResponse {
     is_active: boolean;
 }
 
+export interface WatchlistQuoteItem {
+    watchlist_id: number;
+    stock_id: number;
+    user_id: number;
+    ticker: string;
+    stockPrice: number | null;
+    priceChange: number | null;
+    priceChangePercent: number | null;
+    error: string | null;
+}
+
 // Register a new user
 export async function registerUser(
     userData: RegisterData,
@@ -288,4 +299,59 @@ export async function addToWatchlist(
         throw new Error(msg); // <-- carries "Stock already in watchlist"
     }
     return data;
+}
+
+export async function getWatchlistQuotes(
+    token: string,
+): Promise<WatchlistQuoteItem[]> {
+    const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/watchlist/quotes`;
+    const res = await fetch(
+        url,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        const message = body || "Failed to fetch watchlist quotes";
+        console.error(
+            "getWatchlistQuotes failed:",
+            JSON.stringify({
+                url,
+                status: res.status,
+                statusText: res.statusText,
+                body,
+            }),
+        );
+        const error = new Error(message) as Error & { status?: number };
+        error.status = res.status;
+        throw error;
+    }
+
+    return res.json();
+}
+
+export async function removeFromWatchlist(
+    watchlistId: number,
+    token: string,
+): Promise<void> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/watchlist/${watchlistId}`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    );
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        const msg = data?.detail ?? data?.message ?? "Failed to remove item";
+        throw new Error(msg);
+    }
 }

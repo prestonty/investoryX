@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import axios from "axios";
 import { Item } from "@/types/item";
 
@@ -9,17 +8,18 @@ import { ClipLoader } from "react-spinners";
 import { FaSearch } from "react-icons/fa";
 import defaultOptions from "@/lib/defaults/search_stock_defaults.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { css } from "@emotion/react";
 
 interface SearchbarProps {
     options: { value: string; label: string }[];
     onChange: (selectedOption: { value: string; label: string } | null) => void;
+    onSelect?: (item: { value: string; label: string }) => void;
 }
 
 // TODO recreate this component using a better component not a select!!!
 
 export default function Searchbar(props: SearchbarProps) {
     const router = useRouter();
+    const { options, onChange, onSelect } = props;
 
     const [filterString, setFilterString] = useState<string>("");
     const [results, setResults] = useState<Item[]>([]);
@@ -40,7 +40,12 @@ export default function Searchbar(props: SearchbarProps) {
         ? "text-lightblue"
         : "text-dark";
 
-    const optionsToShow = results.length > 0 ? results : defaultOptions;
+    const optionsToShow =
+        results.length > 0
+            ? results
+            : options.length > 0
+            ? options
+            : defaultOptions;
 
     useEffect(() => {
         // Make API call every 0.3 sceonds after input is changed
@@ -84,6 +89,15 @@ export default function Searchbar(props: SearchbarProps) {
         router.push(`/stock/${ticker}`);
     };
 
+    const handleSelect = (item: { value: string; label: string }) => {
+        onChange(item);
+        if (onSelect) {
+            onSelect(item);
+            return;
+        }
+        navigateToStock(item.value);
+    };
+
     return (
         <div
             className={`min-w-24 flex justify-center items-center fit relative z-10 bg-white border-2 ${borderColor} rounded-full ml-6 px-4 py-2 transition-colors duration-500 outline-none`}
@@ -108,7 +122,7 @@ export default function Searchbar(props: SearchbarProps) {
                     type='text'
                     value={filterString}
                     onChange={(e) => setFilterString(e.target.value)}
-                    placeholder='Search items...'
+                    placeholder='Search'
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className='text-lg w-full text-dark border-none focus:outline-none focus:ring-0'
@@ -139,7 +153,7 @@ export default function Searchbar(props: SearchbarProps) {
                                 <button
                                     className='text-left hover:bg-light w-full px-4 py-1'
                                     onClick={() => {
-                                        navigateToStock(item.value);
+                                        handleSelect(item);
                                     }}
                                 >
                                     {item.label}
