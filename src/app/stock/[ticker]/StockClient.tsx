@@ -189,7 +189,7 @@ export default function StockClient({
                 <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-2 min-[1580px]:col-end-3 min-[1580px]:row-start-1 min-[1580px]:row-end-3'>
                     <div className='flex flex-col sm:flex-row justify-evenly items-center gap-y-4 h-full py-4 px-2 text-md md:text-xl xl:text-lg'>
                         <button
-                            className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-light hover:text-dark transition-all duration-500'
+                            className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-blue transition-all duration-500'
                             onClick={() => handleAddToWatchlist(stock_id)}
                         >
                             Add to Watchlist

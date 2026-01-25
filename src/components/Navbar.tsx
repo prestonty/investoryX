@@ -134,7 +134,7 @@ export default function Navbar(props: NavbarProps) {
                                             handleLogout();
                                             setIsDrawerOpen(false);
                                         }}
-                                        className='block w-full text-left text-dark text-lg font-medium hover:text-blue transition-colors duration-300'
+                                        className='block w-full text-left text-dark text-lg font-medium hover:text-blue transition-colors duration-200'
                                     >
                                         Log Out
                                     </button>
