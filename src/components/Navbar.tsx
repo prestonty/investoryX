@@ -48,6 +48,7 @@ export default function Navbar(props: NavbarProps) {
         { label: "News", href: "/latest-news" },
         { label: "Dashboard", href: "/dashboard" },
         { label: "Watchlist", href: "/watchlist" },
+        { label: "Simulator", href: "/simulator" },
     ];
 
     return (
@@ -80,7 +81,7 @@ export default function Navbar(props: NavbarProps) {
 
             {/* Desktop Navigation - Hidden on md and below */}
             <div
-                className={`hidden lg:flex justify-center gap-x-10 ${
+                className={`hidden xl:flex justify-center gap-x-10 ${
                     search ? "" : "absolute left-1/2 transform -translate-x-1/2"
                 }`}
             >
@@ -104,7 +105,7 @@ export default function Navbar(props: NavbarProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        className='lg:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50'
+                        className='xl:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50'
                     >
                         <div className='px-[3%] py-3'>
                             {navigationItems.map((item, index) => (
@@ -162,7 +163,7 @@ export default function Navbar(props: NavbarProps) {
                 )}
 
                 {/* Mobile Drawer Button - Visible on md and below */}
-                <div className='lg:hidden'>
+                <div className='xl:hidden'>
                     <button
                         onClick={toggleDrawer}
                         className='p-2 text-dark hover:text-blue transition-colors duration-300'
@@ -195,7 +196,7 @@ export default function Navbar(props: NavbarProps) {
                 </div>
 
                 {/* Desktop Logout/Login - Hidden on md and below */}
-                <div className='hidden lg:block flex-none'>
+                <div className='hidden xl:block flex-none'>
                     {isLoggedIn ? (
                         <UnderlineWrapper>
                             <button
