@@ -190,6 +190,84 @@ export interface WatchlistQuoteItem {
     error: string | null;
 }
 
+export interface SimulatorResponse {
+    simulator_id: number;
+    user_id: number | null;
+    name: string;
+    starting_cash: number;
+    cash_balance: number;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface SimulatorTrackedStockResponse {
+    tracked_id: number;
+    simulator_id: number;
+    ticker: string;
+    target_allocation: number;
+    enabled: boolean;
+}
+
+export interface SimulatorPositionResponse {
+    position_id: number;
+    simulator_id: number;
+    ticker: string;
+    shares: number;
+    avg_cost: number;
+}
+
+export interface SimulatorTradeResponse {
+    trade_id: number;
+    simulator_id: number;
+    ticker: string;
+    side: string;
+    price: number;
+    shares: number;
+    fee: number;
+    executed_at?: string;
+}
+
+export interface SimulatorCashLedgerResponse {
+    ledger_id: number;
+    simulator_id: number;
+    delta: number;
+    reason: string;
+    balance_after: number;
+    created_at?: string;
+}
+
+export interface SimulatorSummaryResponse {
+    simulator: SimulatorResponse;
+    tracked_stocks: SimulatorTrackedStockResponse[];
+    positions: SimulatorPositionResponse[];
+    trades: SimulatorTradeResponse[];
+    cash_ledger: SimulatorCashLedgerResponse[];
+}
+
+export interface SimulatorRunResponse {
+    message: string;
+    trades_executed: number;
+    cash_balance: number;
+    price_mode: string;
+    frequency: string;
+}
+
+export interface CreateSimulatorRequest {
+    name: string;
+    starting_cash: number;
+}
+
+export interface CreateTrackedStockRequest {
+    ticker: string;
+    target_allocation: number;
+    enabled?: boolean;
+}
+
+export interface SimulatorRunRequest {
+    price_mode?: "open" | "close";
+    frequency?: "daily" | "twice_daily";
+}
+
 // Register a new user
 export async function registerUser(
     userData: RegisterData,
@@ -355,4 +433,177 @@ export async function removeFromWatchlist(
         const msg = data?.detail ?? data?.message ?? "Failed to remove item";
         throw new Error(msg);
     }
+}
+
+// Simulator
+export async function createSimulator(
+    payload: CreateSimulatorRequest,
+    token: string,
+): Promise<SimulatorResponse> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to create simulator");
+    }
+
+    return res.json();
+}
+
+export async function listSimulators(
+    token: string,
+): Promise<SimulatorResponse[]> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to load simulators");
+    }
+
+    return res.json();
+}
+
+export async function addTrackedStock(
+    simulatorId: number,
+    payload: CreateTrackedStockRequest,
+    token: string,
+): Promise<SimulatorTrackedStockResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to add tracked stock");
+    }
+
+    return res.json();
+}
+
+export async function deleteTrackedStock(
+    simulatorId: number,
+    trackedId: number,
+    token: string,
+): Promise<void> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks/${trackedId}`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to remove tracked stock");
+    }
+}
+
+export async function deleteTrackedStockByTicker(
+    simulatorId: number,
+    ticker: string,
+    token: string,
+): Promise<void> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks/by-ticker/${ticker}`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to remove tracked stock");
+    }
+}
+
+export async function deleteSimulator(
+    simulatorId: number,
+    token: string,
+): Promise<void> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to delete simulator");
+    }
+}
+
+export async function getSimulatorSummary(
+    simulatorId: number,
+    token: string,
+): Promise<SimulatorSummaryResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to load simulator summary");
+    }
+
+    return res.json();
+}
+
+export async function runSimulator(
+    simulatorId: number,
+    payload: SimulatorRunRequest,
+    token: string,
+): Promise<SimulatorRunResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/run`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to run simulator");
+    }
+
+    return res.json();
 }
