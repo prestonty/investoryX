@@ -75,6 +75,7 @@ export default function StockClient({
     const [period, setPeriod] = useState<PeriodType>("1mo");
     const [interval, setInterval] = useState<IntervalType>("1d");
     const [isMounted, setIsMounted] = useState(false);
+    const [isChartLoading, setIsChartLoading] = useState(false);
 
     const priceDirection = basicStockData.priceChange.includes("-")
         ? false
@@ -91,10 +92,33 @@ export default function StockClient({
         if (period === "1mo" && interval === "1d") return; // Already have initial data
         const fetchData = async () => {
             try {
+                setIsChartLoading(true);
                 const result = await getStockHistory(ticker, period, interval);
-                setChartData(result.data);
+                if (result && Array.isArray(result.data)) {
+                    if (result.data.length === 0) {
+                        toast.error(
+                            "No chart data available for this period/interval.",
+                        );
+                    }
+                    setChartData(result);
+                } else {
+                    setChartData({
+                        data: [],
+                        title: "Stock Price",
+                    });
+                    toast.error(
+                        "No chart data available for this period/interval.",
+                    );
+                }
             } catch (error) {
+                const message =
+                    error instanceof Error
+                        ? error.message
+                        : "Chart data not available for this period/interval.";
+                toast.error(message);
                 console.error("Error fetching stock data: ", error);
+            } finally {
+                setIsChartLoading(false);
             }
         };
         fetchData();
@@ -104,6 +128,10 @@ export default function StockClient({
     const advancedEntries = Object.entries(advancedStockData || {});
     const firstFourAdvanced = advancedEntries.slice(0, 4);
     const remainingAdvanced = advancedEntries.slice(4);
+    const selectedPeriodOption =
+        PeriodOptions.find((option) => option.value === period) ?? null;
+    const selectedIntervalOption =
+        IntervalOptions.find((option) => option.value === interval) ?? null;
 
     const handleAddToWatchlist = async (stock_id: number) => {
         try {
@@ -130,7 +158,7 @@ export default function StockClient({
                 position='top-center'
                 reverseOrder={false}
                 gutter={8}
-                containerClassName=''
+                containerClassName='flex justify-center'
                 containerStyle={{}}
                 toastOptions={{
                     // Define default options
@@ -222,20 +250,24 @@ export default function StockClient({
                             </p>
                             <Autocomplete
                                 options={PeriodOptions}
-                                onChange={(selectedOption) =>
-                                    setPeriod(selectedOption?.value)
-                                }
+                                value={selectedPeriodOption}
+                                onChange={(selectedOption) => {
+                                    if (!selectedOption?.value) return;
+                                    setPeriod(selectedOption.value);
+                                }}
                             />
                             <Autocomplete
                                 options={IntervalOptions}
-                                onChange={(selectedOption) =>
-                                    setInterval(selectedOption?.value)
-                                }
+                                value={selectedIntervalOption}
+                                onChange={(selectedOption) => {
+                                    if (!selectedOption?.value) return;
+                                    setInterval(selectedOption.value);
+                                }}
                             />
                         </div>
 
                         <div className='mt-4'>
-                            {chartData === null ? (
+                            {isChartLoading ? (
                                 <div className='flex justify-center items-center h-[20rem]'>
                                     <FourSquare
                                         color='#181D2A'
@@ -244,11 +276,15 @@ export default function StockClient({
                                         textColor=''
                                     />
                                 </div>
-                            ) : (
+                            ) : chartData ? (
                                 <CandlestickChart
                                     data={chartData.data}
                                     title={chartData.title}
                                 />
+                            ) : (
+                                <div className='flex justify-center items-center h-[20rem] text-dark'>
+                                    No chart data available.
+                                </div>
                             )}
                         </div>
                     </div>

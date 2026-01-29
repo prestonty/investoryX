@@ -5,6 +5,7 @@ import Select from "react-select";
 interface AutocompleteProps {
     options: { value: string; label: string }[];
     onChange: (selectedOption: { value: string; label: string } | null) => void;
+    value?: { value: string; label: string } | null;
 }
 
 export default function Autocomplete(props: AutocompleteProps) {
@@ -13,6 +14,7 @@ export default function Autocomplete(props: AutocompleteProps) {
             <Select
                 options={props.options}
                 onChange={props.onChange}
+                value={props.value}
                 className="w-full"
                 styles={{
                     control: (provided: any, state: any) => ({

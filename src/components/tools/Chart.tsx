@@ -31,12 +31,13 @@ interface ChartProps {
 
 export default function CandlestickChart(chartData: ChartProps) {
     const { data, title = "Stock Price" } = chartData;
+    const safeData = data ?? [];
     const trace: Partial<PlotData> = {
-        x: data.map((item) => item.date),
-        open: data.map((item) => item.open),
-        high: data.map((item) => item.high),
-        low: data.map((item) => item.low),
-        close: data.map((item) => item.close),
+        x: safeData.map((item) => item.date),
+        open: safeData.map((item) => item.open),
+        high: safeData.map((item) => item.high),
+        low: safeData.map((item) => item.low),
+        close: safeData.map((item) => item.close),
         type: "candlestick",
         xaxis: "x",
         yaxis: "y",
