@@ -52,49 +52,117 @@ export default function Navbar(props: NavbarProps) {
     ];
 
     return (
-        <div
-            className={`flex items-center px-[3%] min-h-[2rem] py-2 relative isolate ${
-                search ? "" : "justify-between"
-            }`}
-        >
-            <motion.div
-                initial={{ scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
-                className={search ? "mr-10" : ""}
-            >
-                <Link className='w-fit flex-none' type='button' href='/'>
-                    <div className='w-fit flex items-center'>
-                        <Image
-                            src='/format-investory-logo.webp'
-                            width={60}
-                            height={60}
-                            className=''
-                            alt='InvestoryX Logo'
-                        />
-                        <p className='text-dark text-center text-xl md:text-2xl lg:text-4xl font-semibold'>
-                            InvestoryX
-                        </p>
-                    </div>
-                </Link>
-            </motion.div>
-
-            {/* Desktop Navigation - Hidden on md and below */}
+        <div className="relative isolate">
             <div
-                className={`hidden xl:flex justify-center gap-x-10 ${
-                    search ? "" : "absolute left-1/2 transform -translate-x-1/2"
+                className={`flex items-center px-[3%] min-h-[2rem] py-2 ${
+                    search ? "" : "justify-between"
                 }`}
             >
-                {navigationItems.map((item) => (
-                    <UnderlineWrapper key={item.href}>
-                        <Link
-                            className='w-100 text-dark text-md text-nowrap lg:text-xl'
-                            href={item.href}
+                <motion.div
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.3 }}
+                    className={search ? "mr-10" : ""}
+                >
+                    <Link className='w-fit flex-none' type='button' href='/'>
+                        <div className='w-fit flex items-center'>
+                            <Image
+                                src='/format-investory-logo.webp'
+                                width={60}
+                                height={60}
+                                className=''
+                                alt='InvestoryX Logo'
+                            />
+                            <p className='text-dark text-center text-xl md:text-2xl lg:text-4xl font-semibold'>
+                                InvestoryX
+                            </p>
+                        </div>
+                    </Link>
+                </motion.div>
+
+                {/* Desktop Navigation - Hidden on md and below */}
+                <div
+                    className={`hidden xl:flex justify-center gap-x-10 ${
+                        search ? "" : "absolute left-1/2 transform -translate-x-1/2"
+                    }`}
+                >
+                    {navigationItems.map((item) => (
+                        <UnderlineWrapper key={item.href}>
+                            <Link
+                                className='w-100 text-dark text-md text-nowrap lg:text-xl'
+                                href={item.href}
+                            >
+                                {item.label}
+                            </Link>
+                        </UnderlineWrapper>
+                    ))}
+                </div>
+
+                <div className='flex items-center gap-x-4 w-fit ml-auto'>
+                    {search && (
+                        <Searchbar
+                            options={stockList}
+                            onChange={setSearchStock}
+                            onOpen={() => setIsDrawerOpen(false)}
+                        />
+                    )}
+
+                    {/* Mobile Drawer Button - Visible on md and below */}
+                    <div className='xl:hidden'>
+                        <button
+                            onClick={toggleDrawer}
+                            className='p-2 text-dark hover:text-blue transition-colors duration-300'
+                            aria-label='Toggle navigation menu'
                         >
-                            {item.label}
-                        </Link>
-                    </UnderlineWrapper>
-                ))}
+                            <svg
+                                className='w-6 h-6'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
+                                xmlns='http://www.w3.org/2000/svg'
+                            >
+                                {isDrawerOpen ? (
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M6 18L18 6M6 6l12 12'
+                                    />
+                                ) : (
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M4 6h16M4 12h16M4 18h16'
+                                    />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Desktop Logout/Login - Hidden on md and below */}
+                    <div className='hidden xl:block flex-none'>
+                        {isLoggedIn ? (
+                            <UnderlineWrapper>
+                                <button
+                                    onClick={handleLogout}
+                                    className='text-dark text-xl hover:text-blue transition-colors duration-300'
+                                >
+                                    Log Out
+                                </button>
+                            </UnderlineWrapper>
+                        ) : (
+                            <UnderlineWrapper>
+                                <Link
+                                    href='/login'
+                                    className='text-dark text-xl hover:text-blue transition-colors duration-300'
+                                >
+                                    Login
+                                </Link>
+                            </UnderlineWrapper>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Mobile Drawer */}
@@ -105,7 +173,7 @@ export default function Navbar(props: NavbarProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        className='xl:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50'
+                        className='xl:hidden w-full bg-white shadow-lg border-t border-gray-200'
                     >
                         <div className='px-[3%] py-3'>
                             {navigationItems.map((item, index) => (
@@ -153,72 +221,6 @@ export default function Navbar(props: NavbarProps) {
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            <div className='flex items-center gap-x-4 w-fit ml-auto'>
-                {search && (
-                    <Searchbar
-                        options={stockList}
-                        onChange={setSearchStock}
-                        onOpen={() => setIsDrawerOpen(false)}
-                    />
-                )}
-
-                {/* Mobile Drawer Button - Visible on md and below */}
-                <div className='xl:hidden'>
-                    <button
-                        onClick={toggleDrawer}
-                        className='p-2 text-dark hover:text-blue transition-colors duration-300'
-                        aria-label='Toggle navigation menu'
-                    >
-                        <svg
-                            className='w-6 h-6'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                            xmlns='http://www.w3.org/2000/svg'
-                        >
-                            {isDrawerOpen ? (
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M6 18L18 6M6 6l12 12'
-                                />
-                            ) : (
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M4 6h16M4 12h16M4 18h16'
-                                />
-                            )}
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Desktop Logout/Login - Hidden on md and below */}
-                <div className='hidden xl:block flex-none'>
-                    {isLoggedIn ? (
-                        <UnderlineWrapper>
-                            <button
-                                onClick={handleLogout}
-                                className='text-dark text-xl hover:text-blue transition-colors duration-300'
-                            >
-                                Log Out
-                            </button>
-                        </UnderlineWrapper>
-                    ) : (
-                        <UnderlineWrapper>
-                            <Link
-                                href='/login'
-                                className='text-dark text-xl hover:text-blue transition-colors duration-300'
-                            >
-                                Login
-                            </Link>
-                        </UnderlineWrapper>
-                    )}
-                </div>
-            </div>
         </div>
     );
 }

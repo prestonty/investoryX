@@ -14,7 +14,7 @@ interface SearchbarProps {
     options: { value: string; label: string }[];
     onChange: (selectedOption: { value: string; label: string } | null) => void;
     onSelect?: (item: { value: string; label: string }) => void;
-    onOpen?: () => void;
+    onOpen?: () => void; // Used to close navbar drawer when user clicks search bar
 }
 
 // TODO recreate this component using a better component not a select!!!

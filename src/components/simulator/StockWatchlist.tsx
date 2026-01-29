@@ -1,4 +1,4 @@
-import { FaArrowDown, FaArrowUp } from "react-icons/fa";
+import { FaArrowDown, FaArrowUp, FaTrashAlt } from "react-icons/fa";
 
 export interface Stock {
   symbol: string;
@@ -10,9 +10,10 @@ export interface Stock {
 
 interface StockWatchlistProps {
   stocks: Stock[];
+  onRemove?: (symbol: string) => void;
 }
 
-export function StockWatchlist({ stocks }: StockWatchlistProps) {
+export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
   return (
     <div className="bg-white rounded-lg p-4 border border-[#E8EBED] shadow-sm">
       <h3 className="text-[#181D2A] mb-3">Watchlist ({stocks.length}/5)</h3>
@@ -33,7 +34,8 @@ export function StockWatchlist({ stocks }: StockWatchlistProps) {
               </div>
               <span className="text-xs text-[#7E8391]">{stock.name}</span>
             </div>
-            <div className="text-right">
+            <div className="flex items-center gap-3">
+              <div className="text-right">
               <div className="text-[#181D2A] font-medium">${stock.price.toFixed(2)}</div>
               <div
                 className={`text-xs ${
@@ -43,6 +45,17 @@ export function StockWatchlist({ stocks }: StockWatchlistProps) {
                 {stock.change >= 0 ? '+' : ''}
                 {stock.changePercent.toFixed(2)}%
               </div>
+              </div>
+              {onRemove && (
+                <button
+                  type="button"
+                  aria-label={`Remove ${stock.symbol} from watchlist`}
+                  onClick={() => onRemove(stock.symbol)}
+                  className="rounded-md border border-transparent p-2 text-[#7E8391] hover:text-[#DF3F30] hover:bg-white transition-colors"
+                >
+                  <FaTrashAlt className="size-4" />
+                </button>
+              )}
             </div>
           </div>
         ))}

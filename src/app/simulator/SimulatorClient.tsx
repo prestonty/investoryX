@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 import Navbar from "@/components/Navbar";
@@ -30,6 +30,19 @@ interface Simulation {
   stocks: Stock[];
   trades: TradeRecord[];
 }
+
+const STOCK_CATALOG: Stock[] = [
+  { symbol: "AAPL", name: "Apple Inc.", price: 178.32, change: 2.45, changePercent: 1.39 },
+  { symbol: "MSFT", name: "Microsoft Corp.", price: 412.87, change: -1.23, changePercent: -0.30 },
+  { symbol: "GOOGL", name: "Alphabet Inc.", price: 142.56, change: 3.21, changePercent: 2.30 },
+  { symbol: "NVDA", name: "NVIDIA Corp.", price: 875.28, change: 15.67, changePercent: 1.82 },
+  { symbol: "TSLA", name: "Tesla Inc.", price: 238.45, change: -5.32, changePercent: -2.18 },
+  { symbol: "BRK.B", name: "Berkshire Hathaway", price: 398.45, change: 1.23, changePercent: 0.31 },
+  { symbol: "JPM", name: "JPMorgan Chase", price: 182.67, change: -0.89, changePercent: -0.49 },
+  { symbol: "V", name: "Visa Inc.", price: 278.90, change: 2.15, changePercent: 0.78 },
+  { symbol: "AMZN", name: "Amazon.com Inc.", price: 171.44, change: 1.18, changePercent: 0.69 },
+  { symbol: "META", name: "Meta Platforms Inc.", price: 486.90, change: -3.22, changePercent: -0.66 },
+];
 
 // Mock data
 const generateMockSimulations = (): Simulation[] => {
@@ -137,6 +150,7 @@ export default function SimulatorClient() {
     const [simulatorId, setSimulatorId] = useState<number | null>(null);
     const [summary, setSummary] = useState<SimulatorSummaryResponse | null>(null);
     const [isBusy, setIsBusy] = useState(false);
+    const [watchlistQuery, setWatchlistQuery] = useState("");
 
     const requireToken = async () => {
         const token = await getTokenWithRefresh();
@@ -292,6 +306,59 @@ export default function SimulatorClient() {
 
   const activeSimulation = simulations.find((sim) => sim.id === activeSimulationId);
 
+  const updateSimulationStocks = (simulationId: string, stocks: Stock[]) => {
+    setSimulations((prev) =>
+      prev.map((sim) => (sim.id === simulationId ? { ...sim, stocks } : sim)),
+    );
+  };
+
+  const handleAddWatchlistStock = (stock: Stock) => {
+    if (!activeSimulation) return;
+    const exists = activeSimulation.stocks.some((item) => item.symbol === stock.symbol);
+    if (exists) {
+      toast("Already in watchlist");
+      return;
+    }
+    if (activeSimulation.stocks.length >= 5) {
+      toast("Watchlist is full");
+      return;
+    }
+    updateSimulationStocks(activeSimulation.id, [...activeSimulation.stocks, stock]);
+    setWatchlistQuery("");
+    toast.success(`${stock.symbol} added to watchlist`);
+  };
+
+  const handleRemoveWatchlistStock = (symbol: string) => {
+    if (!activeSimulation) return;
+    updateSimulationStocks(
+      activeSimulation.id,
+      activeSimulation.stocks.filter((stock) => stock.symbol !== symbol),
+    );
+    toast.success(`${symbol} removed from simulator watchlist`);
+  };
+
+  const handleWatchlistSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const normalized = watchlistQuery.trim().toUpperCase();
+    if (!normalized) return;
+    const match = STOCK_CATALOG.find((stock) => stock.symbol === normalized);
+    if (!match) {
+      toast("No matching stock found");
+      return;
+    }
+    handleAddWatchlistStock(match);
+  };
+
+  const filteredCatalog = watchlistQuery.trim()
+    ? STOCK_CATALOG.filter((stock) => {
+        const query = watchlistQuery.trim().toLowerCase();
+        return (
+          stock.symbol.toLowerCase().includes(query) ||
+          stock.name.toLowerCase().includes(query)
+        );
+      })
+    : [];
+
   const handleAddSimulation = () => {
     const newId = String(simulations.length + 1);
     const newSimulation: Simulation = {
@@ -319,7 +386,7 @@ export default function SimulatorClient() {
         <div className="bg-light font-[family-name:var(--font-geist-sans)] min-h-screen">
             <Navbar search={false} />
             <Toaster position="top-center" />
-            <div className="mx-auto max-w-4xl px-6 py-10 text-dark">
+            <div className="mx-auto max-w-4xl px-6 pb-10 pt-16 xl:pt-10 text-dark">
                 <div className="size-full flex flex-col bg-white">
       {/* Tabs */}
       <SimulationTabs
@@ -348,7 +415,41 @@ export default function SimulatorClient() {
 
                 {/* Watchlist */}
                 <div>
-                  <StockWatchlist stocks={activeSimulation.stocks} />
+                  <div className="bg-white rounded-lg border border-[#E8EBED] p-4 shadow-sm mb-4">
+                    <form onSubmit={handleWatchlistSubmit} className="flex gap-2">
+                      <input
+                        value={watchlistQuery}
+                        onChange={(event) => setWatchlistQuery(event.target.value)}
+                        placeholder="Search ticker or company"
+                        className="flex-1 rounded-md border border-[#E8EBED] px-3 py-2 text-sm text-[#181D2A] placeholder:text-[#7E8391] focus:outline-none focus:ring-2 focus:ring-[#748EFE]/40"
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-md bg-[#748EFE] px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors"
+                      >
+                        Add
+                      </button>
+                    </form>
+                    {filteredCatalog.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {filteredCatalog.slice(0, 5).map((stock) => (
+                          <button
+                            key={stock.symbol}
+                            type="button"
+                            onClick={() => handleAddWatchlistStock(stock)}
+                            className="w-full rounded-md border border-[#E8EBED] px-3 py-2 text-left text-sm hover:bg-[#E8EBED]/50 transition-colors"
+                          >
+                            <span className="font-medium text-[#181D2A]">{stock.symbol}</span>
+                            <span className="text-[#7E8391]"> - {stock.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <StockWatchlist
+                    stocks={activeSimulation.stocks}
+                    onRemove={handleRemoveWatchlistStock}
+                  />
                 </div>
               </div>
 
