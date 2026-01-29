@@ -14,6 +14,7 @@ interface SearchbarProps {
     options: { value: string; label: string }[];
     onChange: (selectedOption: { value: string; label: string } | null) => void;
     onSelect?: (item: { value: string; label: string }) => void;
+    onOpen?: () => void;
 }
 
 // TODO recreate this component using a better component not a select!!!
@@ -23,6 +24,7 @@ export default function Searchbar({
     options,
     onChange,
     onSelect,
+    onOpen,
 }: SearchbarProps) {
     const router = useRouter();
 
@@ -128,7 +130,10 @@ export default function Searchbar({
                     value={filterString}
                     onChange={(e) => setFilterString(e.target.value)}
                     placeholder={placeholder}
-                    onFocus={() => setIsFocused(true)}
+                    onFocus={() => {
+                        setIsFocused(true);
+                        onOpen?.();
+                    }}
                     onBlur={() => setIsFocused(false)}
                     className='text-lg w-full text-dark border-none focus:outline-none focus:ring-0'
                 />

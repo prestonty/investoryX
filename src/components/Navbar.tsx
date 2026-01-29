@@ -159,6 +159,7 @@ export default function Navbar(props: NavbarProps) {
                     <Searchbar
                         options={stockList}
                         onChange={setSearchStock}
+                        onOpen={() => setIsDrawerOpen(false)}
                     />
                 )}
 

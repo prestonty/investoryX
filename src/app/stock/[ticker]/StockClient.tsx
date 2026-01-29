@@ -97,7 +97,7 @@ export default function StockClient({
                 if (result && Array.isArray(result.data)) {
                     if (result.data.length === 0) {
                         toast.error(
-                            "No chart data available for this period/interval.",
+                            "No chart data for period/interval",
                         );
                     }
                     setChartData(result);
@@ -107,7 +107,7 @@ export default function StockClient({
                         title: "Stock Price",
                     });
                     toast.error(
-                        "No chart data available for this period/interval.",
+                        "No chart data for period/interval",
                     );
                 }
             } catch (error) {
@@ -168,6 +168,7 @@ export default function StockClient({
                     style: {
                         background: "#fff",
                         color: "#181D2A",
+                        textAlign: "center",
                     },
 
                     // Default options for specific types
