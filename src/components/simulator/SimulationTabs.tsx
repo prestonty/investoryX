@@ -28,7 +28,7 @@ export function SimulationTabs({
           onClick={() => onSelectSimulation(simulation.id)}
           className={`
             group relative flex items-center gap-1.5 px-3 py-2 rounded-t-lg cursor-pointer
-            min-w-[140px] max-w-[200px]
+            min-w-[150px] max-w-[220px]
             ${
               activeSimulationId === simulation.id
                 ? 'bg-white text-[#181D2A] shadow-sm'
@@ -50,7 +50,7 @@ export function SimulationTabs({
       ))}
       <button
         onClick={onAddSimulation}
-        className="p-1.5 text-[#7E8391] hover:bg-white/50 rounded-full ml-2 mb-1"
+        className="p-1.5 text-[#7E8391] hover:bg-white/50 rounded-full ml-3 mb-1"
       >
         <GoPlus className="size-3.5" />
       </button>

@@ -31,6 +31,8 @@ interface Simulation {
   trades: TradeRecord[];
 }
 
+const MAX_SIMULATIONS = 3;
+
 const STOCK_CATALOG: Stock[] = [
   { symbol: "AAPL", name: "Apple Inc.", price: 178.32, change: 2.45, changePercent: 1.39 },
   { symbol: "MSFT", name: "Microsoft Corp.", price: 412.87, change: -1.23, changePercent: -0.30 },
@@ -360,6 +362,10 @@ export default function SimulatorClient() {
     : [];
 
   const handleAddSimulation = () => {
+    if (simulations.length >= MAX_SIMULATIONS) {
+      toast.error(`Max ${MAX_SIMULATIONS} simulations reached`);
+      return;
+    }
     const newId = String(simulations.length + 1);
     const newSimulation: Simulation = {
       id: newId,
@@ -416,16 +422,16 @@ export default function SimulatorClient() {
                 {/* Watchlist */}
                 <div>
                   <div className="bg-white rounded-lg border border-light p-4 shadow-sm mb-4">
-                    <form onSubmit={handleWatchlistSubmit} className="flex gap-2">
+                    <form onSubmit={handleWatchlistSubmit} className="flex gap-2 items-center">
                       <input
                         value={watchlistQuery}
                         onChange={(event) => setWatchlistQuery(event.target.value)}
                         placeholder="Search"
-                        className="flex-1 rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-none focus:ring-2 focus:ring-blue/40"
+                        className="flex-[1] min-w-[140px] max-w-[200px] rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-none focus:ring-2 focus:ring-blue/40"
                       />
                       <button
                         type="submit"
-                        className="rounded-md bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors"
+                        className="shrink-0 rounded-md bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors"
                       >
                         Add
                       </button>
