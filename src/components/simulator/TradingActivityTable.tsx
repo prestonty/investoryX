@@ -18,22 +18,22 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
   const getActionIcon = (action: TradeRecord['action']) => {
     switch (action) {
       case 'BUY':
-        return <GoArrowUpRight className="size-4 text-[#248E4F]" />;
+        return <GoArrowUpRight className="size-4 text-green" />;
       case 'SELL':
-        return <GoArrowDownRight className="size-4 text-[#DF3F30]" />;
+        return <GoArrowDownRight className="size-4 text-red" />;
       case 'HOLD':
-        return <FaCircleMinus className="size-4 text-[#748EFE]" />;
+        return <FaCircleMinus className="size-4 text-blue" />;
     }
   };
 
   const getActionColor = (action: TradeRecord['action']) => {
     switch (action) {
       case 'BUY':
-        return 'text-[#248E4F]';
+        return 'text-green';
       case 'SELL':
-        return 'text-[#DF3F30]';
+        return 'text-red';
       case 'HOLD':
-        return 'text-[#748EFE]';
+        return 'text-blue';
     }
   };
 
@@ -47,23 +47,23 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-[#E8EBED] overflow-hidden shadow-sm">
+    <div className="bg-white rounded-lg border border-light overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-[#E8EBED]/50 border-b border-[#E8EBED]">
+          <thead className="bg-light/50 border-b border-light">
             <tr>
-              <th className="text-left px-4 py-3 text-sm text-[#7E8391]">Action</th>
-              <th className="text-left px-4 py-3 text-sm text-[#7E8391]">Symbol</th>
-              <th className="text-left px-4 py-3 text-sm text-[#7E8391]">Price</th>
-              <th className="text-left px-4 py-3 text-sm text-[#7E8391]">Volume</th>
-              <th className="text-left px-4 py-3 text-sm text-[#7E8391]">Time</th>
+              <th className="text-left px-4 py-3 text-sm text-gray">Action</th>
+              <th className="text-left px-4 py-3 text-sm text-gray">Symbol</th>
+              <th className="text-left px-4 py-3 text-sm text-gray">Price</th>
+              <th className="text-left px-4 py-3 text-sm text-gray">Volume</th>
+              <th className="text-left px-4 py-3 text-sm text-gray">Time</th>
             </tr>
           </thead>
           <tbody>
             {records.map((record) => (
               <tr
                 key={record.id}
-                className="border-b border-[#E8EBED] hover:bg-[#E8EBED]/30 transition-colors"
+                className="border-b border-light hover:bg-light/30 transition-colors"
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -73,17 +73,17 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-[#181D2A] font-medium">{record.symbol}</td>
-                <td className="px-4 py-3 text-[#181D2A]">${record.price.toFixed(2)}</td>
-                <td className="px-4 py-3 text-[#181D2A]">{record.volume.toLocaleString()}</td>
-                <td className="px-4 py-3 text-[#7E8391] text-sm">
+                <td className="px-4 py-3 text-dark font-medium">{record.symbol}</td>
+                <td className="px-4 py-3 text-dark">${record.price.toFixed(2)}</td>
+                <td className="px-4 py-3 text-dark">{record.volume.toLocaleString()}</td>
+                <td className="px-4 py-3 text-gray text-sm">
                   {formatDate(record.timestamp)}
                 </td>
               </tr>
             ))}
             {records.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-[#7E8391]">
+                <td colSpan={5} className="px-4 py-12 text-center text-gray">
                   No trading activity yet
                 </td>
               </tr>

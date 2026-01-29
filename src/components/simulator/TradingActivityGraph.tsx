@@ -47,15 +47,15 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-[#E8EBED] rounded-lg p-3 shadow-lg">
-          <p className="text-[#181D2A] font-medium">{payload[0].payload.symbol}</p>
-          <p className="text-sm text-[#7E8391]">Time: {payload[0].payload.name}</p>
-          <p className="text-sm text-[#7E8391]">Price: ${payload[0].payload.price?.toFixed(2)}</p>
-          <p className="text-sm text-[#7E8391]">Volume: {payload[0].value?.toLocaleString()}</p>
+        <div className="bg-white border border-light rounded-lg p-3 shadow-lg">
+          <p className="text-dark font-medium">{payload[0].payload.symbol}</p>
+          <p className="text-sm text-gray">Time: {payload[0].payload.name}</p>
+          <p className="text-sm text-gray">Price: ${payload[0].payload.price?.toFixed(2)}</p>
+          <p className="text-sm text-gray">Volume: {payload[0].value?.toLocaleString()}</p>
           <p className={`text-sm ${
-            payload[0].payload.action === 'BUY' ? 'text-[#248E4F]' :
-            payload[0].payload.action === 'SELL' ? 'text-[#DF3F30]' :
-            'text-[#748EFE]'
+            payload[0].payload.action === 'BUY' ? 'text-green' :
+            payload[0].payload.action === 'SELL' ? 'text-red' :
+            'text-blue'
           }`}>
             Action: {payload[0].payload.action}
           </p>
@@ -67,17 +67,17 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
 
   if (records.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-[#E8EBED] p-12 flex items-center justify-center shadow-sm">
-        <p className="text-[#7E8391]">No trading data to display</p>
+      <div className="bg-white rounded-lg border border-light p-12 flex items-center justify-center shadow-sm">
+        <p className="text-gray">No trading data to display</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-[#E8EBED] p-6 space-y-6 shadow-sm">
+    <div className="bg-white rounded-lg border border-light p-6 space-y-6 shadow-sm">
       {/* Trading Volume Over Time */}
       <div>
-        <h4 className="text-[#181D2A] mb-4">Trading Volume Over Time</h4>
+        <h4 className="text-dark mb-4">Trading Volume Over Time</h4>
         <ResponsiveContainer width="100%" height={300}>
           <ScatterChart
             margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
@@ -119,7 +119,7 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
 
       {/* Price Trends */}
       <div>
-        <h4 className="text-[#181D2A] mb-4">Price Trends</h4>
+        <h4 className="text-dark mb-4">Price Trends</h4>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart
             data={volumeData}

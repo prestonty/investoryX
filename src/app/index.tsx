@@ -19,7 +19,7 @@ export default function Landing() {
                     ></div>
 
                     {/* Blue Triangle */}
-                    <div className='z-2 blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-[#748EFE] md:block'></div>
+                    <div className='z-2 blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-blue md:block'></div>
                 </div>
 
                 <MagneticWrapper>

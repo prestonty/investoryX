@@ -15,31 +15,31 @@ interface StockWatchlistProps {
 
 export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
   return (
-    <div className="bg-white rounded-lg p-4 border border-[#E8EBED] shadow-sm">
-      <h3 className="text-[#181D2A] mb-3">Watchlist ({stocks.length}/5)</h3>
+    <div className="bg-white rounded-lg p-4 border border-light shadow-sm">
+      <h3 className="text-dark mb-3">Watchlist ({stocks.length}/5)</h3>
       <div className="space-y-2">
         {stocks.map((stock) => (
           <div
             key={stock.symbol}
-            className="bg-[#E8EBED]/30 rounded-lg p-3 flex items-center justify-between hover:bg-[#E8EBED]/50 transition-colors"
+            className="bg-light/30 rounded-lg p-3 flex items-center justify-between hover:bg-light/50 transition-colors"
           >
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[#181D2A] font-medium">{stock.symbol}</span>
+                <span className="text-dark font-medium">{stock.symbol}</span>
                 {stock.change >= 0 ? (
-                  <FaArrowUp className="size-4 text-[#248E4F]" />
+                  <FaArrowUp className="size-4 text-green" />
                 ) : (
-                  <FaArrowDown className="size-4 text-[#DF3F30]" />
+                  <FaArrowDown className="size-4 text-red" />
                 )}
               </div>
-              <span className="text-xs text-[#7E8391]">{stock.name}</span>
+              <span className="text-xs text-gray">{stock.name}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-              <div className="text-[#181D2A] font-medium">${stock.price.toFixed(2)}</div>
+              <div className="text-dark font-medium">${stock.price.toFixed(2)}</div>
               <div
                 className={`text-xs ${
-                  stock.change >= 0 ? 'text-[#248E4F]' : 'text-[#DF3F30]'
+                  stock.change >= 0 ? 'text-green' : 'text-red'
                 }`}
               >
                 {stock.change >= 0 ? '+' : ''}
@@ -51,7 +51,7 @@ export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
                   type="button"
                   aria-label={`Remove ${stock.symbol} from watchlist`}
                   onClick={() => onRemove(stock.symbol)}
-                  className="rounded-md border border-transparent p-2 text-[#7E8391] hover:text-[#DF3F30] hover:bg-white transition-colors"
+                  className="rounded-md border border-transparent p-2 text-gray hover:text-red hover:bg-white transition-colors"
                 >
                   <FaTrashAlt className="size-4" />
                 </button>
@@ -60,7 +60,7 @@ export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
           </div>
         ))}
         {stocks.length === 0 && (
-          <div className="text-center py-8 text-[#7E8391]">
+          <div className="text-center py-8 text-gray">
             No stocks in watchlist
           </div>
         )}

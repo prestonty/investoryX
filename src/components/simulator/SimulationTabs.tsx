@@ -21,7 +21,7 @@ export function SimulationTabs({
   onAddSimulation,
 }: SimulationTabsProps) {
   return (
-    <div className="bg-[#E8EBED] flex items-end border-b border-[#7E8391]/20 relative z-0">
+    <div className="bg-light flex items-end border-b border-[#7E8391]/20 relative z-0">
       {simulations.map((simulation) => (
         <div
           key={simulation.id}
@@ -32,7 +32,7 @@ export function SimulationTabs({
             ${
               activeSimulationId === simulation.id
                 ? 'bg-white text-[#181D2A] shadow-sm'
-                : 'bg-[#E8EBED] text-[#7E8391] hover:bg-white/50'
+                : 'bg-light text-[#7E8391] hover:bg-white/50'
             }
           `}
         >
@@ -42,7 +42,7 @@ export function SimulationTabs({
               e.stopPropagation();
               onCloseSimulation(simulation.id);
             }}
-            className="opacity-0 group-hover:opacity-100 hover:bg-[#E8EBED] rounded-full p-0.5 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 hover:bg-light rounded-full p-0.5 transition-opacity"
           >
             <GoX className="size-3" />
           </button>

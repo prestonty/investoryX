@@ -12,7 +12,7 @@ const config: Config = {
             colors: {
                 dark: "#181D2A",
                 gray: "#7E8391",
-                livid: "#4B5B8B", // grey blue
+                livid: "#4B5B8B",
                 light: "#E8EBED",
                 blue: "#748EFE",
                 darkblue: "#667dde",

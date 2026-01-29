@@ -398,34 +398,34 @@ export default function SimulatorClient() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-[#E8EBED]/30">
+      <div className="flex-1 overflow-auto bg-light/30">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {activeSimulation && (
             <>
               {/* Robot and Watchlist Section */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Robot */}
-                <div className="lg:col-span-2 bg-white rounded-lg border border-[#E8EBED] p-6 shadow-sm">
+                <div className="lg:col-span-2 bg-white rounded-lg border border-light p-6 shadow-sm">
                   <RobotTrader />
                   <div className="text-center mt-4">
-                    <p className="text-[#181D2A] font-medium">{activeSimulation.name}</p>
-                    <p className="text-sm text-[#7E8391]">Status: Active Trading</p>
+                    <p className="text-dark font-medium">{activeSimulation.name}</p>
+                    <p className="text-sm text-gray">Status: Active Trading</p>
                   </div>
                 </div>
 
                 {/* Watchlist */}
                 <div>
-                  <div className="bg-white rounded-lg border border-[#E8EBED] p-4 shadow-sm mb-4">
+                  <div className="bg-white rounded-lg border border-light p-4 shadow-sm mb-4">
                     <form onSubmit={handleWatchlistSubmit} className="flex gap-2">
                       <input
                         value={watchlistQuery}
                         onChange={(event) => setWatchlistQuery(event.target.value)}
-                        placeholder="Search ticker or company"
-                        className="flex-1 rounded-md border border-[#E8EBED] px-3 py-2 text-sm text-[#181D2A] placeholder:text-[#7E8391] focus:outline-none focus:ring-2 focus:ring-[#748EFE]/40"
+                        placeholder="Search"
+                        className="flex-1 rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-none focus:ring-2 focus:ring-blue/40"
                       />
                       <button
                         type="submit"
-                        className="rounded-md bg-[#748EFE] px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors"
+                        className="rounded-md bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors"
                       >
                         Add
                       </button>
@@ -437,10 +437,10 @@ export default function SimulatorClient() {
                             key={stock.symbol}
                             type="button"
                             onClick={() => handleAddWatchlistStock(stock)}
-                            className="w-full rounded-md border border-[#E8EBED] px-3 py-2 text-left text-sm hover:bg-[#E8EBED]/50 transition-colors"
+                            className="w-full rounded-md border border-light px-3 py-2 text-left text-sm hover:bg-light/50 transition-colors"
                           >
-                            <span className="font-medium text-[#181D2A]">{stock.symbol}</span>
-                            <span className="text-[#7E8391]"> - {stock.name}</span>
+                            <span className="font-medium text-dark">{stock.symbol}</span>
+                            <span className="text-gray"> - {stock.name}</span>
                           </button>
                         ))}
                       </div>
@@ -456,14 +456,14 @@ export default function SimulatorClient() {
               {/* Trading Activity Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[#181D2A]">Trading Activity</h2>
-                  <div className="flex gap-2 bg-white rounded-lg p-1 border border-[#E8EBED] shadow-sm">
+                  <h2 className="text-dark">Trading Activity</h2>
+                  <div className="flex gap-2 bg-white rounded-lg p-1 border border-light shadow-sm">
                     <button
                       onClick={() => setViewMode('table')}
                       className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
                         viewMode === 'table'
-                          ? 'bg-[#748EFE] text-white'
-                          : 'text-[#7E8391] hover:text-[#181D2A] hover:bg-[#E8EBED]/50'
+                          ? 'bg-blue text-white'
+                          : 'text-gray hover:text-dark hover:bg-light/50'
                       }`}
                     >
                       <GoTable className="size-4" />
@@ -473,8 +473,8 @@ export default function SimulatorClient() {
                       onClick={() => setViewMode('graph')}
                       className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
                         viewMode === 'graph'
-                          ? 'bg-[#748EFE] text-white'
-                          : 'text-[#7E8391] hover:text-[#181D2A] hover:bg-[#E8EBED]/50'
+                          ? 'bg-blue text-white'
+                          : 'text-gray hover:text-dark hover:bg-light/50'
                       }`}
                     >
                       <FaChartBar className="size-4" />
