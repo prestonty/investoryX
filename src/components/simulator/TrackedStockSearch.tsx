@@ -106,14 +106,15 @@ export function TrackedStockSearch({
 
         setIsSubmitting(true);
         try {
-            await addTrackedStock(
+            const tracked = await addTrackedStock(
                 simulatorId,
                 { ticker, target_allocation: targetAllocation },
                 token,
             );
             let stock: Stock = {
                 symbol: ticker,
-                name: item?.label ?? ticker,
+                companyName: item?.label ?? ticker,
+                trackedId: tracked.tracked_id ?? null,
                 price: 0,
                 change: 0,
                 changePercent: 0,
@@ -122,7 +123,8 @@ export function TrackedStockSearch({
                 const basic = await getStockPrice(ticker);
                 stock = {
                     symbol: ticker,
-                    name: basic.companyName ?? stock.name,
+                    companyName: basic.companyName ?? stock.companyName,
+                    trackedId: stock.trackedId,
                     price: parseNumber(basic.stockPrice),
                     change: parseNumber(basic.priceChange),
                     changePercent: parseNumber(basic.priceChangePercent),

@@ -10,6 +10,7 @@ import {
     deleteSimulator,
     getStockPrice,
     getSimulatorSummary,
+    deleteTrackedStock,
     listSimulators,
     runSimulator,
     type SimulatorSummaryResponse,
@@ -82,13 +83,13 @@ export default function SimulatorClient() {
                 const tracked = summary.tracked_stocks ?? [];
                 stocks = await Promise.all(
                   tracked.map(async (trackedStock) => {
-                    let name = trackedStock.ticker;
+                    let companyName = trackedStock.ticker;
                     let price = 0;
                     let change = 0;
                     let changePercent = 0;
                     try {
                       const basic = await getStockPrice(trackedStock.ticker);
-                      name = basic.companyName ?? name;
+                      companyName = basic.companyName ?? companyName;
                       price = parseNumber(basic.stockPrice);
                       change = parseNumber(basic.priceChange);
                       changePercent = parseNumber(basic.priceChangePercent);
@@ -97,7 +98,8 @@ export default function SimulatorClient() {
                     }
                     return {
                       symbol: trackedStock.ticker,
-                      name,
+                      companyName,
+                      trackedId: trackedStock.tracked_id ?? null,
                       price,
                       change,
                       changePercent,
@@ -241,18 +243,41 @@ export default function SimulatorClient() {
     );
   };
 
-  const handleAddWatchlistStock = (stock: Stock) => {
+  const handleAddWatchlistStock = async (stock: Stock) => {
     if (!activeSimulation) return;
-    updateSimulationStocks(activeSimulation.id, [...activeSimulation.stocks, stock]);
+    updateSimulationStocks(activeSimulation.id, [
+      ...activeSimulation.stocks,
+      stock,
+    ]);
   };
 
-  const handleRemoveWatchlistStock = (symbol: string) => {
-    if (!activeSimulation) return;
-    updateSimulationStocks(
-      activeSimulation.id,
-      activeSimulation.stocks.filter((stock) => stock.symbol !== symbol),
-    );
-    toast.success(`${symbol} removed from simulator watchlist`);
+  const handleRemoveWatchlistStock = async (
+    trackedId: number | null,
+    symbol: string,
+  ) => {
+    const token = await requireToken();
+    if (!token || !activeSimulation) return;
+
+    if (!trackedId) {
+      toast.error("No tracked stock id found for this item.");
+      return;
+    }
+
+    setIsBusy(true);
+    try {
+      await deleteTrackedStock(Number(activeSimulation.id), trackedId, token);
+      updateSimulationStocks(
+        activeSimulation.id,
+        activeSimulation.stocks.filter((stock) => stock.symbol !== symbol),
+      );
+      toast.success(`${symbol} removed from simulator watchlist`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to remove tracked stock";
+      toast.error(message);
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   const handleAddSimulation = async () => {
@@ -422,3 +447,4 @@ export default function SimulatorClient() {
         </div>
     );
 }
+

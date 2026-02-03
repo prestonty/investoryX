@@ -2,7 +2,8 @@ import { FaArrowDown, FaArrowUp, FaTrashAlt } from "react-icons/fa";
 
 export interface Stock {
   symbol: string;
-  name: string;
+  companyName: string;
+  trackedId: number | null;
   price: number;
   change: number;
   changePercent: number;
@@ -10,7 +11,7 @@ export interface Stock {
 
 interface StockWatchlistProps {
   stocks: Stock[];
-  onRemove?: (symbol: string) => void;
+  onRemove?: (trackedId: number | null, symbol: string) => void;
 }
 
 export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
@@ -32,7 +33,7 @@ export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
                   <FaArrowDown className="size-4 text-red" />
                 )}
               </div>
-              <span className="text-xs text-gray">{stock.name}</span>
+              <span className="text-xs text-gray">{stock.companyName}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
@@ -50,7 +51,7 @@ export function StockWatchlist({ stocks, onRemove }: StockWatchlistProps) {
                 <button
                   type="button"
                   aria-label={`Remove ${stock.symbol} from watchlist`}
-                  onClick={() => onRemove(stock.symbol)}
+                  onClick={() => onRemove(stock.trackedId, stock.symbol)}
                   className="rounded-md border border-transparent p-2 text-gray hover:text-red hover:bg-white transition-colors"
                 >
                   <FaTrashAlt className="size-4" />

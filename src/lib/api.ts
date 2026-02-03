@@ -190,6 +190,12 @@ export interface WatchlistQuoteItem {
     error: string | null;
 }
 
+export interface WatchlistItemResponse {
+    watchlist_id: number;
+    stock_id: number;
+    user_id: number;
+}
+
 export interface SimulatorResponse {
     simulator_id: number;
     user_id: number | null;
@@ -363,7 +369,7 @@ export async function getCurrentUser(token: string): Promise<UserResponse> {
 export async function addToWatchlist(
     stockId: number,
     token: string,
-): Promise<void> {
+): Promise<WatchlistItemResponse> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
         method: "POST",
         headers: {
@@ -378,7 +384,7 @@ export async function addToWatchlist(
         const msg = data?.detail ?? data?.message ?? `Failed: ${res.status}`;
         throw new Error(msg); // <-- carries "Stock already in watchlist"
     }
-    return data;
+    return data as WatchlistItemResponse;
 }
 
 export async function getWatchlistQuotes(
