@@ -198,6 +198,7 @@ export interface SimulatorResponse {
     cash_balance: number;
     created_at?: string;
     updated_at?: string;
+    tickers: string[];
 }
 
 export interface SimulatorTrackedStockResponse {

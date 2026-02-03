@@ -9,7 +9,7 @@ interface SimulationTabsProps {
   simulations: Simulation[];
   activeSimulationId: string;
   onSelectSimulation: (id: string) => void;
-  onCloseSimulation: (id: string) => void;
+  onCloseSimulation?: (id: string) => void;
   onAddSimulation: () => void;
 }
 
@@ -21,18 +21,18 @@ export function SimulationTabs({
   onAddSimulation,
 }: SimulationTabsProps) {
   return (
-    <div className="bg-light flex items-end border-b border-[#7E8391]/20 relative z-0">
+    <div className="bg-light flex items-end border-b border-gray/20 relative z-0">
       {simulations.map((simulation) => (
         <div
           key={simulation.id}
           onClick={() => onSelectSimulation(simulation.id)}
           className={`
             group relative flex items-center gap-1.5 px-3 py-2 rounded-t-lg cursor-pointer
-            min-w-[150px] max-w-[220px]
+            min-w-[140px] max-w-[200px]
             ${
               activeSimulationId === simulation.id
-                ? 'bg-white text-[#181D2A] shadow-sm'
-                : 'bg-light text-[#7E8391] hover:bg-white/50'
+                ? 'bg-white text-dark shadow-sm'
+                : 'bg-light text-gray hover:bg-white/50'
             }
           `}
         >
@@ -50,7 +50,7 @@ export function SimulationTabs({
       ))}
       <button
         onClick={onAddSimulation}
-        className="p-1.5 text-[#7E8391] hover:bg-white/50 rounded-full ml-3 mb-1"
+        className="p-1.5 text-gray hover:bg-white/50 rounded-full ml-2 mb-1"
       >
         <GoPlus className="size-3.5" />
       </button>
