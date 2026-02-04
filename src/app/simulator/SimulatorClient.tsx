@@ -16,6 +16,7 @@ import {
     type SimulatorSummaryResponse,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
+import { parseNumber } from "@/lib/utils/helper";
 
 import { SimulationTabs } from '@/components/simulator/SimulationTabs';
 import { RobotTrader } from '@/components/simulator/RobotTrader';
@@ -26,33 +27,23 @@ import { TradingActivityGraph } from '@/components/simulator/TradingActivityGrap
 import { FaChartBar } from "react-icons/fa";
 import { GoTable } from "react-icons/go";
 
-
 interface Simulation {
-  id: string;
+  id: number;
   name: string;
   stocks: Stock[];
   trades: TradeRecord[];
 }
 
-const parseNumber = (value: string | number | undefined) => {
-  if (value === undefined || value === null) return 0;
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  const cleaned = value.replace(/[^0-9.-]/g, "");
-  const parsed = Number.parseFloat(cleaned);
-  return Number.isNaN(parsed) ? 0 : parsed;
-};
 
 const MAX_SIMULATIONS = 3;
 
 export default function SimulatorClient() {
-    const [simulatorId, setSimulatorId] = useState<number | null>(null);
     const [summary, setSummary] = useState<SimulatorSummaryResponse | null>(null);
     const [isBusy, setIsBusy] = useState(false);
-
-        // Figma Code
-    const [simulations, setSimulations] = useState<Simulation[]>([]);
-    const [activeSimulationId, setActiveSimulationId] = useState<string>("");
     const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
+
+    const [simulations, setSimulations] = useState<Simulation[]>([]);
+    const [activeSimulationId, setActiveSimulationId] = useState<number | null>(null);
     const activeSimulation = simulations.find((sim) => sim.id === activeSimulationId);
 
 
@@ -110,7 +101,7 @@ export default function SimulatorClient() {
                 console.error("Summary lookup failed:", summaryError);
               }
               return {
-                id: String(simulator.simulator_id),
+                id: simulator.simulator_id,
                 name: simulator.name,
                 stocks,
                 trades: [],
@@ -121,10 +112,8 @@ export default function SimulatorClient() {
           setSimulations(mapped);
           if (mapped.length > 0) {
             setActiveSimulationId(mapped[0].id);
-            setSimulatorId(simulators[0].simulator_id);
           } else {
-            setActiveSimulationId("");
-            setSimulatorId(null);
+            setActiveSimulationId(null);
           }
         } catch (error) {
           const message =
@@ -139,33 +128,8 @@ export default function SimulatorClient() {
       };
     }, []);
 
-    const handleAddTrackedStock = async () => {
-        if (!simulatorId) {
-            toast.error("Create or load a simulator first.");
-            return;
-        }
-        const token = await requireToken();
-        if (!token) return;
-
-        setIsBusy(true);
-        try {
-            await addTrackedStock(
-                simulatorId,
-                { ticker: "NVDA", target_allocation: 25 },
-                token,
-            );
-            toast.success("Tracked stock added");
-        } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Failed to add tracked stock";
-            toast.error(message);
-        } finally {
-            setIsBusy(false);
-        }
-    };
-
     const handleRunSimulator = async () => {
-        if (!simulatorId) {
+        if (!activeSimulationId) {
             toast.error("Create or load a simulator first.");
             return;
         }
@@ -175,7 +139,7 @@ export default function SimulatorClient() {
         setIsBusy(true);
         try {
             const result = await runSimulator(
-                simulatorId,
+                activeSimulationId,
                 { price_mode: "close", frequency: "daily" },
                 token,
             );
@@ -190,7 +154,7 @@ export default function SimulatorClient() {
     };
 
     const handleLoadSummary = async () => {
-        if (!simulatorId) {
+        if (!activeSimulationId) {
             toast.error("Create or load a simulator first.");
             return;
         }
@@ -199,7 +163,7 @@ export default function SimulatorClient() {
 
         setIsBusy(true);
         try {
-            const data = await getSimulatorSummary(simulatorId, token);
+            const data = await getSimulatorSummary(activeSimulationId, token);
             setSummary(data);
             toast.success("Summary loaded");
         } catch (error) {
@@ -211,9 +175,8 @@ export default function SimulatorClient() {
         }
     };
 
-    const handleDeleteSimulator = async (id: string) => {
-        const parsedId = Number(id);
-        if (!Number.isFinite(parsedId)) {
+    const handleDeleteSimulator = async (id: number) => {
+        if (!Number.isFinite(id)) {
             toast.error("Invalid simulator id.");
             return;
         }
@@ -222,9 +185,8 @@ export default function SimulatorClient() {
 
         setIsBusy(true);
         try {
-            await deleteSimulator(parsedId, token);
-            if (simulatorId === parsedId) {
-                setSimulatorId(null);
+            await deleteSimulator(id, token);
+            if (activeSimulationId === id) {
                 setSummary(null);
             }
             toast.success("Simulator deleted");
@@ -237,13 +199,13 @@ export default function SimulatorClient() {
         }
     };
 
-  const updateSimulationStocks = (simulationId: string, stocks: Stock[]) => {
+  const updateSimulationStocks = (simulationId: number, stocks: Stock[]) => {
     setSimulations((prev) =>
       prev.map((sim) => (sim.id === simulationId ? { ...sim, stocks } : sim)),
     );
   };
 
-  const handleAddWatchlistStock = async (stock: Stock) => {
+  const handleAddTrackedStock = async (stock: Stock) => {
     if (!activeSimulation) return;
     updateSimulationStocks(activeSimulation.id, [
       ...activeSimulation.stocks,
@@ -251,7 +213,7 @@ export default function SimulatorClient() {
     ]);
   };
 
-  const handleRemoveWatchlistStock = async (
+  const handleRemoveTrackedStock = async (
     trackedId: number | null,
     symbol: string,
   ) => {
@@ -294,7 +256,7 @@ export default function SimulatorClient() {
         { name: "My Simulator", starting_cash: 10000 },
         token,
       );
-      const newId = String(simulator.simulator_id);
+      const newId = simulator.simulator_id;
       const newSimulation: Simulation = {
         id: newId,
         name: simulator.name,
@@ -303,7 +265,6 @@ export default function SimulatorClient() {
       };
       setSimulations((prev) => [...prev, newSimulation]);
       setActiveSimulationId(newId);
-      setSimulatorId(simulator.simulator_id);
       toast.success("Simulator created");
     } catch (error) {
       const message =
@@ -314,12 +275,12 @@ export default function SimulatorClient() {
     }
   };
 
-  const handleCloseSimulation = async (id: string) => {
+  const handleCloseSimulation = async (id: number) => {
     await handleDeleteSimulator(id);
     const newSimulations = simulations.filter((sim) => sim.id !== id);
     setSimulations(newSimulations);
     if (newSimulations.length === 0) {
-      setActiveSimulationId("");
+      setActiveSimulationId(null);
       return;
     }
     if (activeSimulationId === id) {
@@ -338,8 +299,9 @@ export default function SimulatorClient() {
                 activity.
               </p>
               <button
+                disabled={isBusy}
                 onClick={handleAddSimulation}
-                className="inline-flex items-center justify-center rounded-md bg-blue px-5 py-2.5 text-white font-medium hover:bg-blue/90 transition-colors"
+                className="inline-flex items-center justify-center rounded-md bg-blue px-5 py-2.5 text-white font-medium hover:bg-blue/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 Create Simulator
               </button>
@@ -356,6 +318,7 @@ export default function SimulatorClient() {
             onSelectSimulation={setActiveSimulationId}
             onCloseSimulation={handleCloseSimulation}
             onAddSimulation={handleAddSimulation}
+            isBusy={isBusy}
           />
 
           {/* Main Content */}
@@ -377,15 +340,15 @@ export default function SimulatorClient() {
                     {/* Watchlist */}
                     <div>
                       <TrackedStockSearch
-                        simulatorId={simulatorId}
+                        simulatorId={activeSimulationId}
                         existingSymbols={
                           activeSimulation?.stocks.map((stock) => stock.symbol) ?? []
                         }
-                        onAddStock={handleAddWatchlistStock}
+                        onAddStock={handleAddTrackedStock}
                       />
                       <StockWatchlist
                         stocks={activeSimulation.stocks}
-                        onRemove={handleRemoveWatchlistStock}
+                        onRemove={handleRemoveTrackedStock}
                       />
                     </div>
                   </div>
@@ -396,23 +359,25 @@ export default function SimulatorClient() {
                       <h2 className="text-dark">Trading Activity</h2>
                       <div className="flex gap-2 bg-white rounded-lg p-1 border border-light shadow-sm">
                         <button
+                          disabled={isBusy}
                           onClick={() => setViewMode('table')}
                           className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
                             viewMode === 'table'
                               ? 'bg-blue text-white'
                               : 'text-gray hover:text-dark hover:bg-light/50'
-                          }`}
+                          } ${isBusy ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                           <GoTable className="size-4" />
                           Table
                         </button>
                         <button
+                          disabled={isBusy}
                           onClick={() => setViewMode('graph')}
                           className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
                             viewMode === 'graph'
                               ? 'bg-blue text-white'
                               : 'text-gray hover:text-dark hover:bg-light/50'
-                          }`}
+                          } ${isBusy ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                           <FaChartBar className="size-4" />
                           Graph
@@ -447,4 +412,3 @@ export default function SimulatorClient() {
         </div>
     );
 }
-

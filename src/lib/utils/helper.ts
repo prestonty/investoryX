@@ -40,3 +40,11 @@ export function dateConverter(UNIX_timestamp) {
         month + " " + day + ", " + year + " " + hour + ":" + min + " " + midday;
     return time;
 }
+
+export const parseNumber = (value: string | number | undefined) => {
+  if (value === undefined || value === null) return 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const cleaned = value.replace(/[^0-9.-]/g, "");
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
