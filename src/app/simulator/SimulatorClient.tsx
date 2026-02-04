@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import {
     addTrackedStock,
     createSimulator,
+    renameSimulator,
     deleteSimulator,
     getStockPrice,
     getSimulatorSummary,
@@ -45,7 +46,6 @@ export default function SimulatorClient() {
     const [simulations, setSimulations] = useState<Simulation[]>([]);
     const [activeSimulationId, setActiveSimulationId] = useState<number | null>(null);
     const activeSimulation = simulations.find((sim) => sim.id === activeSimulationId);
-
 
     const requireToken = async () => {
         const token = await getTokenWithRefresh();
@@ -275,6 +275,21 @@ export default function SimulatorClient() {
     }
   };
 
+  const handleRenameSimulation = async (id: number, name: string) => {
+    const token = await requireToken();
+    if (!token) return;
+    
+    try {
+      const updated = await renameSimulator(id, name, token);
+      setSimulations((prev) =>
+      prev.map((sim) => (sim.id === id ? { ...sim, name } : sim)),
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message: "Failed to rename simulator";
+      toast.error(message);
+    }
+  };
+
   const handleCloseSimulation = async (id: number) => {
     await handleDeleteSimulator(id);
     const newSimulations = simulations.filter((sim) => sim.id !== id);
@@ -318,6 +333,7 @@ export default function SimulatorClient() {
             onSelectSimulation={setActiveSimulationId}
             onCloseSimulation={handleCloseSimulation}
             onAddSimulation={handleAddSimulation}
+            onRenameSimulation={handleRenameSimulation}
             isBusy={isBusy}
           />
 

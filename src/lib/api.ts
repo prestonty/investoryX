@@ -464,6 +464,30 @@ export async function createSimulator(
     return res.json();
 }
 
+export async function renameSimulator(
+    simulatorId: number,
+    name: string,
+    token: string
+): Promise<SimulatorResponse> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
+        {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({name}),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to rename simulator");
+    }
+
+    return res.json();
+}
+
 export async function listSimulators(
     token: string,
 ): Promise<SimulatorResponse[]> {

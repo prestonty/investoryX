@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { GoPlus, GoX } from "react-icons/go";
 
 interface Simulation {
@@ -11,6 +12,7 @@ interface SimulationTabsProps {
   onSelectSimulation: (id: number) => void;
   onCloseSimulation?: (id: number) => void;
   onAddSimulation: () => void;
+  onRenameSimulation?: (id: number, name: string) => void;
   isBusy?: boolean;
 }
 
@@ -20,8 +22,39 @@ export function SimulationTabs({
   onSelectSimulation,
   onCloseSimulation,
   onAddSimulation,
+  onRenameSimulation,
   isBusy = false,
 }: SimulationTabsProps) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (editingId !== null) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editingId]);
+
+  const startEditing = (id: number, name: string) => {
+    if (isBusy) return;
+    setEditingId(id);
+    setDraftName(name);
+  };
+
+  const commitEditing = (id: number, name: string) => {
+    const nextName = name.trim();
+    setEditingId(null);
+    if (!nextName) return;
+    if (onRenameSimulation) {
+      onRenameSimulation(id, nextName);
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+  };
+
   return (
     <div className="bg-light flex items-end border-b border-gray/20 relative z-0">
       {simulations.map((simulation) => (
@@ -31,6 +64,7 @@ export function SimulationTabs({
             if (isBusy) return;
             onSelectSimulation(simulation.id);
           }}
+          onDoubleClick={() => startEditing(simulation.id, simulation.name)}
           className={`
             group relative flex items-center gap-1.5 px-3 py-2 rounded-t-lg cursor-pointer
             min-w-[140px] max-w-[200px]
@@ -41,7 +75,30 @@ export function SimulationTabs({
             }
           `}
         >
-          <span className="flex-1 truncate text-[13px]">{simulation.name}</span>
+          {editingId === simulation.id ? (
+            <input
+              ref={inputRef}
+              value={draftName}
+              onChange={(event) => setDraftName(event.target.value)}
+              onBlur={() => commitEditing(simulation.id, draftName)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  commitEditing(simulation.id, draftName);
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  cancelEditing();
+                }
+              }}
+              className="flex-1 min-w-0 rounded-sm bg-white/90 px-1.5 py-0.5 text-[13px] text-dark outline-none ring-1 ring-blue/60"
+              maxLength={40}
+            />
+          ) : (
+            <span className="flex-1 truncate text-[13px]">
+              {simulation.name}
+            </span>
+          )}
           <button
             disabled={isBusy}
             onClick={(e) => {
