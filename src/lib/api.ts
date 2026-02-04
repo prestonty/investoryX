@@ -1,5 +1,17 @@
 // BFF
 
+export async function stockExist(ticker: string): Promise<{ exists: boolean }> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/stocks/exists/${ticker}`,
+        { cache: "no-store" },
+    );
+
+    if(!res.ok) {
+        throw new Error("Failed to check if ticker exists");
+    }
+    return res.json();
+}
+
 // Fetch stock history for candlestick charts
 export async function getStockHistory(
     ticker: string,

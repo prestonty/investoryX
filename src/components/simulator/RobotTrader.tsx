@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 const DEFAULT_SIZE = 220;
@@ -42,10 +43,12 @@ export function RobotTrader({
         }}
       >
         <div className="relative w-full" style={{ aspectRatio: "3 / 4" }}>
-          <img
+          <Image
             src={frames[frameIndex]}
+            fill
+            sizes={`${maxWidth}px`}
             alt="Robot trader"
-            className="absolute inset-0 h-full w-full object-contain object-bottom select-none"
+            className="object-contain object-bottom select-none"
             style={{
               imageRendering: "pixelated",
               filter: "drop-shadow(0 10px 24px rgba(30, 58, 138, 0.35))",

@@ -5,7 +5,6 @@ import toast, { Toaster } from "react-hot-toast";
 
 import Navbar from "@/components/Navbar";
 import {
-    addTrackedStock,
     createSimulator,
     renameSimulator,
     deleteSimulator,
@@ -28,24 +27,58 @@ import { TradingActivityGraph } from '@/components/simulator/TradingActivityGrap
 import { FaChartBar } from "react-icons/fa";
 import { GoTable } from "react-icons/go";
 
-interface Simulation {
+export interface Simulation {
   id: number;
   name: string;
   stocks: Stock[];
   trades: TradeRecord[];
 }
 
-
 const MAX_SIMULATIONS = 3;
 
-export default function SimulatorClient() {
+interface SimulatorClientProps {
+  initialSimulations?: Simulation[];
+  initialActiveSimulationId?: number | null;
+}
+
+export default function SimulatorClient({
+  initialSimulations = [],
+  initialActiveSimulationId = null,
+}: SimulatorClientProps) {
     const [summary, setSummary] = useState<SimulatorSummaryResponse | null>(null);
     const [isBusy, setIsBusy] = useState(false);
     const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
 
-    const [simulations, setSimulations] = useState<Simulation[]>([]);
-    const [activeSimulationId, setActiveSimulationId] = useState<number | null>(null);
-    const activeSimulation = simulations.find((sim) => sim.id === activeSimulationId);
+    const [simulations, setSimulations] = useState<Simulation[]>(initialSimulations);
+    const [activeSimulation, setActiveSimulation] = useState<Simulation | null>(() => {
+      if (initialSimulations.length === 0) return null;
+      if (initialActiveSimulationId !== null) {
+        return (
+          initialSimulations.find((sim) => sim.id === initialActiveSimulationId) ??
+          initialSimulations[0]
+        );
+      }
+      return initialSimulations[0];
+    });
+    const activeSimulationId = activeSimulation?.id ?? null;
+    const hasInitialSimulations = initialSimulations.length > 0;
+
+    useEffect(() => {
+      if (!activeSimulationId) {
+        if (activeSimulation) {
+          setActiveSimulation(null);
+        }
+        return;
+      }
+      const refreshed = simulations.find((sim) => sim.id === activeSimulationId) ?? null;
+      if (!refreshed) {
+        setActiveSimulation(null);
+        return;
+      }
+      if (refreshed !== activeSimulation) {
+        setActiveSimulation(refreshed);
+      }
+    }, [simulations, activeSimulationId, activeSimulation]);
 
     const requireToken = async () => {
         const token = await getTokenWithRefresh();
@@ -57,6 +90,7 @@ export default function SimulatorClient() {
     };
 
     useEffect(() => {
+      if (hasInitialSimulations) return;
       let isMounted = true;
       const loadSimulators = async () => {
         const token = await requireToken();
@@ -110,11 +144,7 @@ export default function SimulatorClient() {
           );
           if (!isMounted) return;
           setSimulations(mapped);
-          if (mapped.length > 0) {
-            setActiveSimulationId(mapped[0].id);
-          } else {
-            setActiveSimulationId(null);
-          }
+          setActiveSimulation(mapped.length > 0 ? mapped[0] : null);
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Failed to load simulators";
@@ -126,7 +156,7 @@ export default function SimulatorClient() {
       return () => {
         isMounted = false;
       };
-    }, []);
+    }, [hasInitialSimulations]);
 
     const handleRunSimulator = async () => {
         if (!activeSimulationId) {
@@ -264,7 +294,7 @@ export default function SimulatorClient() {
         trades: [],
       };
       setSimulations((prev) => [...prev, newSimulation]);
-      setActiveSimulationId(newId);
+      setActiveSimulation(newSimulation);
       toast.success("Simulator created");
     } catch (error) {
       const message =
@@ -295,11 +325,11 @@ export default function SimulatorClient() {
     const newSimulations = simulations.filter((sim) => sim.id !== id);
     setSimulations(newSimulations);
     if (newSimulations.length === 0) {
-      setActiveSimulationId(null);
+      setActiveSimulation(null);
       return;
     }
     if (activeSimulationId === id) {
-      setActiveSimulationId(newSimulations[0].id);
+      setActiveSimulation(newSimulations[0]);
     }
   }
 
@@ -330,7 +360,10 @@ export default function SimulatorClient() {
           <SimulationTabs
             simulations={simulations}
             activeSimulationId={activeSimulationId}
-            onSelectSimulation={setActiveSimulationId}
+            onSelectSimulation={(id) => {
+              const next = simulations.find((sim) => sim.id === id) ?? null;
+              setActiveSimulation(next);
+            }}
             onCloseSimulation={handleCloseSimulation}
             onAddSimulation={handleAddSimulation}
             onRenameSimulation={handleRenameSimulation}

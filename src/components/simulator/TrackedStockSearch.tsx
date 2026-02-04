@@ -6,8 +6,9 @@ import toast from "react-hot-toast";
 
 import type { Item } from "@/types/item";
 import type { Stock } from "@/components/simulator/StockWatchlist";
-import { addTrackedStock, getStockPrice } from "@/lib/api";
+import { addTrackedStock, getStockPrice, stockExist } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
+import { parseNumber } from "@/lib/utils/helper";
 
 interface TrackedStockSearchProps {
     simulatorId: number | null;
@@ -19,13 +20,6 @@ interface TrackedStockSearchProps {
 
 const DEFAULT_MAX_ITEMS = 5;
 const DEFAULT_TARGET_ALLOCATION = 25;
-
-const parseNumber = (value: string | undefined) => {
-    if (!value) return 0;
-    const cleaned = value.replace(/[^0-9.-]/g, "");
-    const parsed = Number.parseFloat(cleaned);
-    return Number.isNaN(parsed) ? 0 : parsed;
-};
 
 export function TrackedStockSearch({
     simulatorId,
@@ -106,32 +100,40 @@ export function TrackedStockSearch({
 
         setIsSubmitting(true);
         try {
+            let exists = false;
+            try {
+                const result = await stockExist(ticker);
+                exists = result.exists === true;
+            } catch (err) {
+                console.error("ticker validation error:", err);
+                toast.error("Ticker not found");
+                return;
+            }
+
+            if (!exists) {
+                toast.error("Ticker not found");
+                return;
+            }
+
             const tracked = await addTrackedStock(
                 simulatorId,
                 { ticker, target_allocation: targetAllocation },
                 token,
             );
-            let stock: Stock = {
-                symbol: ticker,
-                companyName: item?.label ?? ticker,
-                trackedId: tracked.tracked_id ?? null,
-                price: 0,
-                change: 0,
-                changePercent: 0,
-            };
+            let priceData;
             try {
-                const basic = await getStockPrice(ticker);
-                stock = {
-                    symbol: ticker,
-                    companyName: basic.companyName ?? stock.companyName,
-                    trackedId: stock.trackedId,
-                    price: parseNumber(basic.stockPrice),
-                    change: parseNumber(basic.priceChange),
-                    changePercent: parseNumber(basic.priceChangePercent),
-                };
+                priceData = await getStockPrice(ticker);
             } catch (priceError) {
                 console.error("Price lookup failed:", priceError);
             }
+            let stock: Stock = {
+                symbol: ticker,
+                companyName: priceData?.companyName ?? item?.label ?? ticker,
+                trackedId: tracked.tracked_id ?? null,
+                price: parseNumber(priceData?.stockPrice),
+                change: parseNumber(priceData?.priceChange),
+                changePercent: parseNumber(priceData?.priceChangePercent),
+            };
             onAddStock(stock);
             setQuery("");
             setResults([]);
