@@ -214,6 +214,14 @@ export interface SimulatorResponse {
     name: string;
     starting_cash: number;
     cash_balance: number;
+    status: "Active Trading" | "Pause Trading";
+    frequency: "daily" | "twice_daily";
+    price_mode: "open" | "close";
+    last_run_at?: string;
+    next_run_at?: string;
+    max_position_pct?: number | null;
+    max_daily_loss_pct?: number | null;
+    stopped_reason?: string | null;
     created_at?: string;
     updated_at?: string;
     tickers: string[];
@@ -274,6 +282,13 @@ export interface SimulatorRunResponse {
 export interface CreateSimulatorRequest {
     name: string;
     starting_cash: number;
+}
+
+export interface UpdateSimulatorSettingsRequest {
+    frequency?: "daily" | "twice_daily";
+    price_mode?: "open" | "close";
+    max_position_pct?: number | null;
+    max_daily_loss_pct?: number | null;
 }
 
 export interface CreateTrackedStockRequest {
@@ -495,6 +510,31 @@ export async function renameSimulator(
     if (!res.ok) {
         const error = await res.json().catch(() => null);
         throw new Error(error?.detail || "Failed to rename simulator");
+    }
+
+    return res.json();
+}
+
+export async function updateSimulatorSettings(
+    simulatorId: number,
+    payload: UpdateSimulatorSettingsRequest,
+    token: string
+): Promise<SimulatorResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/settings`,
+        {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to update simulator settings");
     }
 
     return res.json();

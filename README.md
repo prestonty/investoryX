@@ -32,6 +32,7 @@ consistent error handling across the application.
 -   **Styling**: Tailwind CSS with custom animations
 -   **State Management**: React hooks with custom state management
 -   **Charts**: Plotly.js for financial data visualization
+-   **Icons**: `react-icons` (`fa`, `fa6`, and `go` icon sets)
 -   **Animations**: Framer Motion and GSAP for smooth user interactions
 -   **Authentication**: JWT-based authentication with secure cookie management
 

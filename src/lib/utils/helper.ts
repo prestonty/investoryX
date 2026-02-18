@@ -48,3 +48,22 @@ export const parseNumber = (value: string | number | undefined) => {
   const parsed = Number.parseFloat(cleaned);
   return Number.isNaN(parsed) ? 0 : parsed;
 };
+
+export const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2,
+    }).format(value);
+
+export const formatPercentage = (value?: number | null) => {
+    if (value === null || value === undefined) return "Not set";
+    return `${value}%`;
+};
+
+export const formatDateTime = (value?: string | null) => {
+    if (!value) return "Not run yet";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString();
+};
