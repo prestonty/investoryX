@@ -190,7 +190,7 @@ export default function SimulatorClient({
           ? { max_position_pct: parsedValue }
           : { max_daily_loss_pct: parsedValue };
 
-      const saved = await persistSimulatorSettings(payload, "Simulator setting updated");
+      const saved = await persistSimulatorSettings(payload);
       if (saved) {
         cancelRiskEdit();
       }
