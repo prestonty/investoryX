@@ -71,12 +71,10 @@ export async function getStockInfo(ticker: string) {
 // MARKET MOVERS API FUNCTIONS
 
 // Fetch top gainers (stocks with highest percentage gains)
-export async function getTopGainers(limit: number = 5) {
+export async function getTopGainers(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}`,
-        {
-            cache: "no-store",
-        },
+        `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}&min_price=${minPrice}`,
+        { cache: "no-store" },
     );
 
     if (!res.ok) {
@@ -87,12 +85,10 @@ export async function getTopGainers(limit: number = 5) {
 }
 
 // Fetch top losers (stocks with highest percentage losses)
-export async function getTopLosers(limit: number = 5) {
+export async function getTopLosers(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}`,
-        {
-            cache: "no-store",
-        },
+        `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}&min_price=${minPrice}`,
+        { cache: "no-store" },
     );
 
     if (!res.ok) {
@@ -103,12 +99,10 @@ export async function getTopLosers(limit: number = 5) {
 }
 
 // Fetch most actively traded stocks (highest volume)
-export async function getMostActive(limit: number = 5) {
+export async function getMostActive(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}`,
-        {
-            cache: "no-store",
-        },
+        `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}&min_price=${minPrice}`,
+        { cache: "no-store" },
     );
 
     if (!res.ok) {
