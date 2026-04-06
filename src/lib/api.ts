@@ -1,5 +1,4 @@
 // BFF
-import axios from "axios";
 
 export async function searchStocks(filterString: string, signal?: AbortSignal) {
     const res = await fetch(

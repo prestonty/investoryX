@@ -49,7 +49,7 @@ export function TrackedStockSearch({
                 }
                 try {
                     const res = await searchStocks(trimmed, controller.signal);
-                    setResults(res.data);
+                    setResults(Array.isArray(res) ? res : (res.data ?? []));
                 } catch (error: any) {
                     if (error.name === "AbortError") {
                         console.log("Request canceled");

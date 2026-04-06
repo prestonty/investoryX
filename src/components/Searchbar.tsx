@@ -70,7 +70,7 @@ export default function Searchbar({
                         filterString.trim(),
                         controller.signal,
                     );
-                    setResults(res.data);
+                    setResults(Array.isArray(res) ? res : (res.data ?? []));
                 } catch (error: any) {
                     if (error.name === "AbortError") {
                         console.log("Request canceled");
@@ -141,7 +141,7 @@ export default function Searchbar({
             <AnimatePresence>
                 {isFocused && (
                     <motion.ul
-                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-20 max-h-60 shadow-lg border border-light`}
+                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-[9999] max-h-60 shadow-lg border border-light`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -167,12 +167,6 @@ export default function Searchbar({
                                 >
                                     {item.label}
                                 </button>
-                                {/* <Link
-                                    className="text-left hover:bg-light w-full px-4 py-1"
-                                    href={`/stocks/${item.value}`}
-                                >
-                                    {item.label}
-                                </Link> */}
                             </motion.li>
                         ))}
                     </motion.ul>
