@@ -690,3 +690,21 @@ export async function runSimulator(
 
     return res.json();
 }
+
+export async function getDevFlags(): Promise<{ dev_mode: boolean }> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, { cache: "no-store" });
+    if (!res.ok) return { dev_mode: false };
+    return res.json();
+}
+
+export async function runPipeline(token: string, day?: string) {
+    const url = new URL(`${process.env.NEXT_PUBLIC_URL}/dev/run-pipeline`);
+    if (day) url.searchParams.set("day", day);
+    const res = await fetch(url.toString(), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to run pipeline");
+    return res.json();
+}

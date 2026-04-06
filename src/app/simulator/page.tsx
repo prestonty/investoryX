@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import SimulatorClient, { type Simulation } from "./SimulatorClient";
 import { getSimulatorSummary, getStockPrice, listSimulators } from "@/lib/api";
 import { parseNumber } from "@/lib/utils/helper";
-import { useEffect } from "react";
 
 export default async function SimulatorPage() {
     const cookieStore = await cookies();
@@ -17,11 +16,20 @@ export default async function SimulatorPage() {
         const mapped: Simulation[] = await Promise.all(
             simulators.map(async (simulator): Promise<Simulation> => {
                 let stocks: Simulation["stocks"] = [];
+                let trades: Simulation["trades"] = [];
                 try {
                     const summary = await getSimulatorSummary(
                         simulator.simulator_id,
                         token,
                     );
+                    trades = (summary.trades ?? []).map((t) => ({
+                        id: String(t.trade_id),
+                        symbol: t.ticker,
+                        action: t.side.toUpperCase() as "BUY" | "SELL" | "HOLD",
+                        price: t.price,
+                        volume: t.shares,
+                        timestamp: new Date(t.executed_at ?? Date.now()),
+                    }));
                     const tracked = summary.tracked_stocks ?? [];
                     stocks = await Promise.all(
                         tracked.map(async (trackedStock) => {
@@ -65,7 +73,7 @@ export default async function SimulatorPage() {
                     max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
                     stopped_reason: simulator.stopped_reason ?? null,
                     stocks,
-                    trades: [],
+                    trades,
                 };
             }),
         );

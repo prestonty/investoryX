@@ -65,7 +65,7 @@ export const formatDateTime = (value?: string | null) => {
     if (!value) return "Not run yet";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString();
+    return date.toLocaleString("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 };
 
 // Helper to ensure we are working with a valid number
