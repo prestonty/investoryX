@@ -1,4 +1,14 @@
 // BFF
+import axios from "axios";
+
+export async function searchStocks(filterString: string, signal?: AbortSignal) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
+        { signal, cache: "no-store" },
+    );
+    if (!res.ok) throw new Error("Failed to search stocks");
+    return res.json();
+}
 
 export async function stockExist(ticker: string): Promise<{ exists: boolean }> {
     const res = await fetch(
@@ -6,7 +16,7 @@ export async function stockExist(ticker: string): Promise<{ exists: boolean }> {
         { cache: "no-store" },
     );
 
-    if(!res.ok) {
+    if (!res.ok) {
         throw new Error("Failed to check if ticker exists");
     }
     return res.json();
@@ -51,7 +61,6 @@ export async function getStockInfo(ticker: string) {
     const res = await fetch(url, {
         cache: "no-store",
     });
-
 
     if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -412,15 +421,12 @@ export async function getWatchlistQuotes(
     token: string,
 ): Promise<WatchlistQuoteItem[]> {
     const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/watchlist/quotes`;
-    const res = await fetch(
-        url,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
+    const res = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${token}`,
         },
-    );
+        cache: "no-store",
+    });
 
     if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -488,16 +494,17 @@ export async function createSimulator(
 export async function renameSimulator(
     simulatorId: number,
     name: string,
-    token: string
+    token: string,
 ): Promise<SimulatorResponse> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
         {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({name}),
+            body: JSON.stringify({ name }),
         },
     );
 
@@ -512,7 +519,7 @@ export async function renameSimulator(
 export async function updateSimulatorSettings(
     simulatorId: number,
     payload: UpdateSimulatorSettingsRequest,
-    token: string
+    token: string,
 ): Promise<SimulatorResponse> {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/settings`,

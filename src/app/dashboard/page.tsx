@@ -18,7 +18,7 @@ import {
 
 type Tab = "gainers" | "losers" | "active";
 
-const MAX_ARTICLES = 2;
+const MAX_ARTICLES = 4;
 
 export default function Dashboard() {
     const [news, setNews] = useState<Article[] | null>(null);

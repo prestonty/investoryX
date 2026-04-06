@@ -6,7 +6,12 @@ import toast from "react-hot-toast";
 
 import type { Item } from "@/types/item";
 import type { Stock } from "@/components/simulator/StockWatchlist";
-import { addTrackedStock, getStockPrice, stockExist } from "@/lib/api";
+import {
+    addTrackedStock,
+    getStockPrice,
+    searchStocks,
+    stockExist,
+} from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
 import { parseNumber } from "@/lib/utils/helper";
 
@@ -43,18 +48,14 @@ export function TrackedStockSearch({
                     return;
                 }
                 try {
-                    const res = await axios.get(
-                        `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${trimmed}`,
-                        {
-                            signal: controller.signal,
-                        },
-                    );
+                    const res = await searchStocks(trimmed, controller.signal);
                     setResults(res.data);
-                } catch (error) {
-                    if (axios.isCancel(error)) {
-                        return;
+                } catch (error: any) {
+                    if (error.name === "AbortError") {
+                        console.log("Request canceled");
+                    } else {
+                        console.error("Search error:", error);
                     }
-                    console.error("Search error:", error);
                 }
             };
 
@@ -155,35 +156,35 @@ export function TrackedStockSearch({
     };
 
     return (
-        <div className="bg-white rounded-lg border border-light p-4 shadow-sm mb-4">
-            <form onSubmit={handleSubmit} className="flex gap-2 items-center">
+        <div className='bg-white rounded-lg border border-light p-4 shadow-sm mb-4'>
+            <form onSubmit={handleSubmit} className='flex gap-2 items-center'>
                 <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search"
+                    placeholder='Search'
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className="flex-[1] min-w-[140px] max-w-[200px] rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-none focus:ring-2 focus:ring-blue/40"
+                    className='flex-[1] min-w-[140px] max-w-[200px] rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-none focus:ring-2 focus:ring-blue/40'
                 />
                 <button
-                    type="submit"
+                    type='submit'
                     disabled={isSubmitting}
-                    className="shrink-0 rounded-md bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors disabled:opacity-60"
+                    className='shrink-0 rounded-md bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-[#6A84F5] transition-colors disabled:opacity-60'
                 >
                     {isSubmitting ? "Adding..." : "Add"}
                 </button>
             </form>
             {isFocused && results.length > 0 && (
-                <div className="mt-3 space-y-2">
+                <div className='mt-3 space-y-2'>
                     {results.slice(0, 5).map((item) => (
                         <button
                             key={`${item.value}-${item.label}`}
-                            type="button"
+                            type='button'
                             onMouseDown={(event) => event.preventDefault()}
                             onClick={() => handleAddTicker(item)}
-                            className="w-full rounded-md border border-light px-3 py-2 text-left text-sm hover:bg-light/50 transition-colors"
+                            className='w-full rounded-md border border-light px-3 py-2 text-left text-sm hover:bg-light/50 transition-colors'
                         >
-                            <span className="font-medium text-dark">
+                            <span className='font-medium text-dark'>
                                 {item.label}
                             </span>
                         </button>

@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { FourSquare } from "react-loading-indicators";
 import axios from "axios";
-import { dateConverter } from "@/lib/utils/helper";
-import Image from "next/image";
 
 import Navbar from "@/components/Navbar";
+import ArticleCard from "@/components/ArticleCard";
 import { Article } from "@/types/article";
 
 export default function Dashboard() {
@@ -33,57 +32,22 @@ export default function Dashboard() {
             </div>
 
             <div className='w-[94%] mx-auto flex flex-col mb-6'>
-                <div className='h-100 bg-white rounded-[30px] shadow-dark-md px-10 mb-6 py-6'>
-                    <div className='mb-12'>
-                        <h2 className='text-dark text-2xl'>Latest News</h2>
-                    </div>
-                    <div className='h-fit min-h-screen'>
+                <div className='bg-white rounded-[30px] shadow-dark-md px-10 mb-6 py-6'>
+                    <h2 className='text-dark text-2xl'>Latest News</h2>
+                    <hr className='h-[4px] border-none bg-blue mt-1 mb-4 rounded-[4px]' />
+                    <div>
                         {news != null ? (
-                            news.map((article, index) => (
-                                <a
-                                    key={index}
-                                    href={article.url}
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                >
-                                    <div className='flex my-4 hover:bg-light transition-colors duration-1000'>
-                                        <Image
-                                            src={article.image}
-                                            className='min-w-[50px] max-w-[400px]'
-                                            width={400}
-                                            height={0}
-                                            alt='article thumbnail'
-                                        />
-
-                                        <div className='ml-4 flex flex-col justify-between pb-2'>
-                                            <div>
-                                                <p className='text-dark text-xl font-medium'>
-                                                    {article.headline}
-                                                </p>
-                                                <p className='text-dark'>
-                                                    {article.source}
-                                                </p>
-                                            </div>
-                                            <div className='flex flex-col gap-y-2'>
-                                                <p className='text-dark'>
-                                                    {`Relevant Tickers: ${
-                                                        article?.tickers?.length
-                                                            ? article.tickers.join(
-                                                                  ", ",
-                                                              )
-                                                            : "N/A"
-                                                    }`}
-                                                </p>
-                                                <p className='text-dark'>
-                                                    {article.datetime}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                            ))
+                            news.length > 0 ? (
+                                news.map((article, index) => (
+                                    <ArticleCard key={index} article={article} />
+                                ))
+                            ) : (
+                                <p className='text-gray text-sm mt-4'>
+                                    No news available.
+                                </p>
+                            )
                         ) : (
-                            <div className='flex h-[80%] justify-center align-center content-center items-center'>
+                            <div className='flex justify-center items-center h-40'>
                                 <FourSquare
                                     color='#181D2A'
                                     size='medium'
