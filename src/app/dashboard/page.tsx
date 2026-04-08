@@ -70,9 +70,9 @@ export default function Dashboard() {
 
             <div className='w-[94%] mx-auto flex flex-col gap-6 pb-10'>
                 {/* Top row: News (2fr) + Trending (1fr) */}
-                <div className='grid grid-cols-1 xl:grid-cols-2-1 gap-6 items-start'>
+                <div className='grid grid-cols-1 xl:grid-cols-2-1 gap-6 items-stretch'>
                     {/* Latest News */}
-                    <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6'>
+                    <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6 h-full'>
                         <h2 className='text-dark text-2xl'>Latest News</h2>
                         <hr className='h-[4px] border-none bg-blue mt-1 rounded-[4px]' />
                         <div className='mt-2'>
@@ -103,7 +103,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Trending Stocks */}
-                    <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6'>
+                    <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6 h-full'>
                         <h2 className='text-dark text-2xl'>Trending Stocks</h2>
                         <hr className='h-[4px] border-none bg-blue mt-1 rounded-[4px]' />
 

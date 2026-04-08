@@ -14,7 +14,14 @@ import {
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
 
-type SortMode = "ticker" | "change";
+type SortMode = "ticker" | "change-desc" | "change-asc";
+
+const SORT_CYCLE: SortMode[] = ["ticker", "change-desc", "change-asc"];
+const SORT_LABELS: Record<SortMode, string> = {
+    "ticker": "A–Z",
+    "change-desc": "Change ▼",
+    "change-asc": "Change ▲",
+};
 
 function sortItems(items: WatchlistQuoteItem[], sortMode: SortMode) {
     const sorted = [...items];
@@ -26,7 +33,7 @@ function sortItems(items: WatchlistQuoteItem[], sortMode: SortMode) {
     sorted.sort((a, b) => {
         const aValue = a.priceChangePercent ?? Number.NEGATIVE_INFINITY;
         const bValue = b.priceChangePercent ?? Number.NEGATIVE_INFINITY;
-        return bValue - aValue;
+        return sortMode === "change-desc" ? bValue - aValue : aValue - bValue;
     });
     return sorted;
 }
@@ -47,7 +54,10 @@ export default function WatchlistClient({
     );
 
     const handleToggleSort = () => {
-        setSortMode((prev) => (prev === "ticker" ? "change" : "ticker"));
+        setSortMode((prev) => {
+            const idx = SORT_CYCLE.indexOf(prev);
+            return SORT_CYCLE[(idx + 1) % SORT_CYCLE.length];
+        });
     };
 
     const handleRemove = (watchlistId: number) => {
@@ -109,42 +119,45 @@ export default function WatchlistClient({
                     },
                 }}
             />
+
             <Searchbar
                 placeholder="Add to Watchlist"
                 options={[]}
                 onChange={() => {}}
                 onSelect={handleAddFromSearch}
             />
-            <div className="flex justify-between items-center">
-                <p className="text-dark font-medium">
-                    {items.length} {items.length === 1 ? "item" : "items"}
-                </p>
+
+            <div className="flex justify-between items-center px-1">
+                <div className="flex items-center gap-x-2">
+                    <span className="text-dark font-semibold text-sm">Holdings</span>
+                    <span className="text-xs font-semibold bg-blue/10 text-blue px-2 py-0.5 rounded-full">
+                        {items.length}
+                    </span>
+                </div>
                 <button
                     type="button"
                     onClick={handleToggleSort}
-                    className="text-sm px-4 py-2 rounded-full border border-dark text-dark hover:bg-dark hover:text-white transition-all"
+                    className="flex items-center gap-x-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-light text-gray hover:border-blue hover:text-blue transition-all"
                 >
-                    Sort: {sortMode === "ticker" ? "Ticker" : "Change %"}
+                    <span>Sort:</span>
+                    <span className="font-semibold">{SORT_LABELS[sortMode]}</span>
                 </button>
             </div>
 
             {sortedItems.length === 0 ? (
-                <div className="text-dark text-center py-8">
-                    Your watchlist is empty.
+                <div className="flex flex-col items-center justify-center py-16 gap-y-2 text-center">
+                    <p className="text-dark font-semibold">Your watchlist is empty</p>
+                    <p className="text-gray text-sm">Search above to add your first stock.</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-y-6">
-                    {sortedItems.map((item, index) => (
-                        <div key={item.watchlist_id}>
-                            <StockWatchItem
-                                item={item}
-                                onRemove={handleRemove}
-                                isRemoving={
-                                    isPending && pendingId === item.watchlist_id
-                                }
-                            />
-                            {index < sortedItems.length - 1 && <hr className="my-4" />}
-                        </div>
+                <div className="flex flex-col">
+                    {sortedItems.map((item) => (
+                        <StockWatchItem
+                            key={item.watchlist_id}
+                            item={item}
+                            onRemove={handleRemove}
+                            isRemoving={isPending && pendingId === item.watchlist_id}
+                        />
                     ))}
                 </div>
             )}

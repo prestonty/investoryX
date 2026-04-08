@@ -35,7 +35,8 @@ export async function getStockHistory(
     );
 
     if (!res.ok) {
-        throw new Error("Failed to fetch stock history");
+        const body = await res.text().catch(() => "");
+        throw new Error(`Failed to fetch stock history: ${res.status} ${res.statusText} — ${body}`);
     }
 
     return res.json();
