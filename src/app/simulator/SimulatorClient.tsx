@@ -15,10 +15,12 @@ import {
     listSimulators,
     runSimulator,
     getDevFlags,
+    getStrategies,
     runPipeline,
     type SimulatorResponse,
     type UpdateSimulatorSettingsRequest,
     type SimulatorSummaryResponse,
+    type StrategyOption,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
 import {
@@ -49,6 +51,7 @@ export interface Simulation {
     status: "Active Trading" | "Pause Trading";
     frequency: "daily" | "twice_daily";
     price_mode: "open" | "close";
+    strategy_name: string;
     last_run_at?: string | null;
     next_run_at?: string | null;
     max_position_pct?: number | null;
@@ -86,6 +89,7 @@ export default function SimulatorClient({
     const [riskDraft, setRiskDraft] = useState("");
 
     const [devMode, setDevMode] = useState(false);
+    const [strategies, setStrategies] = useState<StrategyOption[]>([]);
     const [pipelineDay, setPipelineDay] = useState(() => {
         const d = new Date();
         if (d.getDay() === 0) d.setDate(d.getDate() - 2);
@@ -130,6 +134,7 @@ export default function SimulatorClient({
 
     useEffect(() => {
         getDevFlags().then((flags) => setDevMode(flags.dev_mode));
+        getStrategies().then(setStrategies);
     }, []);
 
     const requireToken = async () => {
@@ -153,6 +158,7 @@ export default function SimulatorClient({
             max_position_pct: simulator.max_position_pct ?? null,
             max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
             stopped_reason: simulator.stopped_reason ?? null,
+            strategy_name: simulator.strategy_name || "sma_crossover",
         };
         setSimulations((prev) =>
             prev.map((sim) =>
@@ -318,6 +324,7 @@ export default function SimulatorClient({
                             max_daily_loss_pct:
                                 simulator.max_daily_loss_pct ?? null,
                             stopped_reason: simulator.stopped_reason ?? null,
+                            strategy_name: simulator.strategy_name || "sma_crossover",
                             stocks,
                             trades,
                         };
@@ -560,6 +567,7 @@ export default function SimulatorClient({
                 max_position_pct: simulator.max_position_pct ?? null,
                 max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
                 stopped_reason: simulator.stopped_reason ?? null,
+                strategy_name: simulator.strategy_name || "sma_crossover",
                 stocks: [],
                 trades: [],
             };
@@ -808,6 +816,31 @@ export default function SimulatorClient({
                                                                             value as Simulation["price_mode"],
                                                                     },
                                                                 );
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    <div className='rounded-md bg-light/40 px-3 py-2'>
+                                                        <p className='text-gray text-xs mb-1'>
+                                                            Strategy
+                                                        </p>
+                                                        <Dropdown
+                                                            className='w-full'
+                                                            value={activeSimulation.strategy_name}
+                                                            disabled={isBusy || strategies.length === 0}
+                                                            options={
+                                                                strategies.length > 0
+                                                                    ? strategies
+                                                                    : [
+                                                                          { label: "SMA Crossover", value: "sma_crossover" },
+                                                                          { label: "Pairs Trading (Stat Arb)", value: "stat_arb_pairs" },
+                                                                          { label: "Auction Liquidity Provider", value: "auction_liquidity_provider" },
+                                                                      ]
+                                                            }
+                                                            onChange={(value) => {
+                                                                void persistSimulatorSettings({
+                                                                    strategy_name: value as StrategyOption["value"],
+                                                                });
                                                             }}
                                                         />
                                                     </div>

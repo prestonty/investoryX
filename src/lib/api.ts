@@ -36,7 +36,9 @@ export async function getStockHistory(
 
     if (!res.ok) {
         const body = await res.text().catch(() => "");
-        throw new Error(`Failed to fetch stock history: ${res.status} ${res.statusText} — ${body}`);
+        throw new Error(
+            `Failed to fetch stock history: ${res.status} ${res.statusText} — ${body}`,
+        );
     }
 
     return res.json();
@@ -225,6 +227,7 @@ export interface SimulatorResponse {
     max_position_pct?: number | null;
     max_daily_loss_pct?: number | null;
     stopped_reason?: string | null;
+    strategy_name: string;
     created_at?: string;
     updated_at?: string;
     tickers: string[];
@@ -287,11 +290,19 @@ export interface CreateSimulatorRequest {
     starting_cash: number;
 }
 
+export type StrategyName = "sma_crossover" | "stat_arb_pairs" | "auction_liquidity_provider";
+
+export interface StrategyOption {
+    value: StrategyName;
+    label: string;
+}
+
 export interface UpdateSimulatorSettingsRequest {
     frequency?: "daily" | "twice_daily";
     price_mode?: "open" | "close";
     max_position_pct?: number | null;
     max_daily_loss_pct?: number | null;
+    strategy_name?: StrategyName;
 }
 
 export interface CreateTrackedStockRequest {
@@ -693,8 +704,18 @@ export async function runSimulator(
 }
 
 export async function getDevFlags(): Promise<{ dev_mode: boolean }> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, { cache: "no-store" });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, {
+        cache: "no-store",
+    });
     if (!res.ok) return { dev_mode: false };
+    return res.json();
+}
+
+export async function getStrategies(): Promise<StrategyOption[]> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/strategies`, {
+        cache: "no-store",
+    });
+    if (!res.ok) return [];
     return res.json();
 }
 
@@ -702,7 +723,7 @@ export async function runPipeline(token: string, day?: string) {
     const url = new URL(`${process.env.NEXT_PUBLIC_URL}/dev/run-pipeline`);
     if (day) url.searchParams.set("day", day);
     const res = await fetch(url.toString(), {
-        method: "POST",
+        method: "GET",
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
     });
