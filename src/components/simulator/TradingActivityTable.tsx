@@ -8,6 +8,8 @@ export interface TradeRecord {
     price: number;
     volume: number;
     timestamp: Date;
+    source?: string;
+    cashAfter?: number;
 }
 
 interface TradingActivityTableProps {
@@ -65,6 +67,9 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                                 Volume
                             </th>
                             <th className='text-left px-4 py-3 text-sm text-gray'>
+                                Balance After
+                            </th>
+                            <th className='text-left px-4 py-3 text-sm text-gray'>
                                 Time
                             </th>
                         </tr>
@@ -76,13 +81,18 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                                 className='border-b border-light hover:bg-light/30 transition-colors'
                             >
                                 <td className='px-4 py-3'>
-                                    <div className='flex items-center gap-2'>
+                                    <div className='flex items-center gap-2 flex-wrap'>
                                         {getActionIcon(record.action)}
                                         <span
                                             className={`font-medium ${getActionColor(record.action)}`}
                                         >
                                             {record.action}
                                         </span>
+                                        {record.source === "backtest" && (
+                                            <span className='text-xs font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded'>
+                                                BACKTEST
+                                            </span>
+                                        )}
                                     </div>
                                 </td>
                                 <td className='px-4 py-3 text-dark font-medium'>
@@ -94,6 +104,11 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                                 <td className='px-4 py-3 text-dark'>
                                     {record.volume.toLocaleString()}
                                 </td>
+                                <td className='px-4 py-3 text-dark text-sm'>
+                                    {record.cashAfter != null
+                                        ? `$${Number(record.cashAfter).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                        : "—"}
+                                </td>
                                 <td className='px-4 py-3 text-gray text-sm'>
                                     {formatDate(record.timestamp)}
                                 </td>
@@ -102,7 +117,7 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                         {records.length === 0 && (
                             <tr>
                                 <td
-                                    colSpan={5}
+                                    colSpan={6}
                                     className='px-4 py-12 text-center text-gray'
                                 >
                                     No trading activity yet

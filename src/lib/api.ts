@@ -258,6 +258,8 @@ export interface SimulatorTradeResponse {
     shares: number;
     fee: number;
     executed_at?: string;
+    source?: string;
+    balance_after?: number;
 }
 
 export interface SimulatorCashLedgerResponse {
@@ -716,6 +718,93 @@ export async function getStrategies(): Promise<StrategyOption[]> {
         cache: "no-store",
     });
     if (!res.ok) return [];
+    return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Trading Sandbox (Backtest)
+// ---------------------------------------------------------------------------
+
+export interface BacktestRequest {
+    start_date: string; // ISO "YYYY-MM-DD"
+    end_date: string;
+    price_mode?: "open" | "close";
+    clear_previous?: boolean;
+}
+
+export interface BacktestDayResult {
+    day: string;
+    signals_generated: number;
+    trades_executed: number;
+    cash_after: number;
+    skipped_tickers: string[];
+}
+
+export interface BacktestResult {
+    simulator_id: number;
+    start_date: string;
+    end_date: string;
+    trading_days_run: number;
+    total_trades: number;
+    starting_cash: number;
+    final_cash: number;
+    pnl: number;
+    pnl_pct: number;
+    day_results: BacktestDayResult[];
+    warnings: string[];
+}
+
+export interface BacktestLaunchResponse {
+    task_id: string;
+    message: string;
+}
+
+export interface BacktestStatusResponse {
+    task_id: string;
+    status: "pending" | "running" | "success" | "failure";
+    result?: BacktestResult;
+    error?: string;
+}
+
+export async function launchBacktest(
+    simulatorId: number,
+    payload: BacktestRequest,
+    token: string,
+): Promise<BacktestLaunchResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        },
+    );
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to launch backtest");
+    }
+    return res.json();
+}
+
+export async function getBacktestStatus(
+    simulatorId: number,
+    taskId: string,
+    token: string,
+): Promise<BacktestStatusResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest/status/${taskId}`,
+        {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+        },
+    );
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to get backtest status");
+    }
     return res.json();
 }
 

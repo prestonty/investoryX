@@ -21,6 +21,7 @@ import {
     type UpdateSimulatorSettingsRequest,
     type SimulatorSummaryResponse,
     type StrategyOption,
+    type BacktestResult,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
 import {
@@ -39,6 +40,7 @@ import {
     TradeRecord,
 } from "@/components/simulator/TradingActivityTable";
 import { TradingActivityGraph } from "@/components/simulator/TradingActivityGraph";
+import { TradingSandboxSection } from "@/components/simulator/TradingSandboxSection";
 import Dropdown from "@/components/Dropdown";
 import { FaChartBar } from "react-icons/fa";
 import { GoTable } from "react-icons/go";
@@ -267,6 +269,7 @@ export default function SimulatorClient({
                                 price: t.price,
                                 volume: t.shares,
                                 timestamp: new Date(t.executed_at ?? Date.now()),
+                                cashAfter: t.balance_after,
                             }));
                             const tracked = summary.tracked_stocks ?? [];
                             stocks = await Promise.all(
@@ -379,6 +382,7 @@ export default function SimulatorClient({
                 price: t.price,
                 volume: t.shares,
                 timestamp: new Date(t.executed_at ?? Date.now()),
+                cashAfter: t.balance_after,
             }));
             setSimulations((prev) =>
                 prev.map((sim) =>
@@ -417,6 +421,7 @@ export default function SimulatorClient({
                     price: t.price,
                     volume: t.shares,
                     timestamp: new Date(t.executed_at ?? Date.now()),
+                    cashAfter: t.balance_after,
                 }));
                 setSimulations((prev) =>
                     prev.map((sim) =>
@@ -433,6 +438,35 @@ export default function SimulatorClient({
             );
         } finally {
             setIsBusy(false);
+        }
+    };
+
+    const handleBacktestComplete = async (_result: BacktestResult) => {
+        if (!activeSimulationId) return;
+        const token = await requireToken();
+        if (!token) return;
+        try {
+            const latestSummary = await getSimulatorSummary(activeSimulationId, token);
+            setSummary(latestSummary);
+            updateSimulationFromResponse(latestSummary.simulator);
+            const mappedTrades = (latestSummary.trades ?? []).map((t) => ({
+                id: String(t.trade_id),
+                symbol: t.ticker,
+                action: t.side.toUpperCase() as TradeRecord["action"],
+                price: t.price,
+                volume: t.shares,
+                timestamp: new Date(t.executed_at ?? Date.now()),
+                source: t.source,
+                cashAfter: t.balance_after,
+            }));
+            setSimulations((prev) =>
+                prev.map((sim) =>
+                    sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
+                ),
+            );
+            toast.success("Backtest complete — trades updated");
+        } catch {
+            toast.error("Backtest complete but failed to refresh trades");
         }
     };
 
@@ -1016,6 +1050,17 @@ export default function SimulatorClient({
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Trading Sandbox Section */}
+                                    {activeSimulationId && (
+                                        <TradingSandboxSection
+                                            simulatorId={activeSimulationId}
+                                            priceMode={activeSimulation.price_mode}
+                                            isBusy={isBusy}
+                                            getToken={requireToken}
+                                            onBacktestComplete={handleBacktestComplete}
+                                        />
+                                    )}
 
                                     {/* Trading Activity Section */}
                                     <div>
