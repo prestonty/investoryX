@@ -19,8 +19,8 @@ export function RobotTrader({
 }: RobotTraderProps) {
   const frames = useMemo(
     () => [
-      "/simulator/astro_2.png",
-      "/simulator/astro_3.png",
+      "/simulator/astro_2.webp",
+      "/simulator/astro_3.webp",
     ],
     [],
   );
@@ -48,7 +48,6 @@ export function RobotTrader({
             fill
             sizes={`${maxWidth}px`}
             alt="Robot trader"
-            unoptimized
             className="object-contain object-bottom select-none"
             style={{
               imageRendering: "pixelated",
