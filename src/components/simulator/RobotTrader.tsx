@@ -48,6 +48,7 @@ export function RobotTrader({
             fill
             sizes={`${maxWidth}px`}
             alt="Robot trader"
+            unoptimized
             className="object-contain object-bottom select-none"
             style={{
               imageRendering: "pixelated",

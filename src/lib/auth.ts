@@ -60,6 +60,10 @@ export async function logout(): Promise<void> {
     deleteCookie("access_token");
     deleteCookie("refresh_token");
 
+    // Clear guest mode if active
+    document.cookie =
+        "guest_mode=;path=/;expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
     // Redirect to login page
     window.location.href = "/login";
 }
@@ -92,6 +96,31 @@ export function requireAuth(): boolean {
 // Set authentication token (used after successful login)
 export function setAuthToken(token: string): void {
     setCookie("access_token", token, 7); // 7 days expiry
+}
+
+// Guest mode — browse without an account, data stored locally
+export function enterGuestMode(): void {
+    if (typeof window === "undefined") return;
+    document.cookie = "guest_mode=true;path=/;max-age=86400"; // 24h
+}
+
+export function exitGuestMode(): void {
+    if (typeof window === "undefined") return;
+    document.cookie =
+        "guest_mode=;path=/;expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+}
+
+export function isGuestMode(): boolean {
+    if (typeof window === "undefined") return false;
+    return !getCookie("access_token") && document.cookie.includes("guest_mode=true");
+}
+
+export type AuthState = "authenticated" | "guest" | "unauthenticated";
+
+export function getAuthState(): AuthState {
+    if (isAuthenticated()) return "authenticated";
+    if (isGuestMode()) return "guest";
+    return "unauthenticated";
 }
 
 // Refresh access token using refresh token

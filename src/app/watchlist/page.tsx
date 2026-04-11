@@ -75,6 +75,8 @@ export default async function WatchList() {
         redirect("/login?redirectTo=/watchlist");
     }
 
+    const isGuest = !accessToken && cookieStore.get("guest_mode")?.value === "true";
+
     return (
         <div className="bg-light font-[family-name:var(--font-geist-sans)]">
             <Navbar search={true} />
@@ -86,7 +88,7 @@ export default async function WatchList() {
             <div className="flex-col w-2/5 mx-auto min-w-[30rem] mt-4">
                 <div className="h-full bg-white rounded-[30px] shadow-dark-md px-10 py-6 flex items-center mb-6">
                     <div className="flex-col w-full px-[4%] mx-auto gap-y-10">
-                        <WatchlistClient initialItems={items} />
+                        <WatchlistClient initialItems={items} isGuest={isGuest} />
                     </div>
                 </div>
             </div>

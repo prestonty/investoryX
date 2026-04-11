@@ -39,13 +39,18 @@ export default function Landing() {
                 </MagneticWrapper>
 
                 <div className='absolute text-white bottom-[5%] right-[7%] h-[50%]'>
-                    <h1 className='text-6xl md:text-8xl mt-20 mb-[20%] px-8 py-2 border-2 border-light 2xl:border-dark bg-dark rounded-full'>
+                    <h1 className='text-6xl md:text-8xl mt-20 mb-[10%] px-8 py-2 border-2 border-light 2xl:border-dark bg-dark rounded-full'>
                         InvestoryX
                     </h1>
-                    <div className='w-fit m-auto flex flex-col'>
+                    <div className='w-fit mx-auto flex flex-col gap-8'>
                         <NavButton
                             route='/dashboard'
                             text='Get Started'
+                            className='px-10'
+                        ></NavButton>
+                        <NavButton
+                            route='/login'
+                            text='Login'
                             className='px-10'
                         ></NavButton>
                     </div>

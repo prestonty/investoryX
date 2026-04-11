@@ -21,6 +21,7 @@ interface TrackedStockSearchProps {
     onAddStock: (stock: Stock) => void;
     maxItems?: number;
     targetAllocation?: number;
+    isGuest?: boolean;
 }
 
 const DEFAULT_MAX_ITEMS = 5;
@@ -32,6 +33,7 @@ export function TrackedStockSearch({
     onAddStock,
     maxItems = DEFAULT_MAX_ITEMS,
     targetAllocation = DEFAULT_TARGET_ALLOCATION,
+    isGuest = false,
 }: TrackedStockSearchProps) {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<Item[]>([]);
@@ -90,6 +92,47 @@ export function TrackedStockSearch({
 
         if (existingSymbols.length >= maxItems) {
             toast("Watchlist is full");
+            return;
+        }
+
+        if (isGuest) {
+            setIsSubmitting(true);
+            try {
+                let exists = false;
+                try {
+                    const result = await stockExist(ticker);
+                    exists = result.exists === true;
+                } catch {
+                    toast.error("Ticker not found");
+                    return;
+                }
+                if (!exists) {
+                    toast.error("Ticker not found");
+                    return;
+                }
+                let priceData;
+                try {
+                    priceData = await getStockPrice(ticker);
+                } catch {
+                    // price is optional
+                }
+                const stock: Stock = {
+                    symbol: ticker,
+                    companyName: priceData?.companyName ?? item?.label ?? ticker,
+                    trackedId: null,
+                    price: parseNumber(priceData?.stockPrice),
+                    change: parseNumber(priceData?.priceChange),
+                    changePercent: parseNumber(priceData?.priceChangePercent),
+                };
+                onAddStock(stock);
+                setQuery("");
+                setResults([]);
+                toast.success(`${ticker} added to watchlist`);
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Failed to add stock");
+            } finally {
+                setIsSubmitting(false);
+            }
             return;
         }
 

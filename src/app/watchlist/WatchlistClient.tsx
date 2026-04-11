@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
+import GuestBanner from "@/components/GuestBanner";
 import Searchbar from "@/components/Searchbar";
 import StockWatchItem from "@/components/StockWatchItem";
 import type { WatchlistQuoteItem } from "@/lib/api";
@@ -13,6 +14,12 @@ import {
     removeFromWatchlist,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
+import {
+    addGuestWatchlistItem,
+    getGuestWatchlist,
+    removeGuestWatchlistItem,
+    type GuestWatchlistItem,
+} from "@/lib/guestStorage";
 
 type SortMode = "ticker" | "change-desc" | "change-asc";
 
@@ -38,15 +45,47 @@ function sortItems(items: WatchlistQuoteItem[], sortMode: SortMode) {
     return sorted;
 }
 
+// Derive a stable unique negative integer from a UUID so guest items
+// have distinct watchlist_id values for React keys and remove lookups.
+function localIdToNegInt(localId: string): number {
+    const hex = localId.replace(/-/g, "").slice(-8);
+    return -(parseInt(hex, 16) + 1);
+}
+
+function guestItemToQuoteItem(item: GuestWatchlistItem): WatchlistQuoteItem {
+    return {
+        watchlist_id: localIdToNegInt(item.local_id),
+        stock_id: item.stock_id,
+        user_id: 0,
+        ticker: item.ticker,
+        company_name: item.company_name,
+        stockPrice: null,
+        priceChange: null,
+        priceChangePercent: null,
+        error: null,
+        // Store local_id as an extension so handleRemove can find it
+        _local_id: item.local_id,
+    } as WatchlistQuoteItem & { _local_id: string };
+}
+
 export default function WatchlistClient({
     initialItems,
+    isGuest = false,
 }: {
     initialItems: WatchlistQuoteItem[];
+    isGuest?: boolean;
 }) {
     const [items, setItems] = useState<WatchlistQuoteItem[]>(initialItems);
     const [sortMode, setSortMode] = useState<SortMode>("ticker");
     const [pendingId, setPendingId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();
+
+    // Load guest watchlist from localStorage on mount
+    useEffect(() => {
+        if (!isGuest) return;
+        const stored = getGuestWatchlist();
+        setItems(stored.map(guestItemToQuoteItem));
+    }, [isGuest]);
 
     const sortedItems = useMemo(
         () => sortItems(items, sortMode),
@@ -64,6 +103,21 @@ export default function WatchlistClient({
         startTransition(async () => {
             try {
                 setPendingId(watchlistId);
+
+                if (isGuest) {
+                    // Find the local_id for this guest item
+                    const target = items.find(
+                        (i) => i.watchlist_id === watchlistId,
+                    ) as (WatchlistQuoteItem & { _local_id?: string }) | undefined;
+                    const localId = target?._local_id ?? String(watchlistId);
+                    removeGuestWatchlistItem(localId);
+                    setItems((prev) =>
+                        prev.filter((item) => item.watchlist_id !== watchlistId),
+                    );
+                    toast.success("Removed from watchlist");
+                    return;
+                }
+
                 const token = await getTokenWithRefresh();
                 if (!token) {
                     toast.error("You must be logged in.");
@@ -88,6 +142,24 @@ export default function WatchlistClient({
     const handleAddFromSearch = (item: { value: string; label: string }) => {
         startTransition(async () => {
             try {
+                if (isGuest) {
+                    const stock = await getStockInfo(item.value);
+                    const guestItem: GuestWatchlistItem = {
+                        local_id: crypto.randomUUID(),
+                        ticker: item.value,
+                        company_name: item.label,
+                        stock_id: stock.stock_id,
+                        added_at: new Date().toISOString(),
+                    };
+                    addGuestWatchlistItem(guestItem);
+                    setItems((prev) => {
+                        if (prev.some((i) => i.ticker === item.value)) return prev;
+                        return [...prev, guestItemToQuoteItem(guestItem)];
+                    });
+                    toast.success("Added to watchlist");
+                    return;
+                }
+
                 const token = await getTokenWithRefresh();
                 if (!token) {
                     toast.error("You must be logged in.");
@@ -119,6 +191,8 @@ export default function WatchlistClient({
                     },
                 }}
             />
+
+            {isGuest && <GuestBanner />}
 
             <Searchbar
                 placeholder="Add to Watchlist"

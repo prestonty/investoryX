@@ -41,6 +41,11 @@ export function middleware(request: NextRequest) {
         const token = request.cookies.get("access_token");
 
         if (!token || !token.value) {
+            // Allow guest mode browsing
+            const guestMode = request.cookies.get("guest_mode");
+            if (guestMode?.value === "true") {
+                return NextResponse.next();
+            }
             // No token found, redirect to login
             const loginUrl = new URL("/login", request.url);
             // Add the original URL as a query parameter so we can redirect back after login

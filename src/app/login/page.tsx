@@ -10,7 +10,8 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState, useEffect } from "react";
 import { loginUser, type LoginData } from "@/lib/api";
-import { setAuthToken } from "@/lib/auth";
+import { setAuthToken, enterGuestMode, exitGuestMode, isGuestMode } from "@/lib/auth";
+import { migrateGuestData, hasGuestData } from "@/lib/guestMigration";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Login() {
@@ -60,6 +61,12 @@ export default function Login() {
 
             // Store the token in cookies using the new auth utility
             setAuthToken(authResponse.access_token);
+
+            // Migrate any guest localStorage data to the backend
+            if (isGuestMode() || hasGuestData()) {
+                await migrateGuestData(authResponse.access_token);
+                exitGuestMode();
+            }
 
             // Show success message
             toast.success("Login successful! Redirecting...");
@@ -289,6 +296,18 @@ export default function Login() {
                             >
                                 Sign Up
                             </Link>
+                        </div>
+                        <div className='flex justify-center mt-4'>
+                            <button
+                                type='button'
+                                onClick={() => {
+                                    enterGuestMode();
+                                    router.push(redirectTo || "/dashboard");
+                                }}
+                                className='text-gray text-sm hover:text-dark underline transition-colors duration-300'
+                            >
+                                Continue as Guest
+                            </button>
                         </div>
                     </div>
                 </div>

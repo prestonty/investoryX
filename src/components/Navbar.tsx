@@ -7,7 +7,7 @@ import UnderlineWrapper from "@/components/animations/UnderlineWrapper";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Searchbar from "@/components/Searchbar";
-import { logout, isAuthenticated } from "@/lib/auth";
+import { logout, isAuthenticated, isGuestMode } from "@/lib/auth";
 
 interface NavbarProps {
     search?: boolean;
@@ -16,6 +16,7 @@ interface NavbarProps {
 export default function Navbar(props: NavbarProps) {
     const { search = false } = props;
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isGuest, setIsGuest] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [searchStock, setSearchStock] = useState<{
@@ -25,6 +26,7 @@ export default function Navbar(props: NavbarProps) {
 
     useEffect(() => {
         setIsLoggedIn(isAuthenticated());
+        setIsGuest(isGuestMode());
     }, []);
 
     const handleLogout = () => {
@@ -133,7 +135,7 @@ export default function Navbar(props: NavbarProps) {
                     </div>
 
                     {/* Desktop Logout/Login - Hidden on md and below */}
-                    <div className='hidden xl:block flex-none'>
+                    <div className='hidden xl:flex flex-none items-center gap-x-3'>
                         {isLoggedIn ? (
                             <UnderlineWrapper>
                                 <button
@@ -143,6 +145,20 @@ export default function Navbar(props: NavbarProps) {
                                     Log Out
                                 </button>
                             </UnderlineWrapper>
+                        ) : isGuest ? (
+                            <>
+                                <span className='text-xs font-semibold text-blue bg-blue/10 px-2.5 py-1 rounded-full'>
+                                    Guest
+                                </span>
+                                <UnderlineWrapper>
+                                    <Link
+                                        href='/sign-up'
+                                        className='text-dark text-xl hover:text-blue transition-colors duration-300'
+                                    >
+                                        Sign Up
+                                    </Link>
+                                </UnderlineWrapper>
+                            </>
                         ) : (
                             <UnderlineWrapper>
                                 <Link
@@ -199,6 +215,19 @@ export default function Navbar(props: NavbarProps) {
                                     >
                                         Log Out
                                     </button>
+                                ) : isGuest ? (
+                                    <div className='flex items-center gap-x-3'>
+                                        <span className='text-xs font-semibold text-blue bg-blue/10 px-2.5 py-1 rounded-full'>
+                                            Guest
+                                        </span>
+                                        <Link
+                                            href='/sign-up'
+                                            className='text-dark text-lg font-medium hover:text-blue transition-colors duration-300'
+                                            onClick={() => setIsDrawerOpen(false)}
+                                        >
+                                            Sign Up
+                                        </Link>
+                                    </div>
                                 ) : (
                                     <Link
                                         href='/login'

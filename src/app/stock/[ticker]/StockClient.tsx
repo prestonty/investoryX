@@ -12,7 +12,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 
 import { addToWatchlist, getStockHistory } from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
+import { getTokenWithRefresh, isGuestMode } from "@/lib/auth";
+import { addGuestWatchlistItem } from "@/lib/guestStorage";
 
 type OHLC = {
     date: string;
@@ -133,7 +134,18 @@ export default function StockClient({
         try {
             const token = await getTokenWithRefresh();
             if (!token) {
-                alert("You must be logged in to add to watchlist.");
+                if (isGuestMode()) {
+                    addGuestWatchlistItem({
+                        local_id: crypto.randomUUID(),
+                        ticker,
+                        company_name: basicStockData.companyName,
+                        stock_id,
+                        added_at: new Date().toISOString(),
+                    });
+                    toast.success("Added to guest watchlist");
+                } else {
+                    toast.error("Please log in to add to watchlist.");
+                }
                 return;
             }
             await addToWatchlist(stock_id, token);

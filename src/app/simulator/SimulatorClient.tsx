@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { FourSquare } from "react-loading-indicators";
 
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import GuestBanner from "@/components/GuestBanner";
 import {
     createSimulator,
     renameSimulator,
     updateSimulatorSettings,
     deleteSimulator,
-    getStockPrice,
     getSimulatorSummary,
     deleteTrackedStock,
-    listSimulators,
     runSimulator,
     getDevFlags,
     getStrategies,
@@ -25,7 +26,19 @@ import {
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
 import {
-    parseNumber,
+    getGuestSimulators,
+    addGuestSimulator,
+    updateGuestSimulator,
+    deleteGuestSimulator,
+    type GuestSimulator,
+} from "@/lib/guestStorage";
+import {
+    DEMO_SIMULATION,
+    DEMO_SIMULATION_ID,
+} from "@/lib/demoSimulator";
+import { guestSimToSimulation } from "./mappers";
+import { useLoadSimulators } from "./useLoadSimulators";
+import {
     formatCurrency,
     formatPercentage,
     formatDateTime,
@@ -68,6 +81,7 @@ const MAX_SIMULATIONS = 3;
 interface SimulatorClientProps {
     initialSimulations?: Simulation[];
     initialActiveSimulationId?: number | null;
+    isGuest?: boolean;
 }
 
 enum ViewMode {
@@ -77,12 +91,18 @@ enum ViewMode {
 
 type EditableRiskField = "max_daily_loss_pct" | "max_position_pct";
 
+
 export default function SimulatorClient({
     initialSimulations = [],
     initialActiveSimulationId = null,
+    isGuest = false,
 }: SimulatorClientProps) {
     const [summary, setSummary] = useState<SimulatorSummaryResponse | null>(
         null,
+    );
+    // If the server already hydrated simulations, or we're a guest (sync load), skip the spinner
+    const [loading, setLoading] = useState<boolean>(
+        () => !initialSimulations.length && !isGuest,
     );
     const [isBusy, setIsBusy] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE);
@@ -135,9 +155,18 @@ export default function SimulatorClient({
     }, [simulations, activeSimulationId, activeSimulation]);
 
     useEffect(() => {
-        getDevFlags().then((flags) => setDevMode(flags.dev_mode));
+        if (isGuest) {
+            // Guest: load demo + any saved drafts synchronously, then done
+            const drafts = getGuestSimulators().map(guestSimToSimulation);
+            const all = [DEMO_SIMULATION, ...drafts];
+            setSimulations(all);
+            setActiveSimulation(DEMO_SIMULATION);
+            setLoading(false);
+        } else {
+            getDevFlags().then((flags) => setDevMode(flags.dev_mode));
+        }
         getStrategies().then(setStrategies);
-    }, []);
+    }, [isGuest]);
 
     const requireToken = async () => {
         const token = await getTokenWithRefresh();
@@ -174,6 +203,35 @@ export default function SimulatorClient({
         successMessage?: string,
     ) => {
         if (!activeSimulationId) return false;
+        if (activeSimulationId === DEMO_SIMULATION_ID) return false;
+
+        if (isGuest) {
+            const target = simulations.find((s) => s.id === activeSimulationId) as
+                | (Simulation & { _localId?: string })
+                | undefined;
+            const localId = target?._localId;
+            if (localId) {
+                updateGuestSimulator(localId, {
+                    ...(payload.frequency && { frequency: payload.frequency }),
+                    ...(payload.price_mode && { price_mode: payload.price_mode }),
+                    ...(payload.strategy_name && { strategy_name: payload.strategy_name }),
+                    ...("max_position_pct" in payload && {
+                        max_position_pct: payload.max_position_pct ?? null,
+                    }),
+                    ...("max_daily_loss_pct" in payload && {
+                        max_daily_loss_pct: payload.max_daily_loss_pct ?? null,
+                    }),
+                });
+            }
+            setSimulations((prev) =>
+                prev.map((sim) =>
+                    sim.id === activeSimulationId ? { ...sim, ...payload } : sim,
+                ),
+            );
+            if (successMessage) toast.success(successMessage);
+            return true;
+        }
+
         const token = await requireToken();
         if (!token) return false;
 
@@ -200,6 +258,7 @@ export default function SimulatorClient({
 
     const beginRiskEdit = (field: EditableRiskField) => {
         if (!activeSimulation) return;
+        if (isGuest && activeSimulation.id === DEMO_SIMULATION_ID) return;
         setEditingRiskField(field);
         const currentValue = activeSimulation[field];
         setRiskDraft(
@@ -245,111 +304,7 @@ export default function SimulatorClient({
         }
     };
 
-    useEffect(() => {
-        if (hasInitialSimulations) return;
-        let isMounted = true;
-        const loadSimulators = async () => {
-            const token = await requireToken();
-            if (!token) return;
-            try {
-                const simulators = await listSimulators(token);
-                const mapped = await Promise.all(
-                    simulators.map(async (simulator) => {
-                        let stocks: Stock[] = [];
-                        let trades: TradeRecord[] = [];
-                        try {
-                            const summary = await getSimulatorSummary(
-                                simulator.simulator_id,
-                                token,
-                            );
-                            trades = (summary.trades ?? []).map((t) => ({
-                                id: String(t.trade_id),
-                                symbol: t.ticker,
-                                action: t.side.toUpperCase() as TradeRecord["action"],
-                                price: t.price,
-                                volume: t.shares,
-                                timestamp: new Date(t.executed_at ?? Date.now()),
-                                cashAfter: t.balance_after,
-                            }));
-                            const tracked = summary.tracked_stocks ?? [];
-                            stocks = await Promise.all(
-                                tracked.map(async (trackedStock) => {
-                                    let companyName = trackedStock.ticker;
-                                    let price = 0;
-                                    let change = 0;
-                                    let changePercent = 0;
-                                    try {
-                                        const basic = await getStockPrice(
-                                            trackedStock.ticker,
-                                        );
-                                        companyName =
-                                            basic.companyName ?? companyName;
-                                        price = parseNumber(basic.stockPrice);
-                                        change = parseNumber(basic.priceChange);
-                                        changePercent = parseNumber(
-                                            basic.priceChangePercent,
-                                        );
-                                    } catch (priceError) {
-                                        console.error(
-                                            "Price lookup failed:",
-                                            priceError,
-                                        );
-                                    }
-                                    return {
-                                        symbol: trackedStock.ticker,
-                                        companyName,
-                                        trackedId:
-                                            trackedStock.tracked_id ?? null,
-                                        price,
-                                        change,
-                                        changePercent,
-                                    };
-                                }),
-                            );
-                        } catch (summaryError) {
-                            console.error(
-                                "Summary lookup failed:",
-                                summaryError,
-                            );
-                        }
-                        return {
-                            id: simulator.simulator_id,
-                            name: simulator.name,
-                            starting_cash: simulator.starting_cash,
-                            cash_balance: simulator.cash_balance,
-                            status: simulator.status || "Active Trading",
-                            frequency: simulator.frequency || "daily",
-                            price_mode: simulator.price_mode || "close",
-                            last_run_at: simulator.last_run_at,
-                            next_run_at: simulator.next_run_at,
-                            max_position_pct:
-                                simulator.max_position_pct ?? null,
-                            max_daily_loss_pct:
-                                simulator.max_daily_loss_pct ?? null,
-                            stopped_reason: simulator.stopped_reason ?? null,
-                            strategy_name: simulator.strategy_name || "sma_crossover",
-                            stocks,
-                            trades,
-                        };
-                    }),
-                );
-                if (!isMounted) return;
-                setSimulations(mapped);
-                setActiveSimulation(mapped.length > 0 ? mapped[0] : null);
-            } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to load simulators";
-                toast.error(message);
-            }
-        };
-
-        loadSimulators();
-        return () => {
-            isMounted = false;
-        };
-    }, [hasInitialSimulations]);
+    useLoadSimulators({ hasInitialSimulations, isGuest, setSimulations, setActiveSimulation, setLoading });
 
     const handleRunSimulator = async () => {
         if (!activeSimulationId || !activeSimulation) {
@@ -499,6 +454,22 @@ export default function SimulatorClient({
             toast.error("Invalid simulator id.");
             return false;
         }
+        if (id === DEMO_SIMULATION_ID) {
+            toast.error("The demo simulator cannot be deleted.");
+            return false;
+        }
+
+        if (isGuest) {
+            const target = simulations.find((s) => s.id === id) as
+                | (Simulation & { _localId?: string })
+                | undefined;
+            const localId = target?._localId;
+            if (localId) deleteGuestSimulator(localId);
+            if (activeSimulationId === id) setSummary(null);
+            toast.success("Simulator deleted");
+            return true;
+        }
+
         const token = await requireToken();
         if (!token) return false;
 
@@ -532,18 +503,57 @@ export default function SimulatorClient({
 
     const handleAddTrackedStock = async (stock: Stock) => {
         if (!activeSimulation) return;
+        if (activeSimulation.id === DEMO_SIMULATION_ID) return;
         updateSimulationStocks(activeSimulation.id, [
             ...activeSimulation.stocks,
             stock,
         ]);
+        if (isGuest) {
+            const target = simulations.find((s) => s.id === activeSimulation.id) as
+                | (Simulation & { _localId?: string })
+                | undefined;
+            const localId = target?._localId;
+            if (localId) {
+                const stored = getGuestSimulators().find((s) => s.local_id === localId);
+                if (stored && !stored.tracked_tickers.includes(stock.symbol)) {
+                    updateGuestSimulator(localId, {
+                        tracked_tickers: [...stored.tracked_tickers, stock.symbol],
+                    });
+                }
+            }
+        }
     };
 
     const handleRemoveTrackedStock = async (
         trackedId: number | null,
         symbol: string,
     ) => {
+        if (!activeSimulation) return;
+        if (activeSimulation.id === DEMO_SIMULATION_ID) return;
+
+        if (isGuest) {
+            const target = simulations.find((s) => s.id === activeSimulation.id) as
+                | (Simulation & { _localId?: string })
+                | undefined;
+            const localId = target?._localId;
+            if (localId) {
+                const stored = getGuestSimulators().find((s) => s.local_id === localId);
+                if (stored) {
+                    updateGuestSimulator(localId, {
+                        tracked_tickers: stored.tracked_tickers.filter((t) => t !== symbol),
+                    });
+                }
+            }
+            updateSimulationStocks(
+                activeSimulation.id,
+                activeSimulation.stocks.filter((s) => s.symbol !== symbol),
+            );
+            toast.success(`${symbol} removed from simulator watchlist`);
+            return;
+        }
+
         const token = await requireToken();
-        if (!token || !activeSimulation) return;
+        if (!token) return;
 
         if (!trackedId) {
             toast.error("No tracked stock id found for this item.");
@@ -576,10 +586,40 @@ export default function SimulatorClient({
     };
 
     const handleAddSimulation = async () => {
-        if (simulations.length >= MAX_SIMULATIONS) {
+        // Guest: +1 for the demo slot
+        const guestMax = MAX_SIMULATIONS + 1;
+        if (isGuest && simulations.length >= guestMax) {
+            toast.error(`Max ${MAX_SIMULATIONS} simulators reached`);
+            return;
+        }
+        if (!isGuest && simulations.length >= MAX_SIMULATIONS) {
             toast.error(`Max ${MAX_SIMULATIONS} simulations reached`);
             return;
         }
+
+        if (isGuest) {
+            const localId = crypto.randomUUID();
+            const draft: GuestSimulator = {
+                local_id: localId,
+                name: "My Simulator",
+                starting_cash: 10000,
+                status: "draft",
+                frequency: "daily",
+                price_mode: "close",
+                strategy_name: "sma_crossover",
+                max_position_pct: null,
+                max_daily_loss_pct: null,
+                tracked_tickers: [],
+                created_at: new Date().toISOString(),
+            };
+            addGuestSimulator(draft);
+            const newSim = guestSimToSimulation(draft);
+            setSimulations((prev) => [...prev, newSim]);
+            setActiveSimulation(newSim);
+            toast.success("Simulator created");
+            return;
+        }
+
         const token = await requireToken();
         if (!token) return;
 
@@ -622,11 +662,25 @@ export default function SimulatorClient({
     };
 
     const handleRenameSimulation = async (id: number, name: string) => {
+        if (id === DEMO_SIMULATION_ID) return;
+
+        if (isGuest) {
+            const target = simulations.find((s) => s.id === id) as
+                | (Simulation & { _localId?: string })
+                | undefined;
+            const localId = target?._localId;
+            if (localId) updateGuestSimulator(localId, { name });
+            setSimulations((prev) =>
+                prev.map((sim) => (sim.id === id ? { ...sim, name } : sim)),
+            );
+            return;
+        }
+
         const token = await requireToken();
         if (!token) return;
 
         try {
-            const updated = await renameSimulator(id, name, token);
+            await renameSimulator(id, name, token);
             setSimulations((prev) =>
                 prev.map((sim) => (sim.id === id ? { ...sim, name } : sim)),
             );
@@ -656,7 +710,18 @@ export default function SimulatorClient({
     };
 
     const renderSimulators = () => {
-        if (simulations.length === 0) {
+        if (loading) {
+            return (
+                <div className='flex-1 flex items-center justify-center bg-light/30'>
+                    <FourSquare
+                        color='#181D2A'
+                        size='medium'
+                        text=''
+                        textColor=''
+                    />
+                </div>
+            );
+        } else if (simulations.length === 0) {
             return (
                 <div className='flex-1 flex items-center justify-center bg-light/30 px-6 py-16'>
                     <div className='max-w-xl text-center space-y-4'>
@@ -699,6 +764,7 @@ export default function SimulatorClient({
                     {/* Main Content */}
                     <div className='flex-1 overflow-auto bg-light/30'>
                         <div className='max-w-7xl mx-auto p-6 space-y-6'>
+                            {isGuest && <GuestBanner />}
                             {activeSimulation && (
                                 <>
                                     {/* Robot and Watchlist Section */}
@@ -725,48 +791,54 @@ export default function SimulatorClient({
                                                         </p>
                                                     </div>
                                                     <div className='mt-3 flex flex-col gap-2'>
-                                                        <button
-                                                            disabled={isBusy}
-                                                            onClick={() =>
-                                                                void handleRunSimulator()
-                                                            }
-                                                            className='w-full rounded-md bg-blue px-4 py-2 text-sm text-white font-medium hover:bg-blue/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
-                                                        >
-                                                            Run Simulator
-                                                        </button>
-                                                        {devMode && (
-                                                            <div className='flex gap-1'>
-                                                                <input
-                                                                    type='date'
-                                                                    value={
-                                                                        pipelineDay
-                                                                    }
-                                                                    disabled={
-                                                                        isBusy
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setPipelineDay(
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                    className='flex-1 min-w-0 rounded-md border border-orange-400 px-2 py-2 text-sm text-orange-600 bg-white disabled:opacity-60 disabled:cursor-not-allowed'
-                                                                />
-                                                                <button
-                                                                    disabled={
-                                                                        isBusy
-                                                                    }
-                                                                    onClick={() =>
-                                                                        void handleRunPipeline()
-                                                                    }
-                                                                    className='rounded-md border border-orange-400 px-3 py-2 text-sm text-orange-600 font-medium hover:bg-orange-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+                                                        {isGuest ? (
+                                                            <div className='flex flex-col items-center gap-2 py-3 text-center'>
+                                                                <p className='text-xs text-gray leading-snug'>
+                                                                    {activeSimulation.id === DEMO_SIMULATION_ID
+                                                                        ? "This is a demo. Sign up to run your own."
+                                                                        : "Sign up to activate this simulator."}
+                                                                </p>
+                                                                <Link
+                                                                    href='/sign-up'
+                                                                    className='w-full rounded-md bg-blue px-4 py-2 text-sm text-white font-medium hover:bg-blue/90 transition-colors text-center'
                                                                 >
-                                                                    Run Pipeline
-                                                                </button>
+                                                                    Create Free Account
+                                                                </Link>
                                                             </div>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    disabled={isBusy}
+                                                                    onClick={() =>
+                                                                        void handleRunSimulator()
+                                                                    }
+                                                                    className='w-full rounded-md bg-blue px-4 py-2 text-sm text-white font-medium hover:bg-blue/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+                                                                >
+                                                                    Run Simulator
+                                                                </button>
+                                                                {devMode && (
+                                                                    <div className='flex gap-1'>
+                                                                        <input
+                                                                            type='date'
+                                                                            value={pipelineDay}
+                                                                            disabled={isBusy}
+                                                                            onChange={(e) =>
+                                                                                setPipelineDay(e.target.value)
+                                                                            }
+                                                                            className='flex-1 min-w-0 rounded-md border border-orange-400 px-2 py-2 text-sm text-orange-600 bg-white disabled:opacity-60 disabled:cursor-not-allowed'
+                                                                        />
+                                                                        <button
+                                                                            disabled={isBusy}
+                                                                            onClick={() =>
+                                                                                void handleRunPipeline()
+                                                                            }
+                                                                            className='rounded-md border border-orange-400 px-3 py-2 text-sm text-orange-600 font-medium hover:bg-orange-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+                                                                        >
+                                                                            Run Pipeline
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1036,28 +1108,33 @@ export default function SimulatorClient({
 
                                         {/* Watchlist */}
                                         <div>
-                                            <TrackedStockSearch
-                                                simulatorId={activeSimulationId}
-                                                existingSymbols={
-                                                    activeSimulation?.stocks.map(
-                                                        (stock) => stock.symbol,
-                                                    ) ?? []
-                                                }
-                                                onAddStock={
-                                                    handleAddTrackedStock
-                                                }
-                                            />
+                                            {(!isGuest || activeSimulation.id !== DEMO_SIMULATION_ID) && (
+                                                <TrackedStockSearch
+                                                    simulatorId={activeSimulationId}
+                                                    existingSymbols={
+                                                        activeSimulation?.stocks.map(
+                                                            (stock) => stock.symbol,
+                                                        ) ?? []
+                                                    }
+                                                    onAddStock={
+                                                        handleAddTrackedStock
+                                                    }
+                                                    isGuest={isGuest}
+                                                />
+                                            )}
                                             <StockWatchlist
                                                 stocks={activeSimulation.stocks}
                                                 onRemove={
-                                                    handleRemoveTrackedStock
+                                                    isGuest && activeSimulation.id === DEMO_SIMULATION_ID
+                                                        ? () => {}
+                                                        : handleRemoveTrackedStock
                                                 }
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Trading Sandbox Section */}
-                                    {activeSimulationId && (
+                                    {/* Trading Sandbox Section — hidden for guests (requires backend) */}
+                                    {!isGuest && activeSimulationId && (
                                         <TradingSandboxSection
                                             simulatorId={activeSimulationId}
                                             priceMode={activeSimulation.price_mode}

@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
         "/watchlist",
         "/stock",
         "/latest-news",
+        "/simulator",
     ];
 
     // Check if the current path is a protected route

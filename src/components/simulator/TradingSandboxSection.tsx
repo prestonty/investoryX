@@ -6,6 +6,7 @@ import {
     getBacktestStatus,
     type BacktestResult,
 } from "@/lib/api";
+import { HiInformationCircle } from "react-icons/hi";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 60; // 2 minutes
@@ -165,13 +166,14 @@ export function TradingSandboxSection({
                 <span className='text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full'>
                     BETA
                 </span>
-                <div className='group relative ml-1'>
-                    <span className='text-gray text-sm cursor-help select-none'>ⓘ</span>
-                    <div className='hidden group-hover:block absolute left-0 top-6 z-10 bg-dark text-white text-xs rounded-md px-3 py-2 w-64 shadow-lg'>
-                        Simulates your trading strategy on historical data starting from
-                        your simulator&apos;s starting cash. Previous backtest trades are
-                        replaced each run.
-                    </div>
+                <div className='group relative ml-1 inline-flex items-center'>
+                <HiInformationCircle className='text-gray-400 text-base cursor-help select-none' />
+
+                <div className='hidden group-hover:block absolute left-0 top-6 z-20 
+                                w-64 px-3 py-2 bg-slate-900 text-white text-xs 
+                                rounded-md shadow-lg pointer-events-none'>
+                    Simulate your strategy on historical data. Note: New runs replace previous backtest results.
+                </div>
                 </div>
             </div>
 
