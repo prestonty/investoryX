@@ -3,32 +3,7 @@
 import type { WatchlistQuoteItem } from "@/lib/api";
 import Link from "next/link";
 import { FaTrash } from "react-icons/fa";
-
-function formatPrice(value: number | null) {
-    if (value === null || Number.isNaN(value)) {
-        return "N/A";
-    }
-    return value.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
-}
-
-function formatChange(value: number | null) {
-    if (value === null || Number.isNaN(value)) {
-        return "N/A";
-    }
-    const sign = value > 0 ? "+" : "";
-    return `${sign}${value.toFixed(2)}`;
-}
-
-function formatPercent(value: number | null) {
-    if (value === null || Number.isNaN(value)) {
-        return "N/A";
-    }
-    const sign = value > 0 ? "+" : "";
-    return `${sign}${value.toFixed(2)}%`;
-}
+import { formatPrice, formatChange, formatPercent } from "@/lib/utils/helper";
 
 export default function StockWatchItem({
     item,
@@ -40,53 +15,43 @@ export default function StockWatchItem({
     isRemoving: boolean;
 }) {
     const isPositive = (item.priceChange ?? 0) >= 0;
-    const changePillClass = isPositive
-        ? "bg-lightgreen text-light"
-        : "bg-red text-white";
+    const changeColor = item.error
+        ? "text-gray"
+        : isPositive
+          ? "text-lightgreen"
+          : "text-red";
     const stockHref = `/stock/${item.ticker.toLowerCase()}`;
 
     return (
-        <div className="flex flex-col text-dark gap-y-2">
-            <div className="flex justify-between items-center">
-                <Link
-                    href={stockHref}
-                    className="font-semibold text-lg hover:text-blue transition-colors"
-                >
+        <div className="flex items-center justify-between gap-x-4 px-4 py-3 rounded-xl hover:bg-light transition-colors group">
+            <Link href={stockHref} className="flex flex-col gap-y-0.5 min-w-0">
+                <span className="font-bold text-blue text-base leading-tight truncate">
                     {item.ticker}
-                </Link>
-                <div className="flex items-center gap-x-3">
-                    <p className="font-bold">{formatPrice(item.stockPrice)}</p>
-                    <button
-                        type="button"
-                        onClick={() => onRemove(item.watchlist_id)}
-                        disabled={isRemoving}
-                        aria-label={`Remove ${item.ticker} from watchlist`}
-                        className="p-2 rounded-full border border-dark text-dark hover:bg-dark hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <FaTrash className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
+                </span>
+                <span className="text-xs text-gray truncate">{item.company_name}</span>
+            </Link>
 
-            <div className="flex justify-between items-center">
-                <Link
-                    href={stockHref}
-                    className="text-sm text-gray-500 hover:text-blue transition-colors"
-                >
-                    {item.company_name}
-                </Link>
-                <div
-                    className={`${changePillClass} rounded-[16px] py-2 px-4 min-w-[7.5rem] text-center`}
-                >
-                    {item.error ? (
-                        <p className="text-sm font-medium">Quote error</p>
-                    ) : (
-                        <p className="font-medium">
-                            {formatChange(item.priceChange)} (
-                            {formatPercent(item.priceChangePercent)})
-                        </p>
-                    )}
+            <div className="flex items-center gap-x-4 shrink-0">
+                <div className="text-right">
+                    <p className="font-bold text-dark text-lg leading-tight">
+                        {formatPrice(item.stockPrice)}
+                    </p>
+                    <p className={`text-xs font-semibold ${changeColor}`}>
+                        {item.error
+                            ? "Quote error"
+                            : `${formatChange(item.priceChange)} (${formatPercent(item.priceChangePercent)})`}
+                    </p>
                 </div>
+
+                <button
+                    type="button"
+                    onClick={() => onRemove(item.watchlist_id)}
+                    disabled={isRemoving}
+                    aria-label={`Remove ${item.ticker} from watchlist`}
+                    className="p-2 rounded-full text-gray hover:text-red hover:bg-red/10 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <FaTrash className="w-3.5 h-3.5" />
+                </button>
             </div>
         </div>
     );

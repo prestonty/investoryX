@@ -35,14 +35,6 @@ export default function Navbar(props: NavbarProps) {
         setIsDrawerOpen(!isDrawerOpen);
     };
 
-    const stockList = [
-        { label: "APPL", value: "appl" },
-        { label: "NVDA", value: "nvda" },
-        { label: "GOOGL", value: "googl" },
-        { label: "AMZN", value: "amzn" },
-        { label: "MSFT", value: "msft" },
-        { label: "META", value: "meta" },
-    ];
 
     const navigationItems = [
         { label: "News", href: "/latest-news" },
@@ -52,7 +44,7 @@ export default function Navbar(props: NavbarProps) {
     ];
 
     return (
-        <div className="relative isolate">
+        <div className="relative z-[9999]">
             <div
                 className={`flex items-center px-[3%] min-h-[2rem] py-2 ${
                     search ? "" : "justify-between"
@@ -101,7 +93,7 @@ export default function Navbar(props: NavbarProps) {
                 <div className='flex items-center gap-x-4 w-fit ml-auto'>
                     {search && (
                         <Searchbar
-                            options={stockList}
+                            options={[]}
                             onChange={setSearchStock}
                             onOpen={() => setIsDrawerOpen(false)}
                         />

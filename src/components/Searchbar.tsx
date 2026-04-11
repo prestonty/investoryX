@@ -8,6 +8,7 @@ import { ClipLoader } from "react-spinners";
 import { FaSearch } from "react-icons/fa";
 import defaultOptions from "@/lib/defaults/search_stock_defaults.json";
 import { motion, AnimatePresence } from "framer-motion";
+import { searchStocks } from "@/lib/api";
 
 interface SearchbarProps {
     placeholder?: string;
@@ -38,21 +39,21 @@ export default function Searchbar({
     const borderColor = isFocused
         ? "border-blue"
         : isHovered
-        ? "border-lightblue"
-        : "border-dark";
+          ? "border-lightblue"
+          : "border-dark";
 
     const iconColor = isFocused
         ? "text-blue"
         : isHovered
-        ? "text-lightblue"
-        : "text-dark";
+          ? "text-lightblue"
+          : "text-dark";
 
     const optionsToShow =
         results.length > 0
             ? results
             : options.length > 0
-            ? options
-            : defaultOptions;
+              ? options
+              : defaultOptions;
 
     useEffect(() => {
         // Make API call every 0.3 sceonds after input is changed
@@ -65,16 +66,14 @@ export default function Searchbar({
                     return;
                 }
                 try {
-                    const res = await axios.get(
-                        `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
-                        {
-                            signal: controller.signal,
-                        },
+                    const res = await searchStocks(
+                        filterString.trim(),
+                        controller.signal,
                     );
-                    setResults(res.data);
+                    setResults(Array.isArray(res) ? res : (res.data ?? []));
                 } catch (error: any) {
-                    if (axios.isCancel(error)) {
-                        console.log("Request canceled:", error.message);
+                    if (error.name === "AbortError") {
+                        console.log("Request canceled");
                     } else {
                         console.error("Search error:", error);
                     }
@@ -142,7 +141,7 @@ export default function Searchbar({
             <AnimatePresence>
                 {isFocused && (
                     <motion.ul
-                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-20 max-h-60 shadow-lg border border-light`}
+                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-[9999] max-h-60 shadow-lg border border-light`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -168,12 +167,6 @@ export default function Searchbar({
                                 >
                                     {item.label}
                                 </button>
-                                {/* <Link
-                                    className="text-left hover:bg-light w-full px-4 py-1"
-                                    href={`/stocks/${item.value}`}
-                                >
-                                    {item.label}
-                                </Link> */}
                             </motion.li>
                         ))}
                     </motion.ul>

@@ -1,12 +1,21 @@
 // BFF
 
+export async function searchStocks(filterString: string, signal?: AbortSignal) {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
+        { signal, cache: "no-store" },
+    );
+    if (!res.ok) throw new Error("Failed to search stocks");
+    return res.json();
+}
+
 export async function stockExist(ticker: string): Promise<{ exists: boolean }> {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/stocks/exists/${ticker}`,
         { cache: "no-store" },
     );
 
-    if(!res.ok) {
+    if (!res.ok) {
         throw new Error("Failed to check if ticker exists");
     }
     return res.json();
@@ -26,7 +35,10 @@ export async function getStockHistory(
     );
 
     if (!res.ok) {
-        throw new Error("Failed to fetch stock history");
+        const body = await res.text().catch(() => "");
+        throw new Error(
+            `Failed to fetch stock history: ${res.status} ${res.statusText} — ${body}`,
+        );
     }
 
     return res.json();
@@ -52,7 +64,6 @@ export async function getStockInfo(ticker: string) {
         cache: "no-store",
     });
 
-
     if (!res.ok) {
         const body = await res.text().catch(() => "");
         const details = {
@@ -71,12 +82,10 @@ export async function getStockInfo(ticker: string) {
 // MARKET MOVERS API FUNCTIONS
 
 // Fetch top gainers (stocks with highest percentage gains)
-export async function getTopGainers(limit: number = 5) {
+export async function getTopGainers(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}`,
-        {
-            cache: "no-store",
-        },
+        `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}&min_price=${minPrice}`,
+        { cache: "no-store" },
     );
 
     if (!res.ok) {
@@ -87,12 +96,10 @@ export async function getTopGainers(limit: number = 5) {
 }
 
 // Fetch top losers (stocks with highest percentage losses)
-export async function getTopLosers(limit: number = 5) {
+export async function getTopLosers(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}`,
-        {
-            cache: "no-store",
-        },
+        `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}&min_price=${minPrice}`,
+        { cache: "no-store" },
     );
 
     if (!res.ok) {
@@ -103,12 +110,10 @@ export async function getTopLosers(limit: number = 5) {
 }
 
 // Fetch most actively traded stocks (highest volume)
-export async function getMostActive(limit: number = 5) {
+export async function getMostActive(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}`,
-        {
-            cache: "no-store",
-        },
+        `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}&min_price=${minPrice}`,
+        { cache: "no-store" },
     );
 
     if (!res.ok) {
@@ -222,6 +227,7 @@ export interface SimulatorResponse {
     max_position_pct?: number | null;
     max_daily_loss_pct?: number | null;
     stopped_reason?: string | null;
+    strategy_name: string;
     created_at?: string;
     updated_at?: string;
     tickers: string[];
@@ -252,6 +258,8 @@ export interface SimulatorTradeResponse {
     shares: number;
     fee: number;
     executed_at?: string;
+    source?: string;
+    balance_after?: number;
 }
 
 export interface SimulatorCashLedgerResponse {
@@ -284,11 +292,19 @@ export interface CreateSimulatorRequest {
     starting_cash: number;
 }
 
+export type StrategyName = "sma_crossover" | "stat_arb_pairs" | "auction_liquidity_provider";
+
+export interface StrategyOption {
+    value: StrategyName;
+    label: string;
+}
+
 export interface UpdateSimulatorSettingsRequest {
     frequency?: "daily" | "twice_daily";
     price_mode?: "open" | "close";
     max_position_pct?: number | null;
     max_daily_loss_pct?: number | null;
+    strategy_name?: StrategyName;
 }
 
 export interface CreateTrackedStockRequest {
@@ -418,15 +434,12 @@ export async function getWatchlistQuotes(
     token: string,
 ): Promise<WatchlistQuoteItem[]> {
     const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/watchlist/quotes`;
-    const res = await fetch(
-        url,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
+    const res = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${token}`,
         },
-    );
+        cache: "no-store",
+    });
 
     if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -494,16 +507,17 @@ export async function createSimulator(
 export async function renameSimulator(
     simulatorId: number,
     name: string,
-    token: string
+    token: string,
 ): Promise<SimulatorResponse> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
         {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({name}),
+            body: JSON.stringify({ name }),
         },
     );
 
@@ -518,7 +532,7 @@ export async function renameSimulator(
 export async function updateSimulatorSettings(
     simulatorId: number,
     payload: UpdateSimulatorSettingsRequest,
-    token: string
+    token: string,
 ): Promise<SimulatorResponse> {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/settings`,
@@ -688,5 +702,120 @@ export async function runSimulator(
         throw new Error(error?.detail || "Failed to run simulator");
     }
 
+    return res.json();
+}
+
+export async function getDevFlags(): Promise<{ dev_mode: boolean }> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, {
+        cache: "no-store",
+    });
+    if (!res.ok) return { dev_mode: false };
+    return res.json();
+}
+
+export async function getStrategies(): Promise<StrategyOption[]> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/strategies`, {
+        cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Trading Sandbox (Backtest)
+// ---------------------------------------------------------------------------
+
+export interface BacktestRequest {
+    start_date: string; // ISO "YYYY-MM-DD"
+    end_date: string;
+    price_mode?: "open" | "close";
+    clear_previous?: boolean;
+}
+
+export interface BacktestDayResult {
+    day: string;
+    signals_generated: number;
+    trades_executed: number;
+    cash_after: number;
+    skipped_tickers: string[];
+}
+
+export interface BacktestResult {
+    simulator_id: number;
+    start_date: string;
+    end_date: string;
+    trading_days_run: number;
+    total_trades: number;
+    starting_cash: number;
+    final_cash: number;
+    pnl: number;
+    pnl_pct: number;
+    day_results: BacktestDayResult[];
+    warnings: string[];
+}
+
+export interface BacktestLaunchResponse {
+    task_id: string;
+    message: string;
+}
+
+export interface BacktestStatusResponse {
+    task_id: string;
+    status: "pending" | "running" | "success" | "failure";
+    result?: BacktestResult;
+    error?: string;
+}
+
+export async function launchBacktest(
+    simulatorId: number,
+    payload: BacktestRequest,
+    token: string,
+): Promise<BacktestLaunchResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        },
+    );
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to launch backtest");
+    }
+    return res.json();
+}
+
+export async function getBacktestStatus(
+    simulatorId: number,
+    taskId: string,
+    token: string,
+): Promise<BacktestStatusResponse> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest/status/${taskId}`,
+        {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+        },
+    );
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to get backtest status");
+    }
+    return res.json();
+}
+
+export async function runPipeline(token: string, day?: string) {
+    const url = new URL(`${process.env.NEXT_PUBLIC_URL}/dev/run-pipeline`);
+    if (day) url.searchParams.set("day", day);
+    const res = await fetch(url.toString(), {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to run pipeline");
     return res.json();
 }

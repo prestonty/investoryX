@@ -42,11 +42,11 @@ export function dateConverter(UNIX_timestamp) {
 }
 
 export const parseNumber = (value: string | number | undefined) => {
-  if (value === undefined || value === null) return 0;
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  const cleaned = value.replace(/[^0-9.-]/g, "");
-  const parsed = Number.parseFloat(cleaned);
-  return Number.isNaN(parsed) ? 0 : parsed;
+    if (value === undefined || value === null) return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const cleaned = value.replace(/[^0-9.-]/g, "");
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isNaN(parsed) ? 0 : parsed;
 };
 
 export const formatCurrency = (value: number) =>
@@ -65,5 +65,35 @@ export const formatDateTime = (value?: string | null) => {
     if (!value) return "Not run yet";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString();
+    return date.toLocaleString("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+};
+
+// Helper to ensure we are working with a valid number
+const toNum = (val: any) =>
+    val === null || val === undefined ? NaN : Number(val);
+
+export const formatPrice = (value: any) => {
+    const num = toNum(value);
+    if (isNaN(num)) return "N/A";
+
+    return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+
+export const formatChange = (value: any) => {
+    const num = toNum(value);
+    if (isNaN(num)) return "N/A";
+
+    const sign = num > 0 ? "+" : "";
+    return `${sign}${num.toFixed(2)}`;
+};
+
+export const formatPercent = (value: any) => {
+    const num = toNum(value);
+    if (isNaN(num)) return "N/A";
+
+    const sign = num > 0 ? "+" : "";
+    return `${sign}${num.toFixed(2)}%`;
 };

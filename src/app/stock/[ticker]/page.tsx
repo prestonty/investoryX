@@ -20,10 +20,10 @@ export default async function Stock({
 
         const [stockInfo, basicStockData, advancedStockData, initialChartData] =
             await Promise.all([
-                getStockInfo(normalizedTicker),
-                getStockPrice(normalizedTicker),
-                getStockOverview(normalizedTicker),
-                getStockHistory(normalizedTicker),
+                getStockInfo(normalizedTicker).catch((e) => { console.error("[stock page] getStockInfo failed:", e?.message); throw e; }),
+                getStockPrice(normalizedTicker).catch((e) => { console.error("[stock page] getStockPrice failed:", e?.message); throw e; }),
+                getStockOverview(normalizedTicker).catch((e) => { console.error("[stock page] getStockOverview failed:", e?.message); throw e; }),
+                getStockHistory(normalizedTicker).catch((e) => { console.error("[stock page] getStockHistory failed:", e?.message); throw e; }),
             ]);
 
         return (

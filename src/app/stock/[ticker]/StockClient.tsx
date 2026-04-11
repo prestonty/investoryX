@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import CandlestickChart from "@/components/tools/Chart";
 import Autocomplete from "@/components/Autocomplete";
 import toast, { Toaster } from "react-hot-toast";
+import { FaPlus } from "react-icons/fa";
 
 import { addToWatchlist, getStockHistory } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
@@ -70,8 +71,9 @@ export default function StockClient({
     basicStockData: BasicStockData;
     advancedStockData: AdvanceStockData;
 }) {
-    const [chartData, setChartData] =
-        useState<ChartProps | null>(initialChartData);
+    const [chartData, setChartData] = useState<ChartProps | null>(
+        initialChartData,
+    );
     const [period, setPeriod] = useState<PeriodType>("1mo");
     const [interval, setInterval] = useState<IntervalType>("1d");
     const [isMounted, setIsMounted] = useState(false);
@@ -96,9 +98,7 @@ export default function StockClient({
                 const result = await getStockHistory(ticker, period, interval);
                 if (result && Array.isArray(result.data)) {
                     if (result.data.length === 0) {
-                        toast.error(
-                            "No chart data for period/interval",
-                        );
+                        toast.error("No chart data for period/interval");
                     }
                     setChartData(result);
                 } else {
@@ -106,9 +106,7 @@ export default function StockClient({
                         data: [],
                         title: "Stock Price",
                     });
-                    toast.error(
-                        "No chart data for period/interval",
-                    );
+                    toast.error("No chart data for period/interval");
                 }
             } catch (error) {
                 const message =
@@ -126,8 +124,6 @@ export default function StockClient({
 
     // Split advanced data into first 4 (single column) and the rest (grid)
     const advancedEntries = Object.entries(advancedStockData || {});
-    const firstFourAdvanced = advancedEntries.slice(0, 4);
-    const remainingAdvanced = advancedEntries.slice(4);
     const selectedPeriodOption =
         PeriodOptions.find((option) => option.value === period) ?? null;
     const selectedIntervalOption =
@@ -215,25 +211,25 @@ export default function StockClient({
                 </div>
 
                 {/* Top right */}
-                <div className='bg-white rounded-[30px] shadow-dark-md min-[1580px]:col-start-2 min-[1580px]:col-end-3 min-[1580px]:row-start-1 min-[1580px]:row-end-3'>
-                    <div className='flex flex-col sm:flex-row justify-evenly items-center gap-y-4 h-full py-4 px-2 text-md md:text-xl xl:text-lg'>
+                <div className='bg-white rounded-[20px] shadow-dark-md border border-slate-100 p-4 min-[1580px]:col-start-2 min-[1580px]:col-end-3 min-[1580px]:row-start-1 min-[1580px]:row-end-3'>
+                    <div className='grid grid-cols-2 gap-4 h-full items-center'>
                         <button
-                            className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center hover:bg-blue transition-all duration-500'
+                            className='flex justify-center items-center gap-2 text-white bg-blue px-4 py-2.5 rounded-lg hover:bg-darkblue active:scale-95 transition-all duration-200 font-semibold text-sm'
                             onClick={() => handleAddToWatchlist(stock_id)}
                         >
-                            Add to Watchlist
+                            <FaPlus className='text-xs' />
+                            Watchlist
                         </button>
-                        <div className='relative group w-fit h-fit'>
+
+                        <div className='relative group'>
                             <button
                                 disabled
-                                className='text-nowrap text-white bg-dark px-4 py-4 rounded-full w-fit h-fit flex justify-center items-center transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                                className='w-full text-slate-400 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-lg font-medium text-sm disabled:cursor-not-allowed'
                             >
-                                Sentimental Analysis
+                                Sentiment
                             </button>
-
-                            {/* Tooltip */}
-                            <span className='absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-dark text-white text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
-                                Coming soon
+                            <span className='absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-800 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+                                Coming Soon
                             </span>
                         </div>
                     </div>
@@ -298,56 +294,44 @@ export default function StockClient({
                             Additional Information
                         </h2>
                         <hr className='bg-dark rounded-full border-none h-0.5 px-4 my-2' />
-                        {/* First 4 items in a single column */}
-                        <div className='mt-4 flex flex-col gap-y-3'>
-                            {firstFourAdvanced.map(([key]) => (
-                                <div
-                                    key={key}
-                                    className='flex gap-x-2 items-center'
-                                >
-                                    <p className='text-md text-dark'>{key}:</p>
-                                    <p className='text-md text-dark'>
-                                        {advancedStockData[
-                                            key as keyof AdvanceStockData
-                                        ] ?? "N/A"}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Remaining items follow a responsive grid */}
-                        {remainingAdvanced.length > 0 && (
-                            <div className='mt-6 grid grid-cols-1 xl:grid-cols-2 gap-x-4 gap-y-4'>
-                                {remainingAdvanced.map(([key]) => (
-                                    <div
-                                        key={key}
-                                        className='flex gap-x-2 items-center'
-                                    >
-                                        <p className='text-md text-dark'>
-                                            {key}:
-                                        </p>
-                                        {key === "Ex-Dividend Date" ||
-                                        key === "Earnings Date" ? (
-                                            <p className='text-md text-dark'>
-                                                {isMounted
+                        <div className='mt-2 overflow-auto'>
+                            <table className='w-full text-sm text-dark border-separate border-spacing-0'>
+                                <tbody>
+                                    {advancedEntries.map(([key], i) => {
+                                        const value =
+                                            key === "Ex-Dividend Date" ||
+                                            key === "Earnings Date"
+                                                ? isMounted
                                                     ? dateConverter(
                                                           advancedStockData[
                                                               key as keyof AdvanceStockData
                                                           ],
                                                       )
-                                                    : "N/A"}
-                                            </p>
-                                        ) : (
-                                            <p className='text-md text-dark'>
-                                                {advancedStockData[
-                                                    key as keyof AdvanceStockData
-                                                ] ?? "N/A"}
-                                            </p>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                                    : "N/A"
+                                                : (advancedStockData[
+                                                      key as keyof AdvanceStockData
+                                                  ] ?? "N/A");
+                                        return (
+                                            <tr
+                                                key={key}
+                                                className={
+                                                    i % 2 === 0
+                                                        ? "bg-gray-50"
+                                                        : "bg-white"
+                                                }
+                                            >
+                                                <td className='py-2 px-3 font-medium text-dark/70 whitespace-nowrap rounded-l-lg w-1/2'>
+                                                    {key}
+                                                </td>
+                                                <td className='py-2 px-3 font-semibold text-dark rounded-r-lg w-1/2'>
+                                                    {value}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
