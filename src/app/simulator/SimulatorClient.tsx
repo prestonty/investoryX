@@ -329,13 +329,13 @@ export default function SimulatorClient({
         }
     };
 
-    const handleDeleteSimulator = async (id: number) => {
+    const handleDeleteSimulator = async (id: number): Promise<boolean> => {
         if (!Number.isFinite(id)) {
             toast.error("Invalid simulator id.");
-            return;
+            return false;
         }
         const token = await requireToken();
-        if (!token) return;
+        if (!token) return false;
 
         setIsBusy(true);
         try {
@@ -344,10 +344,12 @@ export default function SimulatorClient({
                 setSummary(null);
             }
             toast.success("Simulator deleted");
+            return true;
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : "Failed to delete simulator";
             toast.error(message);
+            return false;
         } finally {
             setIsBusy(false);
         }
@@ -455,7 +457,10 @@ export default function SimulatorClient({
   };
 
   const handleCloseSimulation = async (id: number) => {
-    await handleDeleteSimulator(id);
+    const deleted = await handleDeleteSimulator(id);
+    if (!deleted) {
+      return;
+    }
     const newSimulations = simulations.filter((sim) => sim.id !== id);
     setSimulations(newSimulations);
     if (newSimulations.length === 0) {
