@@ -7,7 +7,8 @@ import UnderlineWrapper from "@/components/animations/UnderlineWrapper";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Searchbar from "@/components/Searchbar";
-import { logout, isAuthenticated, isGuestMode } from "@/lib/auth";
+import { logout, isAuthenticated } from "@/lib/auth";
+import { useGuest } from "@/contexts/GuestContext";
 
 interface NavbarProps {
     search?: boolean;
@@ -16,7 +17,7 @@ interface NavbarProps {
 export default function Navbar(props: NavbarProps) {
     const { search = false } = props;
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isGuest, setIsGuest] = useState(false);
+    const { isGuest } = useGuest();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [searchStock, setSearchStock] = useState<{
@@ -26,7 +27,6 @@ export default function Navbar(props: NavbarProps) {
 
     useEffect(() => {
         setIsLoggedIn(isAuthenticated());
-        setIsGuest(isGuestMode());
     }, []);
 
     const handleLogout = () => {

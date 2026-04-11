@@ -12,7 +12,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 
 import { addToWatchlist, getStockHistory } from "@/lib/api";
-import { getTokenWithRefresh, isGuestMode } from "@/lib/auth";
+import { getTokenWithRefresh } from "@/lib/auth";
+import { useGuest } from "@/contexts/GuestContext";
 import { addGuestWatchlistItem } from "@/lib/guestStorage";
 
 type OHLC = {
@@ -72,10 +73,11 @@ export default function StockClient({
     basicStockData: BasicStockData;
     advancedStockData: AdvanceStockData;
 }) {
+    const { isGuest } = useGuest();
     const [chartData, setChartData] = useState<ChartProps | null>(
         initialChartData,
     );
-    const [period, setPeriod] = useState<PeriodType>("1mo");
+    const [period, setPeriod] = useState<PeriodType>("3mo");
     const [interval, setInterval] = useState<IntervalType>("1d");
     const [isMounted, setIsMounted] = useState(false);
     const [isChartLoading, setIsChartLoading] = useState(false);
@@ -134,7 +136,7 @@ export default function StockClient({
         try {
             const token = await getTokenWithRefresh();
             if (!token) {
-                if (isGuestMode()) {
+                if (isGuest) {
                     addGuestWatchlistItem({
                         local_id: crypto.randomUUID(),
                         ticker,

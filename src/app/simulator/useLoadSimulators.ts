@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { getTokenWithRefresh } from "@/lib/auth";
+import { useGuest } from "@/contexts/GuestContext";
 import { listSimulators, getSimulatorSummary, getStockPrice } from "@/lib/api";
 import { parseNumber } from "@/lib/utils/helper";
 import type { Stock } from "@/components/simulator/StockWatchlist";
@@ -52,7 +53,6 @@ async function fetchAllSimulators(token: string): Promise<Simulation[]> {
 
 interface UseLoadSimulatorsParams {
     hasInitialSimulations: boolean;
-    isGuest: boolean;
     setSimulations: (simulations: Simulation[]) => void;
     setActiveSimulation: (simulation: Simulation | null) => void;
     setLoading: (loading: boolean) => void;
@@ -60,11 +60,11 @@ interface UseLoadSimulatorsParams {
 
 export function useLoadSimulators({
     hasInitialSimulations,
-    isGuest,
     setSimulations,
     setActiveSimulation,
     setLoading,
 }: UseLoadSimulatorsParams) {
+    const { isGuest } = useGuest();
     useEffect(() => {
         if (hasInitialSimulations || isGuest) return;
         let isMounted = true;
@@ -73,6 +73,7 @@ export function useLoadSimulators({
             const token = await getTokenWithRefresh();
             if (!token) {
                 toast.error("You must be logged in.");
+                if (isMounted) setLoading(false);
                 return;
             }
             try {

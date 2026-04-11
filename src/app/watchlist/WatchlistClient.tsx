@@ -10,10 +10,12 @@ import type { WatchlistQuoteItem } from "@/lib/api";
 import {
     addToWatchlist,
     getStockInfo,
+    getStockPrice,
     getWatchlistQuotes,
     removeFromWatchlist,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
+import { useGuest } from "@/contexts/GuestContext";
 import {
     addGuestWatchlistItem,
     getGuestWatchlist,
@@ -70,21 +72,40 @@ function guestItemToQuoteItem(item: GuestWatchlistItem): WatchlistQuoteItem {
 
 export default function WatchlistClient({
     initialItems,
-    isGuest = false,
 }: {
     initialItems: WatchlistQuoteItem[];
-    isGuest?: boolean;
 }) {
+    const { isGuest } = useGuest();
     const [items, setItems] = useState<WatchlistQuoteItem[]>(initialItems);
     const [sortMode, setSortMode] = useState<SortMode>("ticker");
     const [pendingId, setPendingId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();
 
-    // Load guest watchlist from localStorage on mount
+    // Load guest watchlist from localStorage on mount and fetch prices
     useEffect(() => {
         if (!isGuest) return;
         const stored = getGuestWatchlist();
         setItems(stored.map(guestItemToQuoteItem));
+
+        if (stored.length === 0) return;
+        Promise.allSettled(stored.map((item) => getStockPrice(item.ticker))).then(
+            (results) => {
+                setItems((prev) =>
+                    prev.map((item, i) => {
+                        const result = results[i];
+                        if (result.status === "fulfilled") {
+                            return {
+                                ...item,
+                                stockPrice: result.value.stockPrice ?? null,
+                                priceChange: result.value.priceChange ?? null,
+                                priceChangePercent: result.value.priceChangePercent ?? null,
+                            };
+                        }
+                        return item;
+                    }),
+                );
+            },
+        );
     }, [isGuest]);
 
     const sortedItems = useMemo(
@@ -143,7 +164,10 @@ export default function WatchlistClient({
         startTransition(async () => {
             try {
                 if (isGuest) {
-                    const stock = await getStockInfo(item.value);
+                    const [stock, priceData] = await Promise.all([
+                        getStockInfo(item.value),
+                        getStockPrice(item.value).catch(() => null),
+                    ]);
                     const guestItem: GuestWatchlistItem = {
                         local_id: crypto.randomUUID(),
                         ticker: item.value,
@@ -154,7 +178,15 @@ export default function WatchlistClient({
                     addGuestWatchlistItem(guestItem);
                     setItems((prev) => {
                         if (prev.some((i) => i.ticker === item.value)) return prev;
-                        return [...prev, guestItemToQuoteItem(guestItem)];
+                        return [
+                            ...prev,
+                            {
+                                ...guestItemToQuoteItem(guestItem),
+                                stockPrice: priceData?.stockPrice ?? null,
+                                priceChange: priceData?.priceChange ?? null,
+                                priceChangePercent: priceData?.priceChangePercent ?? null,
+                            },
+                        ];
                     });
                     toast.success("Added to watchlist");
                     return;

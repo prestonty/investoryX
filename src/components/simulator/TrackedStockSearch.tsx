@@ -13,6 +13,7 @@ import {
     stockExist,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
+import { useGuest } from "@/contexts/GuestContext";
 import { parseNumber } from "@/lib/utils/helper";
 
 interface TrackedStockSearchProps {
@@ -21,7 +22,6 @@ interface TrackedStockSearchProps {
     onAddStock: (stock: Stock) => void;
     maxItems?: number;
     targetAllocation?: number;
-    isGuest?: boolean;
 }
 
 const DEFAULT_MAX_ITEMS = 5;
@@ -33,8 +33,8 @@ export function TrackedStockSearch({
     onAddStock,
     maxItems = DEFAULT_MAX_ITEMS,
     targetAllocation = DEFAULT_TARGET_ALLOCATION,
-    isGuest = false,
 }: TrackedStockSearchProps) {
+    const { isGuest } = useGuest();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<Item[]>([]);
     const [isFocused, setIsFocused] = useState(false);

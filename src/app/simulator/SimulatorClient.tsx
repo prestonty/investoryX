@@ -25,6 +25,7 @@ import {
     type BacktestResult,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
+import { useGuest } from "@/contexts/GuestContext";
 import {
     getGuestSimulators,
     addGuestSimulator,
@@ -81,7 +82,6 @@ const MAX_SIMULATIONS = 3;
 interface SimulatorClientProps {
     initialSimulations?: Simulation[];
     initialActiveSimulationId?: number | null;
-    isGuest?: boolean;
 }
 
 enum ViewMode {
@@ -95,8 +95,8 @@ type EditableRiskField = "max_daily_loss_pct" | "max_position_pct";
 export default function SimulatorClient({
     initialSimulations = [],
     initialActiveSimulationId = null,
-    isGuest = false,
 }: SimulatorClientProps) {
+    const { isGuest } = useGuest();
     const [summary, setSummary] = useState<SimulatorSummaryResponse | null>(
         null,
     );
@@ -304,7 +304,7 @@ export default function SimulatorClient({
         }
     };
 
-    useLoadSimulators({ hasInitialSimulations, isGuest, setSimulations, setActiveSimulation, setLoading });
+    useLoadSimulators({ hasInitialSimulations, setSimulations, setActiveSimulation, setLoading });
 
     const handleRunSimulator = async () => {
         if (!activeSimulationId || !activeSimulation) {
@@ -712,7 +712,7 @@ export default function SimulatorClient({
     const renderSimulators = () => {
         if (loading) {
             return (
-                <div className='flex-1 flex items-center justify-center bg-light/30'>
+                <div className='fixed inset-0 flex items-center justify-center rounded-[40px] overflow-hidden'>
                     <FourSquare
                         color='#181D2A'
                         size='medium'
@@ -1119,7 +1119,6 @@ export default function SimulatorClient({
                                                     onAddStock={
                                                         handleAddTrackedStock
                                                     }
-                                                    isGuest={isGuest}
                                                 />
                                             )}
                                             <StockWatchlist
@@ -1213,7 +1212,7 @@ export default function SimulatorClient({
 
     return (
         <div className='bg-light font-[family-name:var(--font-geist-sans)] min-h-screen'>
-            <Navbar search={false} />
+            <Navbar />
             <Toaster position='top-center' />
             <div className='mx-auto max-w-6xl px-6 pb-10 pt-16 xl:pt-10 text-dark'>
                 <div className='size-full flex flex-col bg-white'>

@@ -1,17 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { isGuestMode } from "@/lib/auth";
+import { useState } from "react";
+import { useGuest } from "@/contexts/GuestContext";
 
 export default function GuestBanner() {
-    const [show, setShow] = useState(false);
+    const { isGuest } = useGuest();
+    const [dismissed, setDismissed] = useState(false);
 
-    useEffect(() => {
-        setShow(isGuestMode());
-    }, []);
-
-    if (!show) return null;
+    if (!isGuest || dismissed) return null;
 
     return (
         <div className='bg-blue/10 border border-blue/30 rounded-xl px-4 py-3 flex items-center justify-between text-sm text-dark'>
@@ -27,7 +24,7 @@ export default function GuestBanner() {
             </span>
             <button
                 type='button'
-                onClick={() => setShow(false)}
+                onClick={() => setDismissed(true)}
                 className='text-gray hover:text-dark ml-4 flex-none'
                 aria-label='Dismiss banner'
             >
