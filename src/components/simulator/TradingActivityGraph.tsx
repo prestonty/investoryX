@@ -19,10 +19,7 @@ interface TradingActivityGraphProps {
 export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
     // Group records by symbol and aggregate data
     const chartData = records.reduce((acc, record) => {
-        const timeKey = new Date(record.timestamp).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
+        const timeKey = new Date(record.timestamp).toISOString().slice(0, 10);
 
         const existing = acc.find(
             (item) => item.time === timeKey && item.symbol === record.symbol,
@@ -47,10 +44,7 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
 
     // Create data for shares chart
     const sharesData = records.map((record, index) => ({
-        name: new Date(record.timestamp).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-        }),
+        name: new Date(record.timestamp).toISOString().slice(0, 10),
         shares: record.shares,
         price: record.price,
         symbol: record.symbol,
@@ -65,7 +59,7 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
                         {payload[0].payload.symbol}
                     </p>
                     <p className='text-sm text-gray'>
-                        Time: {payload[0].payload.name}
+                        Date: {payload[0].payload.name}
                     </p>
                     <p className='text-sm text-gray'>
                         Price: ${Number(payload[0].payload.price).toFixed(2)}

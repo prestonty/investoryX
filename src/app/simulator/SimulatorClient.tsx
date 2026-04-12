@@ -1110,6 +1110,7 @@ export default function SimulatorClient({
                                     {/* Trading Sandbox Section — hidden for guests (requires backend) */}
                                     {!isGuest && activeSimulationId && (
                                         <TradingSandboxSection
+                                            key={activeSimulationId}
                                             simulatorId={activeSimulationId}
                                             priceMode={activeSimulation.price_mode}
                                             isBusy={isBusy}
