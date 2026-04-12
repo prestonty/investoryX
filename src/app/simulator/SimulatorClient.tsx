@@ -37,7 +37,7 @@ import {
     DEMO_SIMULATION,
     DEMO_SIMULATION_ID,
 } from "@/lib/demoSimulator";
-import { guestSimToSimulation } from "./mappers";
+import { guestSimToSimulation, mapTradeRecord } from "./mappers";
 import { useLoadSimulators } from "./useLoadSimulators";
 import {
     formatCurrency,
@@ -330,15 +330,7 @@ export default function SimulatorClient({
             );
             setSummary(latestSummary);
             updateSimulationFromResponse(latestSummary.simulator);
-            const mappedTrades = (latestSummary.trades ?? []).map((t) => ({
-                id: String(t.trade_id),
-                symbol: t.ticker,
-                action: t.side.toUpperCase() as TradeRecord["action"],
-                price: t.price,
-                volume: t.shares,
-                timestamp: new Date(t.executed_at ?? Date.now()),
-                cashAfter: t.balance_after,
-            }));
+            const mappedTrades = (latestSummary.trades ?? []).map(mapTradeRecord);
             setSimulations((prev) =>
                 prev.map((sim) =>
                     sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
@@ -369,15 +361,7 @@ export default function SimulatorClient({
                 );
                 setSummary(latestSummary);
                 updateSimulationFromResponse(latestSummary.simulator);
-                const mappedTrades = (latestSummary.trades ?? []).map((t) => ({
-                    id: String(t.trade_id),
-                    symbol: t.ticker,
-                    action: t.side.toUpperCase() as TradeRecord["action"],
-                    price: t.price,
-                    volume: t.shares,
-                    timestamp: new Date(t.executed_at ?? Date.now()),
-                    cashAfter: t.balance_after,
-                }));
+                const mappedTrades = (latestSummary.trades ?? []).map(mapTradeRecord);
                 setSimulations((prev) =>
                     prev.map((sim) =>
                         sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
@@ -404,16 +388,7 @@ export default function SimulatorClient({
             const latestSummary = await getSimulatorSummary(activeSimulationId, token);
             setSummary(latestSummary);
             updateSimulationFromResponse(latestSummary.simulator);
-            const mappedTrades = (latestSummary.trades ?? []).map((t) => ({
-                id: String(t.trade_id),
-                symbol: t.ticker,
-                action: t.side.toUpperCase() as TradeRecord["action"],
-                price: t.price,
-                volume: t.shares,
-                timestamp: new Date(t.executed_at ?? Date.now()),
-                source: t.source,
-                cashAfter: t.balance_after,
-            }));
+            const mappedTrades = (latestSummary.trades ?? []).map(mapTradeRecord);
             setSimulations((prev) =>
                 prev.map((sim) =>
                     sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,

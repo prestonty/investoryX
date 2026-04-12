@@ -51,7 +51,7 @@ export function mapTradeRecord(t: SimulatorTradeResponse): TradeRecord {
         symbol: t.ticker,
         action: t.side.toUpperCase() as TradeRecord["action"],
         price: t.price,
-        volume: t.shares,
+        shares: t.shares,
         timestamp: new Date(t.executed_at ?? Date.now()),
         cashAfter: t.balance_after,
     };

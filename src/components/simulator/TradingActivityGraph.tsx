@@ -29,14 +29,14 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
         );
 
         if (existing) {
-            existing.totalVolume += record.volume;
+            existing.totalShares += record.shares;
             existing.trades.push(record);
         } else {
             acc.push({
                 time: timeKey,
                 symbol: record.symbol,
                 price: record.price,
-                totalVolume: record.volume,
+                totalShares: record.shares,
                 action: record.action,
                 trades: [record],
             });
@@ -45,13 +45,13 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
         return acc;
     }, [] as any[]);
 
-    // Create data for volume chart
-    const volumeData = records.map((record, index) => ({
+    // Create data for shares chart
+    const sharesData = records.map((record, index) => ({
         name: new Date(record.timestamp).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
         }),
-        volume: record.volume,
+        shares: record.shares,
         price: record.price,
         symbol: record.symbol,
         action: record.action,
@@ -71,7 +71,7 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
                         Price: ${Number(payload[0].payload.price).toFixed(2)}
                     </p>
                     <p className='text-sm text-gray'>
-                        Volume: {payload[0].payload.volume?.toLocaleString()}
+                        Volume: {payload[0].payload.shares?.toLocaleString()}
                     </p>
                     <p
                         className={`text-sm ${
@@ -114,7 +114,7 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
                             tick={{ fill: "#7E8391" }}
                         />
                         <YAxis
-                            dataKey='volume'
+                            dataKey='shares'
                             stroke='#7E8391'
                             tick={{ fill: "#7E8391" }}
                             label={{
@@ -127,17 +127,17 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
                         <Tooltip content={<CustomTooltip />} />
                         <Scatter
                             name='Buy'
-                            data={volumeData.filter((d) => d.action === "BUY")}
+                            data={sharesData.filter((d) => d.action === "BUY")}
                             fill='#248E4F'
                         />
                         <Scatter
                             name='Sell'
-                            data={volumeData.filter((d) => d.action === "SELL")}
+                            data={sharesData.filter((d) => d.action === "SELL")}
                             fill='#DF3F30'
                         />
                         <Scatter
                             name='Hold'
-                            data={volumeData.filter((d) => d.action === "HOLD")}
+                            data={sharesData.filter((d) => d.action === "HOLD")}
                             fill='#748EFE'
                         />
                         <Legend
@@ -153,7 +153,7 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
                 <h4 className='text-dark mb-4'>Price Trends</h4>
                 <ResponsiveContainer width='100%' height={300}>
                     <LineChart
-                        data={volumeData}
+                        data={sharesData}
                         margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
                     >
                         <CartesianGrid strokeDasharray='3 3' stroke='#E8EBED' />

@@ -6,7 +6,7 @@ export interface TradeRecord {
     symbol: string;
     action: "BUY" | "SELL" | "HOLD";
     price: number;
-    volume: number;
+    shares: number;
     timestamp: Date;
     source?: string;
     cashAfter?: number;
@@ -64,7 +64,7 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                                 Price
                             </th>
                             <th className='text-left px-4 py-3 text-sm text-gray'>
-                                Volume
+                                Shares
                             </th>
                             <th className='text-left px-4 py-3 text-sm text-gray'>
                                 Balance After
@@ -102,7 +102,7 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                                     ${Number(record.price).toFixed(2)}
                                 </td>
                                 <td className='px-4 py-3 text-dark'>
-                                    {record.volume.toLocaleString()}
+                                    {record.shares.toLocaleString()}
                                 </td>
                                 <td className='px-4 py-3 text-dark text-sm'>
                                     {record.cashAfter != null

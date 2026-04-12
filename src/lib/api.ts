@@ -706,11 +706,15 @@ export async function runSimulator(
 }
 
 export async function getDevFlags(): Promise<{ dev_mode: boolean }> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, {
-        cache: "no-store",
-    });
-    if (!res.ok) return { dev_mode: false };
-    return res.json();
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, {
+            cache: "no-store",
+        });
+        if (!res.ok) return { dev_mode: false };
+        return res.json();
+    } catch {
+        return { dev_mode: false };
+    }
 }
 
 export async function getStrategies(): Promise<StrategyOption[]> {
