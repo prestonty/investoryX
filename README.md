@@ -6,6 +6,10 @@ portfolio management capabilities.
 
 Here's the link to [InvestoryX Backend](https://github.com/prestonty/investoryX-backend)
 
+## Video Demo
+
+Watch video demo here: https://youtu.be/PdQUqJX_cCM
+
 ## Architecture Overview
 
 This frontend application follows a **Backend for Frontend (BFF)** architecture
