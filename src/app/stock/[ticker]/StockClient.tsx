@@ -58,8 +58,10 @@ export default function StockClient({
     const { isGuest } = useGuest();
     const [chartView, setChartView] = useState<TimeframeKey | "ALL">("D");
     const [showInfo, setShowInfo] = useState(true);
-    // With the info panel hidden, the chart card is wide enough to put "All" side by side
-    const isWideGrid = chartView === "ALL" && !showInfo;
+    const [allLayout, setAllLayout] = useState<"horizontal" | "vertical">(
+        "vertical",
+    );
+    const isSideBySide = chartView === "ALL" && allLayout === "horizontal";
     const [isMounted, setIsMounted] = useState(false);
 
     const priceDirection = basicStockData.priceChange.includes("-")
@@ -204,6 +206,30 @@ export default function StockClient({
                         <div className='flex flex-wrap items-center justify-between gap-2'>
                             <h2 className='text-dark text-2xl'>Chart</h2>
                             <div className='flex flex-wrap items-center gap-2'>
+                                {chartView === "ALL" && (
+                                    <div className='flex rounded-lg border border-slate-200 bg-slate-50 p-1'>
+                                        {(
+                                            [
+                                                ["horizontal", "Horizontal"],
+                                                ["vertical", "Vertical"],
+                                            ] as const
+                                        ).map(([layout, label]) => (
+                                            <button
+                                                key={layout}
+                                                onClick={() =>
+                                                    setAllLayout(layout)
+                                                }
+                                                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-200 ${
+                                                    allLayout === layout
+                                                        ? "bg-dark text-white"
+                                                        : "text-dark/70 hover:bg-white"
+                                                }`}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                                 <div className='flex rounded-lg border border-slate-200 bg-slate-50 p-1'>
                                     {[
                                         ...TIMEFRAME_PRESETS.map((preset) => ({
@@ -233,7 +259,7 @@ export default function StockClient({
 
                         <div
                             className={`mt-2 ${
-                                isWideGrid
+                                isSideBySide
                                     ? "grid grid-cols-1 lg:grid-cols-3 gap-4"
                                     : "flex flex-col gap-6"
                             }`}
@@ -284,7 +310,7 @@ export default function StockClient({
                                         symbol={ticker}
                                         preset={preset}
                                         className={
-                                            chartView === "ALL" && showInfo
+                                            chartView === "ALL" && !isSideBySide
                                                 ? "h-[26rem]"
                                                 : "h-[34rem]"
                                         }
