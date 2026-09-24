@@ -1,7 +1,6 @@
 import {
     getStockPrice,
     getStockOverview,
-    getStockHistory,
     getStockInfo,
 } from "@/lib/api";
 import StockClient from "./StockClient";
@@ -18,12 +17,11 @@ export default async function Stock({
         const { ticker } = await params;
         const normalizedTicker = ticker.toUpperCase();
 
-        const [stockInfo, basicStockData, advancedStockData, initialChartData] =
+        const [stockInfo, basicStockData, advancedStockData] =
             await Promise.all([
                 getStockInfo(normalizedTicker).catch((e) => { console.error("[stock page] getStockInfo failed:", e?.message); throw e; }),
                 getStockPrice(normalizedTicker).catch((e) => { console.error("[stock page] getStockPrice failed:", e?.message); throw e; }),
                 getStockOverview(normalizedTicker).catch((e) => { console.error("[stock page] getStockOverview failed:", e?.message); throw e; }),
-                getStockHistory(normalizedTicker).catch((e) => { console.error("[stock page] getStockHistory failed:", e?.message); throw e; }),
             ]);
 
         return (
@@ -31,7 +29,6 @@ export default async function Stock({
                 <StockClient
                     ticker={normalizedTicker}
                     stock_id={stockInfo.stock_id}
-                    initialChartData={initialChartData}
                     basicStockData={basicStockData}
                     advancedStockData={advancedStockData}
                 />

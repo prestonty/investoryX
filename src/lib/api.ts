@@ -752,6 +752,10 @@ export interface BacktestResult {
     total_trades: number;
     starting_cash: number;
     final_cash: number;
+    /** Market value of shares still held at end_date. */
+    holdings_value?: number;
+    /** final_cash + holdings_value; pnl is measured against this. */
+    final_equity?: number;
     pnl: number;
     pnl_pct: number;
     day_results: BacktestDayResult[];

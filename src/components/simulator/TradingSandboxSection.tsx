@@ -275,6 +275,14 @@ export function TradingSandboxSection({
                                 ${Number(lastResult.final_cash).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                         </div>
+                        {lastResult.holdings_value != null && (
+                            <div>
+                                <p className='text-xs text-gray'>Holdings Value</p>
+                                <p className='text-sm text-dark font-medium'>
+                                    ${Number(lastResult.holdings_value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
                         <div>
                             <p className='text-xs text-gray'>P&amp;L</p>
                             <p className={`text-sm font-medium ${pnlColor}`}>
