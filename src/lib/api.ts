@@ -457,6 +457,53 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
     return res.json();
 }
 
+// Request a password reset email. The response is the same whether or not
+// an account exists for the email.
+export async function requestPasswordReset(
+    email: string,
+): Promise<{ message: string }> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/auth/forgot-password`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(
+            errorDetail(error) || "Could not send reset email. Please try again.",
+        );
+    }
+
+    return res.json();
+}
+
+// Set a new password using the token from a reset email
+export async function resetPassword(
+    token: string,
+    password: string,
+): Promise<{ message: string }> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/auth/reset-password`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, password }),
+            credentials: "include", // the API clears any old session cookies
+        },
+    );
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(errorDetail(error) || "Password reset failed");
+    }
+
+    return res.json();
+}
+
 // Login user and get access token
 export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
     // FastAPI OAuth2PasswordRequestForm expects form data, not JSON

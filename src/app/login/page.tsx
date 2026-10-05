@@ -272,6 +272,12 @@ export default function Login() {
                                         setIsPasswordFocused(false);
                                     }}
                                 />
+                                <Link
+                                    className='self-end pr-4 pt-1 text-sm text-blue hover:text-darkblue transition-colors duration-300'
+                                    href='/forgot-password'
+                                >
+                                    Forgot password?
+                                </Link>
                             </div>
 
                             <input
