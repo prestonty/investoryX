@@ -13,6 +13,7 @@ import { loginUser, type LoginData } from "@/lib/api";
 import { enterGuestMode, exitGuestMode, getToken, isGuestMode } from "@/lib/auth";
 import { migrateGuestData, hasGuestData } from "@/lib/guestMigration";
 import toast, { Toaster } from "react-hot-toast";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function Login() {
     const [isEmailFocused, setIsEmailFocused] = useState<boolean>(false);
@@ -256,9 +257,8 @@ export default function Login() {
                                     Password
                                 </label>
 
-                                <input
+                                <PasswordInput
                                     className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
-                                    type='password'
                                     id='password'
                                     name='password'
                                     value={password}

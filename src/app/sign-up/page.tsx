@@ -10,6 +10,7 @@ import { useState } from "react";
 import { registerUser, type RegisterData } from "@/lib/api";
 import { PASSWORD_RULE_TEXT, passwordPolicyError } from "@/lib/passwordPolicy";
 import toast, { Toaster } from "react-hot-toast";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function Register() {
     const [isEmailFocused, setIsEmailFocused] = useState<boolean>(false);
@@ -246,9 +247,8 @@ export default function Register() {
                                     Password
                                 </label>
 
-                                <input
+                                <PasswordInput
                                     className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
-                                    type='password'
                                     id='password'
                                     name='password'
                                     value={password}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import PasswordInput from "@/components/PasswordInput";
 import { resetPassword } from "@/lib/api";
 import { PASSWORD_RULE_TEXT, passwordPolicyError } from "@/lib/passwordPolicy";
 
@@ -102,9 +103,8 @@ export default function ResetPasswordClient() {
                                     >
                                         New password
                                     </label>
-                                    <input
+                                    <PasswordInput
                                         className={inputClass}
-                                        type='password'
                                         id='password'
                                         name='password'
                                         autoComplete='new-password'
@@ -129,9 +129,8 @@ export default function ResetPasswordClient() {
                                     >
                                         Confirm new password
                                     </label>
-                                    <input
+                                    <PasswordInput
                                         className={inputClass}
-                                        type='password'
                                         id='confirmPassword'
                                         name='confirmPassword'
                                         autoComplete='new-password'
