@@ -1,5 +1,62 @@
 // BFF
 
+// FastAPI errors are {detail: string} or, for validation failures,
+// {detail: [{msg: "Value error, ..."}]}. Returns a readable message or null.
+export function errorDetail(body: unknown): string | null {
+    const detail = (body as { detail?: unknown } | null)?.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+        const messages = detail
+            .map((item) => String((item as { msg?: unknown })?.msg ?? ""))
+            .map((msg) => msg.replace(/^Value error, /, ""))
+            .filter(Boolean);
+        return messages.length ? messages.join("; ") : null;
+    }
+    return null;
+}
+
+const API_URL = process.env.NEXT_PUBLIC_URL;
+
+// Public market data uses `next: { revalidate }` so the Next.js server reuses
+// responses for a short time instead of hitting the API (and Yahoo) per view.
+
+// Auth tokens live in httpOnly cookies that JavaScript can't read. In the
+// browser, authenticated requests just send cookies; a 401 triggers one refresh
+// (shared by all concurrent requests) and a single retry. On the Next.js server
+// there are no browser cookies, so pages forward the access token explicitly
+// as a Bearer header, which is kept only there.
+let refreshInFlight: Promise<boolean> | null = null;
+
+export function refreshSession(): Promise<boolean> {
+    if (!refreshInFlight) {
+        refreshInFlight = fetch(`${API_URL}/api/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+        })
+            .then((res) => res.ok)
+            .catch(() => false)
+            .finally(() => {
+                refreshInFlight = null;
+            });
+    }
+    return refreshInFlight;
+}
+
+export async function authFetch(
+    url: string,
+    init: RequestInit = {},
+): Promise<Response> {
+    const isBrowser = typeof window !== "undefined";
+    const headers = new Headers(init.headers);
+    if (isBrowser) headers.delete("Authorization");
+    const request: RequestInit = { ...init, headers, credentials: "include" };
+
+    const res = await fetch(url, request);
+    if (res.status !== 401 || !isBrowser) return res;
+    if (!(await refreshSession())) return res;
+    return fetch(url, request);
+}
+
 export async function searchStocks(filterString: string, signal?: AbortSignal) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
@@ -30,7 +87,7 @@ export async function getStockHistory(
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/stock-history/${ticker}?period=${period}&interval=${interval}`,
         {
-            cache: "no-store",
+            next: { revalidate: 60 },
         },
     );
 
@@ -47,7 +104,7 @@ export async function getStockHistory(
 // Fetch general stock information to populate stock page
 export async function getStockPrice(ticker: string) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/stocks/${ticker}`, {
-        cache: "no-store",
+        next: { revalidate: 30 },
     });
 
     if (!res.ok) {
@@ -61,7 +118,7 @@ export async function getStockPrice(ticker: string) {
 export async function getStockInfo(ticker: string) {
     const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/ticker/${ticker}`;
     const res = await fetch(url, {
-        cache: "no-store",
+        next: { revalidate: 3600 },
     });
 
     if (!res.ok) {
@@ -85,7 +142,7 @@ export async function getStockInfo(ticker: string) {
 export async function getTopGainers(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}&min_price=${minPrice}`,
-        { cache: "no-store" },
+        { next: { revalidate: 60 } },
     );
 
     if (!res.ok) {
@@ -99,7 +156,7 @@ export async function getTopGainers(limit: number = 8, minPrice: number = 4.0) {
 export async function getTopLosers(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}&min_price=${minPrice}`,
-        { cache: "no-store" },
+        { next: { revalidate: 60 } },
     );
 
     if (!res.ok) {
@@ -113,7 +170,7 @@ export async function getTopLosers(limit: number = 8, minPrice: number = 4.0) {
 export async function getMostActive(limit: number = 8, minPrice: number = 4.0) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}&min_price=${minPrice}`,
-        { cache: "no-store" },
+        { next: { revalidate: 60 } },
     );
 
     if (!res.ok) {
@@ -128,7 +185,7 @@ export async function getStockNews(maxArticles: number = 20) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${maxArticles}`,
         {
-            cache: "no-store",
+            next: { revalidate: 300 },
         },
     );
 
@@ -144,7 +201,7 @@ export async function getDefaultIndexes() {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/get-default-indexes`,
         {
-            cache: "no-store",
+            next: { revalidate: 30 },
         },
     );
 
@@ -159,7 +216,7 @@ export async function getStockOverview(ticker: string) {
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/stock-overview/${ticker}`,
         {
-            cache: "no-store",
+            next: { revalidate: 300 },
         },
     );
 
@@ -221,13 +278,14 @@ export interface SimulatorResponse {
     cash_balance: number;
     status: "Active Trading" | "Pause Trading";
     frequency: "daily" | "twice_daily";
-    price_mode: "open" | "close";
     last_run_at?: string;
     next_run_at?: string;
     max_position_pct?: number | null;
     max_daily_loss_pct?: number | null;
     stopped_reason?: string | null;
     strategy_name: string;
+    // Every setting of strategy_name, with defaults filled in.
+    strategy_params: StrategyParams;
     created_at?: string;
     updated_at?: string;
     tickers: string[];
@@ -281,9 +339,11 @@ export interface SimulatorSummaryResponse {
 
 export interface SimulatorRunResponse {
     message: string;
+    // Fills of the previous trading day's orders, at today's open.
     trades_executed: number;
+    // Orders decided on today's close, filling at the next trading day's open.
+    orders_queued: number;
     cash_balance: number;
-    price_mode: string;
     frequency: string;
 }
 
@@ -292,19 +352,39 @@ export interface CreateSimulatorRequest {
     starting_cash: number;
 }
 
-export type StrategyName = "sma_crossover" | "stat_arb_pairs" | "auction_liquidity_provider";
+export type StrategyName =
+    | "sma_crossover"
+    | "sma_50_200_crossover"
+    | "stat_arb_pairs"
+    | "auction_liquidity_provider";
+
+export type StrategyParamValue = number | string | null;
+export type StrategyParams = Record<string, StrategyParamValue>;
+
+export interface StrategyParamSpec {
+    name: string;
+    label: string;
+    type: "integer" | "number" | "ticker";
+    default: StrategyParamValue;
+    min?: number;
+    max?: number;
+    min_exclusive?: boolean;
+    max_exclusive?: boolean;
+}
 
 export interface StrategyOption {
     value: StrategyName;
     label: string;
+    params: StrategyParamSpec[];
 }
 
 export interface UpdateSimulatorSettingsRequest {
     frequency?: "daily" | "twice_daily";
-    price_mode?: "open" | "close";
     max_position_pct?: number | null;
     max_daily_loss_pct?: number | null;
     strategy_name?: StrategyName;
+    // Replaces the saved settings; omitted keys use the strategy's defaults.
+    strategy_params?: StrategyParams;
 }
 
 export interface CreateTrackedStockRequest {
@@ -314,7 +394,6 @@ export interface CreateTrackedStockRequest {
 }
 
 export interface SimulatorRunRequest {
-    price_mode?: "open" | "close";
     frequency?: "daily" | "twice_daily";
 }
 
@@ -334,8 +413,8 @@ export async function registerUser(
     );
 
     if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Registration failed");
+        const error = await res.json().catch(() => null);
+        throw new Error(errorDetail(error) || "Registration failed");
     }
 
     const user = await res.json();
@@ -374,6 +453,7 @@ export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/token`, {
         method: "POST",
         body: formData,
+        credentials: "include", // the API sets the httpOnly auth cookies
     });
 
     if (!res.ok) {
@@ -394,15 +474,19 @@ export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
 
 // Get current user info (requires token)
 export async function getCurrentUser(token: string): Promise<UserResponse> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/me`, {
+    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/me`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
     });
 
     if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Failed to get user info");
+        const body = await res.json().catch(() => null);
+        const error = new Error(errorDetail(body) || "Failed to get user info") as Error & {
+            status?: number;
+        };
+        error.status = res.status;
+        throw error;
     }
 
     return res.json();
@@ -413,7 +497,7 @@ export async function addToWatchlist(
     stockId: number,
     token: string,
 ): Promise<WatchlistItemResponse> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
+    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -434,7 +518,7 @@ export async function getWatchlistQuotes(
     token: string,
 ): Promise<WatchlistQuoteItem[]> {
     const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/watchlist/quotes`;
-    const res = await fetch(url, {
+    const res = await authFetch(url, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -465,7 +549,7 @@ export async function removeFromWatchlist(
     watchlistId: number,
     token: string,
 ): Promise<void> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/watchlist/${watchlistId}`,
         {
             method: "DELETE",
@@ -487,7 +571,7 @@ export async function createSimulator(
     payload: CreateSimulatorRequest,
     token: string,
 ): Promise<SimulatorResponse> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
+    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -509,7 +593,7 @@ export async function renameSimulator(
     name: string,
     token: string,
 ): Promise<SimulatorResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
         {
             method: "PATCH",
@@ -534,7 +618,7 @@ export async function updateSimulatorSettings(
     payload: UpdateSimulatorSettingsRequest,
     token: string,
 ): Promise<SimulatorResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/settings`,
         {
             method: "PATCH",
@@ -557,7 +641,7 @@ export async function updateSimulatorSettings(
 export async function listSimulators(
     token: string,
 ): Promise<SimulatorResponse[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
+    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -576,7 +660,7 @@ export async function addTrackedStock(
     payload: CreateTrackedStockRequest,
     token: string,
 ): Promise<SimulatorTrackedStockResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks`,
         {
             method: "POST",
@@ -601,7 +685,7 @@ export async function deleteTrackedStock(
     trackedId: number,
     token: string,
 ): Promise<void> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks/${trackedId}`,
         {
             method: "DELETE",
@@ -622,7 +706,7 @@ export async function deleteTrackedStockByTicker(
     ticker: string,
     token: string,
 ): Promise<void> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks/by-ticker/${ticker}`,
         {
             method: "DELETE",
@@ -642,7 +726,7 @@ export async function deleteSimulator(
     simulatorId: number,
     token: string,
 ): Promise<void> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}`,
         {
             method: "DELETE",
@@ -662,7 +746,7 @@ export async function getSimulatorSummary(
     simulatorId: number,
     token: string,
 ): Promise<SimulatorSummaryResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}`,
         {
             headers: {
@@ -685,7 +769,7 @@ export async function runSimulator(
     payload: SimulatorRunRequest,
     token: string,
 ): Promise<SimulatorRunResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/run`,
         {
             method: "POST",
@@ -718,7 +802,7 @@ export async function getDevFlags(): Promise<{ dev_mode: boolean }> {
 }
 
 export async function getStrategies(): Promise<StrategyOption[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/strategies`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/strategies`, {
         cache: "no-store",
     });
     if (!res.ok) return [];
@@ -732,7 +816,6 @@ export async function getStrategies(): Promise<StrategyOption[]> {
 export interface BacktestRequest {
     start_date: string; // ISO "YYYY-MM-DD"
     end_date: string;
-    price_mode?: "open" | "close";
     clear_previous?: boolean;
 }
 
@@ -779,7 +862,7 @@ export async function launchBacktest(
     payload: BacktestRequest,
     token: string,
 ): Promise<BacktestLaunchResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest`,
         {
             method: "POST",
@@ -802,7 +885,7 @@ export async function getBacktestStatus(
     taskId: string,
     token: string,
 ): Promise<BacktestStatusResponse> {
-    const res = await fetch(
+    const res = await authFetch(
         `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest/status/${taskId}`,
         {
             headers: { Authorization: `Bearer ${token}` },
@@ -819,11 +902,14 @@ export async function getBacktestStatus(
 export async function runPipeline(token: string, day?: string) {
     const url = new URL(`${process.env.NEXT_PUBLIC_URL}/dev/run-pipeline`);
     if (day) url.searchParams.set("day", day);
-    const res = await fetch(url.toString(), {
-        method: "GET",
+    const res = await authFetch(url.toString(), {
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
     });
-    if (!res.ok) throw new Error("Failed to run pipeline");
+    if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.detail || "Failed to run pipeline");
+    }
     return res.json();
 }

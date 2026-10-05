@@ -8,6 +8,7 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState } from "react";
 import { registerUser, type RegisterData } from "@/lib/api";
+import { PASSWORD_RULE_TEXT, passwordPolicyError } from "@/lib/passwordPolicy";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Register() {
@@ -37,8 +38,10 @@ export default function Register() {
             return;
         }
 
-        if (password.length < 6) {
-            setError("Password must be at least 6 characters long");
+        const passwordError = passwordPolicyError(password);
+        if (passwordError) {
+            setError(passwordError);
+            toast.error(passwordError);
             setLoading(false);
             return;
         }
@@ -81,8 +84,8 @@ export default function Register() {
                 toast.error("Please enter a valid email address.");
             } else if (errorMessage.includes("name")) {
                 toast.error("Please enter a valid name.");
-            } else if (errorMessage.includes("password")) {
-                toast.error("Please enter a valid password.");
+            } else if (errorMessage.toLowerCase().includes("password")) {
+                toast.error(errorMessage);
             } else if (errorMessage.includes("required")) {
                 toast.error("All fields are required.");
             } else {
@@ -259,6 +262,9 @@ export default function Register() {
                                         setIsPasswordFocused(false);
                                     }}
                                 />
+                                <p className='w-72 pl-4 pt-1 text-sm text-gray'>
+                                    {PASSWORD_RULE_TEXT}
+                                </p>
                             </div>
 
                             <input

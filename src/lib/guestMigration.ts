@@ -1,5 +1,5 @@
 // Migrates guest localStorage data to the backend after the user logs in.
-// Called once after setAuthToken() on successful login.
+// Called once after a successful login (the session lives in httpOnly cookies).
 
 import {
     addToWatchlist,
@@ -52,8 +52,8 @@ async function migrateSimulators(token: string): Promise<void> {
                 simId,
                 {
                     frequency: sim.frequency,
-                    price_mode: sim.price_mode,
                     strategy_name: sim.strategy_name as StrategyName,
+                    ...(sim.strategy_params && { strategy_params: sim.strategy_params }),
                     max_position_pct: sim.max_position_pct,
                     max_daily_loss_pct: sim.max_daily_loss_pct,
                 },

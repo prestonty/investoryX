@@ -5,74 +5,31 @@ import {
     type WatchlistQuoteItem,
 } from "@/lib/api";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 export default async function WatchList() {
+    // In production the API's cookies use Domain=.investoryx.ca (locally,
+    // localhost), so this server sees the httpOnly access cookie and forwards it.
+    // It can't refresh an expired one (the refresh cookie is scoped to the API's
+    // /api/auth path); in that case the browser loads the watchlist instead.
     const cookieStore = await cookies();
     const accessToken = cookieStore.get("access_token")?.value;
-    const refreshToken = cookieStore.get("refresh_token")?.value;
+    const hasSession = !!cookieStore.get("session_active")?.value;
     let items: WatchlistQuoteItem[] = [];
-    let authFailed = false;
+    let loadOnClient = false;
 
     if (accessToken) {
         try {
             items = await getWatchlistQuotes(accessToken);
         } catch (error) {
             const status = (error as { status?: number })?.status;
-            const shouldRefresh = status === 401 && !!refreshToken;
-
-            if (!shouldRefresh) {
-                console.error("Failed to load watchlist quotes:", error);
+            if (status === 401) {
+                loadOnClient = true;
             } else {
-                try {
-                    const refreshRes = await fetch(
-                        `${process.env.NEXT_PUBLIC_URL}/api/auth/refresh`,
-                        {
-                            method: "POST",
-                            headers: {
-                                Cookie: `refresh_token=${refreshToken}`,
-                            },
-                            cache: "no-store",
-                        },
-                    );
-
-                    if (!refreshRes.ok) {
-                        authFailed = true;
-                    } else {
-                        const refreshData = (await refreshRes.json()) as {
-                            access_token?: string;
-                        };
-                        if (refreshData.access_token) {
-                            try {
-                                items = await getWatchlistQuotes(
-                                    refreshData.access_token,
-                                );
-                            } catch (retryError) {
-                                const retryStatus = (
-                                    retryError as { status?: number }
-                                )?.status;
-                                if (retryStatus === 401) {
-                                    authFailed = true;
-                                } else {
-                                    console.error(
-                                        "Failed to load watchlist quotes:",
-                                        retryError,
-                                    );
-                                }
-                            }
-                        } else {
-                            authFailed = true;
-                        }
-                    }
-                } catch (refreshError) {
-                    authFailed = true;
-                }
+                console.error("Failed to load watchlist quotes:", error);
             }
         }
-    }
-
-    if (authFailed) {
-        redirect("/login?redirectTo=/watchlist");
+    } else if (hasSession) {
+        loadOnClient = true;
     }
 
     return (
@@ -86,7 +43,7 @@ export default async function WatchList() {
             <div className="flex-col w-2/5 mx-auto min-w-[30rem] mt-4">
                 <div className="h-full bg-white rounded-[30px] shadow-dark-md px-10 py-6 flex items-center mb-6">
                     <div className="flex-col w-full px-[4%] mx-auto gap-y-10">
-                        <WatchlistClient initialItems={items} />
+                        <WatchlistClient initialItems={items} loadOnClient={loadOnClient} />
                     </div>
                 </div>
             </div>

@@ -1,16 +1,19 @@
 // Authentication utility functions
-import { getCurrentUser, type UserResponse } from "./api";
+//
+// The API keeps the access and refresh tokens in httpOnly cookies, so this code
+// never sees or stores a token. The API also sets a non-secret `session_active`
+// cookie that only tells the UI a session probably exists; the API is the real
+// authority (requests get 401 and are refreshed by authFetch in ./api).
+import { getCurrentUser, refreshSession, type UserResponse } from "./api";
 
 // Re-export UserResponse type for convenience
 export type { UserResponse };
 
-// Cookie utility functions
-function setCookie(name: string, value: string, days: number = 7) {
-    if (typeof window === "undefined") return;
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-}
+const SESSION_HINT_COOKIE = "session_active";
+
+// Passed to the API helpers in place of a token: in the browser the httpOnly
+// cookies authenticate, and authFetch drops any Authorization header.
+const COOKIE_SESSION = "cookie-session";
 
 function getCookie(name: string): string | null {
     if (typeof window === "undefined") return null;
@@ -30,16 +33,16 @@ function deleteCookie(name: string) {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
 }
 
-// Check if user is authenticated
+// Check if user is authenticated (a session cookie exists; the API decides if it's valid)
 export function isAuthenticated(): boolean {
     if (typeof window === "undefined") return false;
-    return !!getCookie("access_token");
+    return !!getCookie(SESSION_HINT_COOKIE);
 }
 
-// Get stored token
+// Returns a placeholder for the API helpers' `token` argument when logged in.
+// The real token is an httpOnly cookie that JavaScript can't (and needn't) read.
 export function getToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return getCookie("access_token");
+    return isAuthenticated() ? COOKIE_SESSION : null;
 }
 
 // Clear authentication data
@@ -47,7 +50,8 @@ export async function logout(): Promise<void> {
     if (typeof window === "undefined") return;
 
     try {
-        // Call backend logout endpoint to clear cookies
+        // Revokes the session server-side (its tokens stop working immediately)
+        // and clears the httpOnly cookies.
         await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/logout`, {
             method: "POST",
             credentials: "include",
@@ -56,7 +60,8 @@ export async function logout(): Promise<void> {
         console.error("Failed to call logout endpoint:", error);
     }
 
-    // Also clear frontend cookies as backup
+    deleteCookie(SESSION_HINT_COOKIE);
+    // Token cookies written by JavaScript before tokens moved to httpOnly cookies.
     deleteCookie("access_token");
     deleteCookie("refresh_token");
 
@@ -70,14 +75,16 @@ export async function logout(): Promise<void> {
 
 // Get current user data
 export async function getCurrentUserData(): Promise<UserResponse | null> {
-    const token = getToken();
-    if (!token) return null;
+    if (!isAuthenticated()) return null;
 
     try {
-        return await getCurrentUser(token);
+        return await getCurrentUser(COOKIE_SESSION);
     } catch (error) {
-        // Token might be expired or invalid
-        logout();
+        // Only a 401 (after authFetch already tried refreshing) means the session
+        // is gone; a network blip or server error shouldn't log the user out.
+        if ((error as { status?: number })?.status === 401) {
+            logout();
+        }
         return null;
     }
 }
@@ -91,11 +98,6 @@ export function requireAuth(): boolean {
         return false;
     }
     return true;
-}
-
-// Set authentication token (used after successful login)
-export function setAuthToken(token: string): void {
-    setCookie("access_token", token, 7); // 7 days expiry
 }
 
 // Guest mode — browse without an account, data stored locally
@@ -112,7 +114,7 @@ export function exitGuestMode(): void {
 
 export function isGuestMode(): boolean {
     if (typeof window === "undefined") return false;
-    return !getCookie("access_token") && document.cookie.includes("guest_mode=true");
+    return !isAuthenticated() && document.cookie.includes("guest_mode=true");
 }
 
 export type AuthState = "authenticated" | "guest" | "unauthenticated";
@@ -123,40 +125,13 @@ export function getAuthState(): AuthState {
     return "unauthenticated";
 }
 
-// Refresh access token using refresh token
+// Refresh the session (rotates the httpOnly refresh cookie)
 export async function refreshToken(): Promise<string | null> {
-    try {
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_URL}/api/auth/refresh`,
-            {
-                method: "POST",
-                credentials: "include", // Include cookies
-            },
-        );
-
-        if (response.ok) {
-            const data = await response.json();
-            return data.access_token;
-        }
-        return null;
-    } catch (error) {
-        console.error("Failed to refresh token:", error);
-        return null;
-    }
+    return (await refreshSession()) ? COOKIE_SESSION : null;
 }
 
-// Enhanced getToken function that attempts to refresh if needed
+// Returns the session placeholder, refreshing first if no session cookie is present
 export async function getTokenWithRefresh(): Promise<string | null> {
-    const token = getToken();
-    if (token) {
-        return token;
-    }
-
-    // Try to refresh the token
-    const newToken = await refreshToken();
-    if (newToken) {
-        return newToken;
-    }
-
-    return null;
+    if (isAuthenticated()) return COOKIE_SESSION;
+    return refreshToken();
 }

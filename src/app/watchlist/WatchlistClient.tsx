@@ -14,7 +14,7 @@ import {
     getWatchlistQuotes,
     removeFromWatchlist,
 } from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
+import { getToken, getTokenWithRefresh } from "@/lib/auth";
 import { useGuest } from "@/contexts/GuestContext";
 import {
     addGuestWatchlistItem,
@@ -72,11 +72,30 @@ function guestItemToQuoteItem(item: GuestWatchlistItem): WatchlistQuoteItem {
 
 export default function WatchlistClient({
     initialItems,
+    loadOnClient = false,
 }: {
     initialItems: WatchlistQuoteItem[];
+    // Set when the server couldn't load the watchlist (e.g. the short-lived
+    // access cookie expired); the browser request refreshes the session first.
+    loadOnClient?: boolean;
 }) {
     const { isGuest } = useGuest();
     const [items, setItems] = useState<WatchlistQuoteItem[]>(initialItems);
+
+    useEffect(() => {
+        if (!loadOnClient || isGuest) return;
+        const token = getToken();
+        if (!token) return;
+        getWatchlistQuotes(token)
+            .then(setItems)
+            .catch((error) => {
+                if ((error as { status?: number })?.status === 401) {
+                    window.location.href = "/login?redirectTo=/watchlist";
+                } else {
+                    console.error("Failed to load watchlist quotes:", error);
+                }
+            });
+    }, [loadOnClient, isGuest]);
     const [sortMode, setSortMode] = useState<SortMode>("ticker");
     const [pendingId, setPendingId] = useState<number | null>(null);
     const [isPending, startTransition] = useTransition();

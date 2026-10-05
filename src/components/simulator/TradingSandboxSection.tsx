@@ -13,7 +13,6 @@ const MAX_POLLS = 60; // 2 minutes
 
 interface TradingSandboxSectionProps {
     simulatorId: number;
-    priceMode: "open" | "close";
     isBusy: boolean;
     getToken: () => Promise<string | null>;
     onBacktestComplete: (result: BacktestResult) => void;
@@ -47,7 +46,6 @@ function getDefaultDates(): { start: string; end: string } {
 
 export function TradingSandboxSection({
     simulatorId,
-    priceMode,
     isBusy,
     getToken,
     onBacktestComplete,
@@ -141,7 +139,6 @@ export function TradingSandboxSection({
                 {
                     start_date: startDate,
                     end_date: endDate,
-                    price_mode: priceMode,
                     clear_previous: true,
                 },
                 token,
@@ -172,7 +169,9 @@ export function TradingSandboxSection({
                 <div className='hidden group-hover:block absolute left-0 top-6 z-20 
                                 w-64 px-3 py-2 bg-slate-900 text-white text-xs 
                                 rounded-md shadow-lg pointer-events-none'>
-                    Simulate your strategy on historical data. Note: New runs replace previous backtest results.
+                    Simulate your strategy on historical data, trading exactly like live runs:
+                    orders decided at a day&apos;s close fill at the next day&apos;s open, with your
+                    strategy settings and risk limits. Note: New runs replace previous backtest results.
                 </div>
                 </div>
             </div>

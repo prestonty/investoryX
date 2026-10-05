@@ -22,6 +22,7 @@ import {
     type UpdateSimulatorSettingsRequest,
     type SimulatorSummaryResponse,
     type StrategyOption,
+    type StrategyParams,
     type BacktestResult,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
@@ -55,6 +56,7 @@ import {
 } from "@/components/simulator/TradingActivityTable";
 import { TradingActivityGraph } from "@/components/simulator/TradingActivityGraph";
 import { TradingSandboxSection } from "@/components/simulator/TradingSandboxSection";
+import { StrategySettingsPanel } from "@/components/simulator/StrategySettingsPanel";
 import Dropdown from "@/components/Dropdown";
 import { FaChartBar } from "react-icons/fa";
 import { GoTable } from "react-icons/go";
@@ -66,8 +68,8 @@ export interface Simulation {
     starting_cash: number;
     status: "Active Trading" | "Pause Trading";
     frequency: "daily" | "twice_daily";
-    price_mode: "open" | "close";
     strategy_name: string;
+    strategy_params: StrategyParams;
     last_run_at?: string | null;
     next_run_at?: string | null;
     max_position_pct?: number | null;
@@ -183,13 +185,13 @@ export default function SimulatorClient({
             cash_balance: simulator.cash_balance,
             status: simulator.status || "Active Trading",
             frequency: simulator.frequency || "daily",
-            price_mode: simulator.price_mode || "close",
             last_run_at: simulator.last_run_at ?? null,
             next_run_at: simulator.next_run_at ?? null,
             max_position_pct: simulator.max_position_pct ?? null,
             max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
             stopped_reason: simulator.stopped_reason ?? null,
             strategy_name: simulator.strategy_name || "sma_crossover",
+            strategy_params: simulator.strategy_params ?? {},
         };
         setSimulations((prev) =>
             prev.map((sim) =>
@@ -210,11 +212,16 @@ export default function SimulatorClient({
                 | (Simulation & { _localId?: string })
                 | undefined;
             const localId = target?._localId;
+            // Mirror the server: switching strategy without new params resets to defaults.
+            const strategyChanged =
+                !!payload.strategy_name && payload.strategy_name !== target?.strategy_name;
+            const strategyParams =
+                payload.strategy_params ?? (strategyChanged ? {} : undefined);
             if (localId) {
                 updateGuestSimulator(localId, {
                     ...(payload.frequency && { frequency: payload.frequency }),
-                    ...(payload.price_mode && { price_mode: payload.price_mode }),
                     ...(payload.strategy_name && { strategy_name: payload.strategy_name }),
+                    ...(strategyParams && { strategy_params: strategyParams }),
                     ...("max_position_pct" in payload && {
                         max_position_pct: payload.max_position_pct ?? null,
                     }),
@@ -225,7 +232,13 @@ export default function SimulatorClient({
             }
             setSimulations((prev) =>
                 prev.map((sim) =>
-                    sim.id === activeSimulationId ? { ...sim, ...payload } : sim,
+                    sim.id === activeSimulationId
+                        ? {
+                              ...sim,
+                              ...payload,
+                              ...(strategyParams && { strategy_params: strategyParams }),
+                          }
+                        : sim,
                 ),
             );
             if (successMessage) toast.success(successMessage);
@@ -284,6 +297,14 @@ export default function SimulatorClient({
                 toast.error("Enter a valid non-negative percentage.");
                 return;
             }
+            // Enforced on every buy, so 0% would block all buying.
+            if (
+                editingRiskField === "max_position_pct" &&
+                (parsedNumber <= 0 || parsedNumber > 100)
+            ) {
+                toast.error("Max position must be above 0% and at most 100%.");
+                return;
+            }
             parsedValue = parsedNumber;
         }
 
@@ -304,6 +325,9 @@ export default function SimulatorClient({
         }
     };
 
+    const saveStrategyParams = (params: StrategyParams) =>
+        persistSimulatorSettings({ strategy_params: params }, "Strategy settings saved");
+
     useLoadSimulators({ hasInitialSimulations, setSimulations, setActiveSimulation, setLoading });
 
     const handleRunSimulator = async () => {
@@ -318,10 +342,7 @@ export default function SimulatorClient({
         try {
             const result = await runSimulator(
                 activeSimulationId,
-                {
-                    price_mode: activeSimulation.price_mode,
-                    frequency: activeSimulation.frequency,
-                },
+                { frequency: activeSimulation.frequency },
                 token,
             );
             const latestSummary = await getSimulatorSummary(
@@ -336,7 +357,10 @@ export default function SimulatorClient({
                     sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
                 ),
             );
-            toast.success(`Run complete (${result.trades_executed} trades)`);
+            toast.success(
+                `${result.message}: ${result.trades_executed} trades filled, ` +
+                    `${result.orders_queued} orders queued for the next open`,
+            );
         } catch (error) {
             const message =
                 error instanceof Error
@@ -580,7 +604,6 @@ export default function SimulatorClient({
                 starting_cash: 10000,
                 status: "draft",
                 frequency: "daily",
-                price_mode: "close",
                 strategy_name: "sma_crossover",
                 max_position_pct: null,
                 max_daily_loss_pct: null,
@@ -612,13 +635,13 @@ export default function SimulatorClient({
                 cash_balance: simulator.cash_balance,
                 status: simulator.status || "Active Trading",
                 frequency: simulator.frequency || "daily",
-                price_mode: simulator.price_mode || "close",
                 last_run_at: simulator.last_run_at ?? null,
                 next_run_at: simulator.next_run_at ?? null,
                 max_position_pct: simulator.max_position_pct ?? null,
                 max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
                 stopped_reason: simulator.stopped_reason ?? null,
                 strategy_name: simulator.strategy_name || "sma_crossover",
+                strategy_params: simulator.strategy_params ?? {},
                 stocks: [],
                 trades: [],
             };
@@ -874,36 +897,15 @@ export default function SimulatorClient({
                                                     </div>
 
                                                     <div className='rounded-md bg-light/40 px-3 py-2'>
-                                                        <p className='text-gray text-xs mb-1'>
-                                                            Price Mode
+                                                        <p className='text-gray text-xs'>
+                                                            Order Fills
                                                         </p>
-                                                        <Dropdown
-                                                            className='w-full'
-                                                            value={
-                                                                activeSimulation.price_mode
-                                                            }
-                                                            disabled={isBusy}
-                                                            options={[
-                                                                {
-                                                                    label: "Close",
-                                                                    value: "close",
-                                                                },
-                                                                {
-                                                                    label: "Open",
-                                                                    value: "open",
-                                                                },
-                                                            ]}
-                                                            onChange={(
-                                                                value,
-                                                            ) => {
-                                                                void persistSimulatorSettings(
-                                                                    {
-                                                                        price_mode:
-                                                                            value as Simulation["price_mode"],
-                                                                    },
-                                                                );
-                                                            }}
-                                                        />
+                                                        <p className='text-dark font-medium'>
+                                                            Next day&apos;s open
+                                                        </p>
+                                                        <p className='text-[11px] text-gray'>
+                                                            Decided at the close
+                                                        </p>
                                                     </div>
 
                                                     <div className='rounded-md bg-light/40 px-3 py-2'>
@@ -919,6 +921,7 @@ export default function SimulatorClient({
                                                                     ? strategies
                                                                     : [
                                                                           { label: "SMA Crossover", value: "sma_crossover" },
+                                                                          { label: "SMA 50/200 (Golden Cross)", value: "sma_50_200_crossover" },
                                                                           { label: "Pairs Trading (Stat Arb)", value: "stat_arb_pairs" },
                                                                           { label: "Auction Liquidity Provider", value: "auction_liquidity_provider" },
                                                                       ]
@@ -1107,12 +1110,24 @@ export default function SimulatorClient({
                                         </div>
                                     </div>
 
+                                    <StrategySettingsPanel
+                                        strategy={strategies.find(
+                                            (option) =>
+                                                option.value === activeSimulation.strategy_name,
+                                        )}
+                                        params={activeSimulation.strategy_params}
+                                        disabled={isBusy}
+                                        readOnly={
+                                            isGuest && activeSimulation.id === DEMO_SIMULATION_ID
+                                        }
+                                        onSave={saveStrategyParams}
+                                    />
+
                                     {/* Trading Sandbox Section — hidden for guests (requires backend) */}
                                     {!isGuest && activeSimulationId && (
                                         <TradingSandboxSection
                                             key={activeSimulationId}
                                             simulatorId={activeSimulationId}
-                                            priceMode={activeSimulation.price_mode}
                                             isBusy={isBusy}
                                             getToken={requireToken}
                                             onBacktestComplete={handleBacktestComplete}

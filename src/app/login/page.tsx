@@ -10,7 +10,7 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState, useEffect } from "react";
 import { loginUser, type LoginData } from "@/lib/api";
-import { setAuthToken, enterGuestMode, exitGuestMode, isGuestMode } from "@/lib/auth";
+import { enterGuestMode, exitGuestMode, getToken, isGuestMode } from "@/lib/auth";
 import { migrateGuestData, hasGuestData } from "@/lib/guestMigration";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -57,14 +57,13 @@ export default function Login() {
                 password: password,
             };
 
-            const authResponse = await loginUser(loginData);
-
-            // Store the token in cookies using the new auth utility
-            setAuthToken(authResponse.access_token);
+            // The API sets httpOnly session cookies; nothing to store here.
+            await loginUser(loginData);
 
             // Migrate any guest localStorage data to the backend
-            if (isGuestMode() || hasGuestData()) {
-                await migrateGuestData(authResponse.access_token);
+            const sessionToken = getToken();
+            if (sessionToken && (isGuestMode() || hasGuestData())) {
+                await migrateGuestData(sessionToken);
                 exitGuestMode();
             }
 

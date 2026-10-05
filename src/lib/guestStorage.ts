@@ -1,6 +1,8 @@
 // Guest mode localStorage persistence
 // All data stored here is local-only and migrated to the backend on first login.
 
+import type { StrategyParams } from "./api";
+
 export interface GuestWatchlistItem {
     local_id: string;
     ticker: string;
@@ -20,8 +22,9 @@ export interface GuestSimulator {
     starting_cash: number;
     status: "draft";
     frequency: "daily" | "twice_daily";
-    price_mode: "open" | "close";
     strategy_name: string;
+    // Absent on drafts saved before per-simulator strategy settings existed.
+    strategy_params?: StrategyParams;
     max_position_pct: number | null;
     max_daily_loss_pct: number | null;
     tracked_tickers: string[];
