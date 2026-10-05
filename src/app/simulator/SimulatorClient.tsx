@@ -23,6 +23,7 @@ import {
     type SimulatorSummaryResponse,
     type StrategyOption,
     type StrategyParams,
+    type SimulatorDecisionResponse,
     type BacktestResult,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
@@ -38,7 +39,7 @@ import {
     DEMO_SIMULATION,
     DEMO_SIMULATION_ID,
 } from "@/lib/demoSimulator";
-import { guestSimToSimulation, mapTradeRecord } from "./mappers";
+import { guestSimToSimulation, mapDecisions, mapTradeRecord } from "./mappers";
 import { useLoadSimulators } from "./useLoadSimulators";
 import {
     formatCurrency,
@@ -77,6 +78,8 @@ export interface Simulation {
     stopped_reason?: string | null;
     stocks: Stock[];
     trades: TradeRecord[];
+    // Latest strategy decision per ticker.
+    decisions: Record<string, SimulatorDecisionResponse>;
 }
 
 const MAX_SIMULATIONS = 3;
@@ -200,6 +203,22 @@ export default function SimulatorClient({
         );
     };
 
+    // Refresh a simulation's state, trades and per-stock decisions from its summary.
+    const applySummary = (
+        simulationId: number,
+        latestSummary: SimulatorSummaryResponse,
+    ) => {
+        setSummary(latestSummary);
+        updateSimulationFromResponse(latestSummary.simulator);
+        const trades = (latestSummary.trades ?? []).map(mapTradeRecord);
+        const decisions = mapDecisions(latestSummary.decisions);
+        setSimulations((prev) =>
+            prev.map((sim) =>
+                sim.id === simulationId ? { ...sim, trades, decisions } : sim,
+            ),
+        );
+    };
+
     const persistSimulatorSettings = async (
         payload: UpdateSimulatorSettingsRequest,
         successMessage?: string,
@@ -264,7 +283,8 @@ export default function SimulatorClient({
                 error instanceof Error
                     ? error.message
                     : "Failed to update simulator settings";
-            toast.error(message);
+            // Long enough to read the price-history explanation.
+            toast.error(message, { duration: 8000 });
             return false;
         }
     };
@@ -345,17 +365,9 @@ export default function SimulatorClient({
                 { frequency: activeSimulation.frequency },
                 token,
             );
-            const latestSummary = await getSimulatorSummary(
+            applySummary(
                 activeSimulationId,
-                token,
-            );
-            setSummary(latestSummary);
-            updateSimulationFromResponse(latestSummary.simulator);
-            const mappedTrades = (latestSummary.trades ?? []).map(mapTradeRecord);
-            setSimulations((prev) =>
-                prev.map((sim) =>
-                    sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
-                ),
+                await getSimulatorSummary(activeSimulationId, token),
             );
             toast.success(
                 `${result.message}: ${result.trades_executed} trades filled, ` +
@@ -379,17 +391,9 @@ export default function SimulatorClient({
         try {
             const result = await runPipeline(token, pipelineDay);
             if (activeSimulationId) {
-                const latestSummary = await getSimulatorSummary(
+                applySummary(
                     activeSimulationId,
-                    token,
-                );
-                setSummary(latestSummary);
-                updateSimulationFromResponse(latestSummary.simulator);
-                const mappedTrades = (latestSummary.trades ?? []).map(mapTradeRecord);
-                setSimulations((prev) =>
-                    prev.map((sim) =>
-                        sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
-                    ),
+                    await getSimulatorSummary(activeSimulationId, token),
                 );
             }
             toast.success(
@@ -409,14 +413,9 @@ export default function SimulatorClient({
         const token = await requireToken();
         if (!token) return;
         try {
-            const latestSummary = await getSimulatorSummary(activeSimulationId, token);
-            setSummary(latestSummary);
-            updateSimulationFromResponse(latestSummary.simulator);
-            const mappedTrades = (latestSummary.trades ?? []).map(mapTradeRecord);
-            setSimulations((prev) =>
-                prev.map((sim) =>
-                    sim.id === activeSimulationId ? { ...sim, trades: mappedTrades } : sim,
-                ),
+            applySummary(
+                activeSimulationId,
+                await getSimulatorSummary(activeSimulationId, token),
             );
             toast.success("Backtest complete — trades updated");
         } catch {
@@ -644,6 +643,7 @@ export default function SimulatorClient({
                 strategy_params: simulator.strategy_params ?? {},
                 stocks: [],
                 trades: [],
+                decisions: {},
             };
             setSimulations((prev) => [...prev, newSimulation]);
             setActiveSimulation(newSimulation);
@@ -1101,6 +1101,7 @@ export default function SimulatorClient({
                                             )}
                                             <StockWatchlist
                                                 stocks={activeSimulation.stocks}
+                                                decisions={activeSimulation.decisions}
                                                 onRemove={
                                                     isGuest && activeSimulation.id === DEMO_SIMULATION_ID
                                                         ? () => {}

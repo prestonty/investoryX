@@ -187,7 +187,8 @@ export function TrackedStockSearch({
                 error instanceof Error
                     ? error.message
                     : "Failed to add tracked stock";
-            toast.error(message);
+            // Long enough to read the price-history explanation.
+            toast.error(message, { duration: 8000 });
         } finally {
             setIsSubmitting(false);
         }

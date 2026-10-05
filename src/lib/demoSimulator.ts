@@ -19,6 +19,20 @@ export const DEMO_SIMULATION: Simulation = {
     max_position_pct: 20,
     max_daily_loss_pct: 5,
     stopped_reason: null,
+    decisions: {
+        AAPL: {
+            ticker: "AAPL", action: "buy", quantity: 1, status: "pending",
+            reason: "Short SMA crossed above long SMA", for_day: "2025-04-10",
+        },
+        MSFT: {
+            ticker: "MSFT", action: "hold", quantity: 0, status: "pending",
+            reason: "No crossover signal", for_day: "2025-04-10",
+        },
+        NVDA: {
+            ticker: "NVDA", action: "sell", quantity: 1, status: "executed",
+            reason: "Short SMA crossed below long SMA", for_day: "2025-04-09",
+        },
+    },
     stocks: [
         {
             symbol: "AAPL",

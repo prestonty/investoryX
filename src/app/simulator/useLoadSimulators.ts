@@ -7,7 +7,7 @@ import { parseNumber } from "@/lib/utils/helper";
 import type { Stock } from "@/components/simulator/StockWatchlist";
 import type { TradeRecord } from "@/components/simulator/TradingActivityTable";
 import type { Simulation } from "./SimulatorClient";
-import { mapTradeRecord, mapSimulatorToSimulation } from "./mappers";
+import { mapDecisions, mapTradeRecord, mapSimulatorToSimulation } from "./mappers";
 
 async function fetchStockWithPrice(
     ticker: string,
@@ -35,9 +35,11 @@ async function fetchAllSimulators(token: string): Promise<Simulation[]> {
         simulators.map(async (simulator) => {
             let stocks: Stock[] = [];
             let trades: TradeRecord[] = [];
+            let decisions: Simulation["decisions"] = {};
             try {
                 const summary = await getSimulatorSummary(simulator.simulator_id, token);
                 trades = (summary.trades ?? []).map(mapTradeRecord);
+                decisions = mapDecisions(summary.decisions);
                 stocks = await Promise.all(
                     (summary.tracked_stocks ?? []).map((ts) =>
                         fetchStockWithPrice(ts.ticker, ts.tracked_id ?? null),
@@ -46,7 +48,7 @@ async function fetchAllSimulators(token: string): Promise<Simulation[]> {
             } catch (summaryError) {
                 console.error("Summary lookup failed:", summaryError);
             }
-            return mapSimulatorToSimulation(simulator, stocks, trades);
+            return mapSimulatorToSimulation(simulator, stocks, trades, decisions);
         }),
     );
 }

@@ -346,7 +346,7 @@ export default function StockClient({
                             </h2>
                             <button
                                 onClick={() => setShowInfo((prev) => !prev)}
-                                className='px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-semibold text-dark/70 hover:bg-slate-50 transition-all duration-200'
+                                className='px-3 py-1.5 rounded-lg border border-slate-200 bg-blue text-sm font-semibold text-white hover:bg-darkblue transition-all duration-200'
                             >
                                 {showInfo ? "Hide" : "Show"}
                             </button>

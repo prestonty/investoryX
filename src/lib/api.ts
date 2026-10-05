@@ -329,12 +329,26 @@ export interface SimulatorCashLedgerResponse {
     created_at?: string;
 }
 
+// The strategy's latest decision for one tracked stock, and what became of it.
+export interface SimulatorDecisionResponse {
+    ticker: string;
+    action: "buy" | "sell" | "hold";
+    quantity: number;
+    reason: string;
+    // pending = waiting for the next open; executed/skipped/failed after that.
+    status: "pending" | "executed" | "skipped" | "failed";
+    execution_error?: string | null;
+    for_day?: string | null;
+    created_at?: string | null;
+}
+
 export interface SimulatorSummaryResponse {
     simulator: SimulatorResponse;
     tracked_stocks: SimulatorTrackedStockResponse[];
     positions: SimulatorPositionResponse[];
     trades: SimulatorTradeResponse[];
     cash_ledger: SimulatorCashLedgerResponse[];
+    decisions: SimulatorDecisionResponse[];
 }
 
 export interface SimulatorRunResponse {

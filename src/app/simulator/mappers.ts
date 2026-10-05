@@ -1,6 +1,10 @@
 import type { Simulation } from "./SimulatorClient";
 import type { GuestSimulator } from "@/lib/guestStorage";
-import type { SimulatorResponse, SimulatorTradeResponse } from "@/lib/api";
+import type {
+    SimulatorDecisionResponse,
+    SimulatorResponse,
+    SimulatorTradeResponse,
+} from "@/lib/api";
 import type { Stock } from "@/components/simulator/StockWatchlist";
 import type { TradeRecord } from "@/components/simulator/TradingActivityTable";
 
@@ -41,8 +45,15 @@ export function guestSimToSimulation(
             changePercent: 0,
         })),
         trades: [],
+        decisions: {},
         _localId: sim.local_id,
     };
+}
+
+export function mapDecisions(
+    decisions: SimulatorDecisionResponse[] | undefined,
+): Record<string, SimulatorDecisionResponse> {
+    return Object.fromEntries((decisions ?? []).map((d) => [d.ticker, d]));
 }
 
 export function mapTradeRecord(t: SimulatorTradeResponse): TradeRecord {
@@ -61,6 +72,7 @@ export function mapSimulatorToSimulation(
     simulator: SimulatorResponse,
     stocks: Stock[],
     trades: TradeRecord[],
+    decisions: Record<string, SimulatorDecisionResponse> = {},
 ): Simulation {
     return {
         id: simulator.simulator_id,
@@ -78,5 +90,6 @@ export function mapSimulatorToSimulation(
         strategy_params: simulator.strategy_params ?? {},
         stocks,
         trades,
+        decisions,
     };
 }

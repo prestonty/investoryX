@@ -103,7 +103,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Trending Stocks */}
-                    <div className='bg-white rounded-[30px] shadow-dark-md px-10 py-6 h-full'>
+                    <div className='bg-white rounded-[30px] shadow-dark-md px-5 sm:px-10 py-6 h-full'>
                         <h2 className='text-dark text-2xl'>Trending Stocks</h2>
                         <hr className='h-[4px] border-none bg-blue mt-1 rounded-[4px]' />
 
