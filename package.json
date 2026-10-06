@@ -15,7 +15,7 @@
     "gsap": "^3.13.0",
     "motion": "^11.14.4",
     "next": "^15.5.24",
-    "plotly.js": "^3.0.1",
+    "plotly.js": "^4.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-google-button": "^0.8.0",
