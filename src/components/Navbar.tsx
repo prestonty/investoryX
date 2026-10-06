@@ -152,10 +152,10 @@ export default function Navbar(props: NavbarProps) {
                                 </span>
                                 <UnderlineWrapper>
                                     <Link
-                                        href='/sign-up'
+                                        href='/login'
                                         className='text-dark text-xl hover:text-blue transition-colors duration-300'
                                     >
-                                        Sign Up
+                                        Sign In
                                     </Link>
                                 </UnderlineWrapper>
                             </>
@@ -221,11 +221,11 @@ export default function Navbar(props: NavbarProps) {
                                             Guest
                                         </span>
                                         <Link
-                                            href='/sign-up'
+                                            href='/login'
                                             className='text-dark text-lg font-medium hover:text-blue transition-colors duration-300'
                                             onClick={() => setIsDrawerOpen(false)}
                                         >
-                                            Sign Up
+                                            Sign In
                                         </Link>
                                     </div>
                                 ) : (
