@@ -6,22 +6,9 @@ import toast, { Toaster } from "react-hot-toast";
 import GuestBanner from "@/components/GuestBanner";
 import Searchbar from "@/components/Searchbar";
 import StockWatchItem from "@/components/StockWatchItem";
-import type { WatchlistQuoteItem } from "@/lib/api";
-import {
-    addToWatchlist,
-    getStockInfo,
-    getStockPrice,
-    getWatchlistQuotes,
-    removeFromWatchlist,
-} from "@/lib/api";
-import { getToken, getTokenWithRefresh } from "@/lib/auth";
-import { useGuest } from "@/contexts/GuestContext";
-import {
-    addGuestWatchlistItem,
-    getGuestWatchlist,
-    removeGuestWatchlistItem,
-    type GuestWatchlistItem,
-} from "@/lib/guestStorage";
+import { getStockInfo } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { getWatchlistStore, type WatchlistQuote } from "@/lib/data/watchlist";
 
 type SortMode = "ticker" | "change-desc" | "change-asc";
 
@@ -32,7 +19,7 @@ const SORT_LABELS: Record<SortMode, string> = {
     "change-asc": "Change ▲",
 };
 
-function sortItems(items: WatchlistQuoteItem[], sortMode: SortMode) {
+function sortItems(items: WatchlistQuote[], sortMode: SortMode) {
     const sorted = [...items];
     if (sortMode === "ticker") {
         sorted.sort((a, b) => a.ticker.localeCompare(b.ticker));
@@ -47,46 +34,29 @@ function sortItems(items: WatchlistQuoteItem[], sortMode: SortMode) {
     return sorted;
 }
 
-// Derive a stable unique negative integer from a UUID so guest items
-// have distinct watchlist_id values for React keys and remove lookups.
-function localIdToNegInt(localId: string): number {
-    const hex = localId.replace(/-/g, "").slice(-8);
-    return -(parseInt(hex, 16) + 1);
-}
-
-function guestItemToQuoteItem(item: GuestWatchlistItem): WatchlistQuoteItem {
-    return {
-        watchlist_id: localIdToNegInt(item.local_id),
-        stock_id: item.stock_id,
-        user_id: 0,
-        ticker: item.ticker,
-        company_name: item.company_name,
-        stockPrice: null,
-        priceChange: null,
-        priceChangePercent: null,
-        error: null,
-        // Store local_id as an extension so handleRemove can find it
-        _local_id: item.local_id,
-    } as WatchlistQuoteItem & { _local_id: string };
-}
-
 export default function WatchlistClient({
     initialItems,
     loadOnClient = false,
 }: {
-    initialItems: WatchlistQuoteItem[];
+    initialItems: WatchlistQuote[];
     // Set when the server couldn't load the watchlist (e.g. the short-lived
     // access cookie expired); the browser request refreshes the session first.
     loadOnClient?: boolean;
 }) {
-    const { isGuest } = useGuest();
-    const [items, setItems] = useState<WatchlistQuoteItem[]>(initialItems);
+    const { status, isAuthenticated } = useAuth();
+    const store = getWatchlistStore(isAuthenticated);
+    const [items, setItems] = useState<WatchlistQuote[]>(initialItems);
+    const [sortMode, setSortMode] = useState<SortMode>("ticker");
+    const [pendingId, setPendingId] = useState<number | null>(null);
+    const [isPending, startTransition] = useTransition();
 
+    // The server renders a logged-in user's watchlist; load it here for guests,
+    // or when the server couldn't.
     useEffect(() => {
-        if (!loadOnClient || isGuest) return;
-        const token = getToken();
-        if (!token) return;
-        getWatchlistQuotes(token)
+        if (status === "loading") return;
+        if (isAuthenticated && !loadOnClient) return;
+        store
+            .listQuotes()
             .then(setItems)
             .catch((error) => {
                 if ((error as { status?: number })?.status === 401) {
@@ -95,37 +65,8 @@ export default function WatchlistClient({
                     console.error("Failed to load watchlist quotes:", error);
                 }
             });
-    }, [loadOnClient, isGuest]);
-    const [sortMode, setSortMode] = useState<SortMode>("ticker");
-    const [pendingId, setPendingId] = useState<number | null>(null);
-    const [isPending, startTransition] = useTransition();
-
-    // Load guest watchlist from localStorage on mount and fetch prices
-    useEffect(() => {
-        if (!isGuest) return;
-        const stored = getGuestWatchlist();
-        setItems(stored.map(guestItemToQuoteItem));
-
-        if (stored.length === 0) return;
-        Promise.allSettled(stored.map((item) => getStockPrice(item.ticker))).then(
-            (results) => {
-                setItems((prev) =>
-                    prev.map((item, i) => {
-                        const result = results[i];
-                        if (result.status === "fulfilled") {
-                            return {
-                                ...item,
-                                stockPrice: result.value.stockPrice ?? null,
-                                priceChange: result.value.priceChange ?? null,
-                                priceChangePercent: result.value.priceChangePercent ?? null,
-                            };
-                        }
-                        return item;
-                    }),
-                );
-            },
-        );
-    }, [isGuest]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, loadOnClient]);
 
     const sortedItems = useMemo(
         () => sortItems(items, sortMode),
@@ -139,35 +80,12 @@ export default function WatchlistClient({
         });
     };
 
-    const handleRemove = (watchlistId: number) => {
+    const handleRemove = (stockId: number) => {
         startTransition(async () => {
             try {
-                setPendingId(watchlistId);
-
-                if (isGuest) {
-                    // Find the local_id for this guest item
-                    const target = items.find(
-                        (i) => i.watchlist_id === watchlistId,
-                    ) as (WatchlistQuoteItem & { _local_id?: string }) | undefined;
-                    const localId = target?._local_id ?? String(watchlistId);
-                    removeGuestWatchlistItem(localId);
-                    setItems((prev) =>
-                        prev.filter((item) => item.watchlist_id !== watchlistId),
-                    );
-                    toast.success("Removed from watchlist");
-                    return;
-                }
-
-                const token = await getTokenWithRefresh();
-                if (!token) {
-                    toast.error("You must be logged in.");
-                    return;
-                }
-
-                await removeFromWatchlist(watchlistId, token);
-                setItems((prev) =>
-                    prev.filter((item) => item.watchlist_id !== watchlistId),
-                );
+                setPendingId(stockId);
+                await store.remove(stockId);
+                setItems((prev) => prev.filter((item) => item.stock_id !== stockId));
                 toast.success("Removed from watchlist");
             } catch (error) {
                 const message =
@@ -182,45 +100,17 @@ export default function WatchlistClient({
     const handleAddFromSearch = (item: { value: string; label: string }) => {
         startTransition(async () => {
             try {
-                if (isGuest) {
-                    const [stock, priceData] = await Promise.all([
-                        getStockInfo(item.value),
-                        getStockPrice(item.value).catch(() => null),
-                    ]);
-                    const guestItem: GuestWatchlistItem = {
-                        local_id: crypto.randomUUID(),
-                        ticker: item.value,
-                        company_name: item.label,
-                        stock_id: stock.stock_id,
-                        added_at: new Date().toISOString(),
-                    };
-                    addGuestWatchlistItem(guestItem);
-                    setItems((prev) => {
-                        if (prev.some((i) => i.ticker === item.value)) return prev;
-                        return [
-                            ...prev,
-                            {
-                                ...guestItemToQuoteItem(guestItem),
-                                stockPrice: priceData?.stockPrice ?? null,
-                                priceChange: priceData?.priceChange ?? null,
-                                priceChangePercent: priceData?.priceChangePercent ?? null,
-                            },
-                        ];
-                    });
-                    toast.success("Added to watchlist");
+                if (items.some((i) => i.ticker === item.value)) {
+                    toast("Already in watchlist");
                     return;
                 }
-
-                const token = await getTokenWithRefresh();
-                if (!token) {
-                    toast.error("You must be logged in.");
-                    return;
-                }
-
                 const stock = await getStockInfo(item.value);
-                await addToWatchlist(stock.stock_id, token);
-                const refreshed = await getWatchlistQuotes(token);
-                setItems(refreshed);
+                await store.add({
+                    stock_id: stock.stock_id,
+                    ticker: item.value,
+                    company_name: item.label,
+                });
+                setItems(await store.listQuotes());
                 toast.success("Added to watchlist");
             } catch (error) {
                 const message =
@@ -243,7 +133,7 @@ export default function WatchlistClient({
                 }}
             />
 
-            {isGuest && <GuestBanner />}
+            <GuestBanner />
 
             <Searchbar
                 placeholder="Add to Watchlist"
@@ -278,10 +168,10 @@ export default function WatchlistClient({
                 <div className="flex flex-col">
                     {sortedItems.map((item) => (
                         <StockWatchItem
-                            key={item.watchlist_id}
+                            key={item.stock_id}
                             item={item}
                             onRemove={handleRemove}
-                            isRemoving={isPending && pendingId === item.watchlist_id}
+                            isRemoving={isPending && pendingId === item.stock_id}
                         />
                     ))}
                 </div>

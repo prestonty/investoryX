@@ -14,7 +14,7 @@ interface StockWatchlistProps {
   stocks: Stock[];
   // Latest strategy decision per ticker.
   decisions?: Record<string, SimulatorDecisionResponse>;
-  onRemove?: (trackedId: number | null, symbol: string) => void;
+  onRemove?: (stock: Stock) => void;
 }
 
 const ACTION_STYLES: Record<SimulatorDecisionResponse["action"], string> = {
@@ -109,7 +109,7 @@ export function StockWatchlist({ stocks, decisions = {}, onRemove }: StockWatchl
                 <button
                   type="button"
                   aria-label={`Remove ${stock.symbol} from watchlist`}
-                  onClick={() => onRemove(stock.trackedId, stock.symbol)}
+                  onClick={() => onRemove(stock)}
                   className="rounded-md border border-transparent p-2 text-gray hover:text-red hover:bg-white transition-colors"
                 >
                   <FaTrashAlt className="size-4" />

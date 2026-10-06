@@ -8,12 +8,10 @@ import TradingViewChart, {
     type TimeframeKey,
 } from "@/components/tools/TradingViewChart";
 import toast, { Toaster } from "react-hot-toast";
-import { FaPlus } from "react-icons/fa";
+import { FaCheck, FaPlus } from "react-icons/fa";
 
-import { addToWatchlist } from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
-import { useGuest } from "@/contexts/GuestContext";
-import { addGuestWatchlistItem } from "@/lib/guestStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { getWatchlistStore } from "@/lib/data/watchlist";
 
 interface BasicStockData {
     companyName: string;
@@ -55,7 +53,8 @@ export default function StockClient({
     basicStockData: BasicStockData;
     advancedStockData: AdvanceStockData;
 }) {
-    const { isGuest } = useGuest();
+    const { status, isAuthenticated } = useAuth();
+    const watchlist = getWatchlistStore(isAuthenticated);
     const [chartView, setChartView] = useState<TimeframeKey | "ALL">("D");
     const [showInfo, setShowInfo] = useState(true);
     const [allLayout, setAllLayout] = useState<"horizontal" | "vertical">(
@@ -63,6 +62,8 @@ export default function StockClient({
     );
     const isSideBySide = chartView === "ALL" && allLayout === "horizontal";
     const [isMounted, setIsMounted] = useState(false);
+    const [isInWatchlist, setIsInWatchlist] = useState(false);
+    const [watchlistBusy, setWatchlistBusy] = useState(false);
 
     const priceDirection = basicStockData.priceChange.includes("-")
         ? false
@@ -74,32 +75,38 @@ export default function StockClient({
         setIsMounted(true);
     }, []);
 
+    // Show whether this stock is already on the user's (or guest's) watchlist
+    useEffect(() => {
+        if (status === "loading") return;
+        watchlist.contains(stock_id).then(setIsInWatchlist).catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, stock_id]);
+
     // Split advanced data into first 4 (single column) and the rest (grid)
     const advancedEntries = Object.entries(advancedStockData || {});
 
-    const handleAddToWatchlist = async (stock_id: number) => {
+    const handleToggleWatchlist = async () => {
+        if (watchlistBusy) return;
+        setWatchlistBusy(true);
         try {
-            const token = await getTokenWithRefresh();
-            if (!token) {
-                if (isGuest) {
-                    addGuestWatchlistItem({
-                        local_id: crypto.randomUUID(),
-                        ticker,
-                        company_name: basicStockData.companyName,
-                        stock_id,
-                        added_at: new Date().toISOString(),
-                    });
-                    toast.success("Added to guest watchlist");
-                } else {
-                    toast.error("Please log in to add to watchlist.");
-                }
-                return;
+            if (isInWatchlist) {
+                await watchlist.remove(stock_id);
+                setIsInWatchlist(false);
+                toast.success("Removed from Watchlist");
+            } else {
+                await watchlist.add({
+                    stock_id,
+                    ticker,
+                    company_name: basicStockData.companyName,
+                });
+                setIsInWatchlist(true);
+                toast.success("Added to Watchlist");
             }
-            await addToWatchlist(stock_id, token);
-            toast.success("Added to Watchlist");
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             toast.error(msg);
+        } finally {
+            setWatchlistBusy(false);
         }
     };
 
@@ -174,9 +181,15 @@ export default function StockClient({
                     <div className='grid grid-cols-2 gap-4 h-full items-center'>
                         <button
                             className='flex justify-center items-center gap-2 text-white bg-blue px-4 py-2.5 rounded-lg hover:bg-darkblue active:scale-95 transition-all duration-200 font-semibold text-sm'
-                            onClick={() => handleAddToWatchlist(stock_id)}
+                            onClick={handleToggleWatchlist}
+                            disabled={watchlistBusy}
+                            aria-pressed={isInWatchlist}
                         >
-                            <FaPlus className='text-xs' />
+                            {isInWatchlist ? (
+                                <FaCheck className='text-xs' />
+                            ) : (
+                                <FaPlus className='text-xs' />
+                            )}
                             Watchlist
                         </button>
 

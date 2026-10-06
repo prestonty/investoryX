@@ -63,14 +63,14 @@ export function getGuestWatchlist(): GuestWatchlistItem[] {
 
 export function addGuestWatchlistItem(item: GuestWatchlistItem): void {
     const store = readWatchlistStore();
-    if (store.items.some((i) => i.ticker === item.ticker)) return; // dedup
+    if (store.items.some((i) => i.stock_id === item.stock_id)) return; // dedup
     store.items.push(item);
     writeWatchlistStore(store);
 }
 
-export function removeGuestWatchlistItem(localId: string): void {
+export function removeGuestWatchlistItemByStock(stockId: number): void {
     const store = readWatchlistStore();
-    store.items = store.items.filter((i) => i.local_id !== localId);
+    store.items = store.items.filter((i) => i.stock_id !== stockId);
     writeWatchlistStore(store);
 }
 

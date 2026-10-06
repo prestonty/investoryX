@@ -8,17 +8,11 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import GuestBanner from "@/components/GuestBanner";
 import {
-    createSimulator,
-    renameSimulator,
-    updateSimulatorSettings,
-    deleteSimulator,
     getSimulatorSummary,
-    deleteTrackedStock,
     runSimulator,
     getDevFlags,
     getStrategies,
     runPipeline,
-    type SimulatorResponse,
     type UpdateSimulatorSettingsRequest,
     type SimulatorSummaryResponse,
     type StrategyOption,
@@ -27,19 +21,10 @@ import {
     type BacktestResult,
 } from "@/lib/api";
 import { getTokenWithRefresh } from "@/lib/auth";
-import { useGuest } from "@/contexts/GuestContext";
-import {
-    getGuestSimulators,
-    addGuestSimulator,
-    updateGuestSimulator,
-    deleteGuestSimulator,
-    type GuestSimulator,
-} from "@/lib/guestStorage";
-import {
-    DEMO_SIMULATION,
-    DEMO_SIMULATION_ID,
-} from "@/lib/demoSimulator";
-import { guestSimToSimulation, mapDecisions, mapTradeRecord } from "./mappers";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSimulatorStore } from "@/lib/data/simulators";
+import { DEMO_SIMULATION_ID } from "@/lib/demoSimulator";
+import { mapDecisions, mapTradeRecord, simulatorPatch } from "./mappers";
 import { useLoadSimulators } from "./useLoadSimulators";
 import {
     formatCurrency,
@@ -101,13 +86,14 @@ export default function SimulatorClient({
     initialSimulations = [],
     initialActiveSimulationId = null,
 }: SimulatorClientProps) {
-    const { isGuest } = useGuest();
+    const { isAuthenticated } = useAuth();
+    const store = getSimulatorStore(isAuthenticated);
     const [summary, setSummary] = useState<SimulatorSummaryResponse | null>(
         null,
     );
-    // If the server already hydrated simulations, or we're a guest (sync load), skip the spinner
+    // If the server already hydrated simulations, skip the spinner
     const [loading, setLoading] = useState<boolean>(
-        () => !initialSimulations.length && !isGuest,
+        () => !initialSimulations.length,
     );
     const [isBusy, setIsBusy] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE);
@@ -160,18 +146,11 @@ export default function SimulatorClient({
     }, [simulations, activeSimulationId, activeSimulation]);
 
     useEffect(() => {
-        if (isGuest) {
-            // Guest: load demo + any saved drafts synchronously, then done
-            const drafts = getGuestSimulators().map(guestSimToSimulation);
-            const all = [DEMO_SIMULATION, ...drafts];
-            setSimulations(all);
-            setActiveSimulation(DEMO_SIMULATION);
-            setLoading(false);
-        } else {
+        if (isAuthenticated) {
             getDevFlags().then((flags) => setDevMode(flags.dev_mode));
         }
         getStrategies().then(setStrategies);
-    }, [isGuest]);
+    }, [isAuthenticated]);
 
     const requireToken = async () => {
         const token = await getTokenWithRefresh();
@@ -182,24 +161,9 @@ export default function SimulatorClient({
         return token;
     };
 
-    const updateSimulationFromResponse = (simulator: SimulatorResponse) => {
-        const patch: Partial<Simulation> = {
-            starting_cash: simulator.starting_cash,
-            cash_balance: simulator.cash_balance,
-            status: simulator.status || "Active Trading",
-            frequency: simulator.frequency || "daily",
-            last_run_at: simulator.last_run_at ?? null,
-            next_run_at: simulator.next_run_at ?? null,
-            max_position_pct: simulator.max_position_pct ?? null,
-            max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
-            stopped_reason: simulator.stopped_reason ?? null,
-            strategy_name: simulator.strategy_name || "sma_crossover",
-            strategy_params: simulator.strategy_params ?? {},
-        };
+    const patchSimulation = (id: number, patch: Partial<Simulation>) => {
         setSimulations((prev) =>
-            prev.map((sim) =>
-                sim.id === simulator.simulator_id ? { ...sim, ...patch } : sim,
-            ),
+            prev.map((sim) => (sim.id === id ? { ...sim, ...patch } : sim)),
         );
     };
 
@@ -209,7 +173,7 @@ export default function SimulatorClient({
         latestSummary: SimulatorSummaryResponse,
     ) => {
         setSummary(latestSummary);
-        updateSimulationFromResponse(latestSummary.simulator);
+        patchSimulation(simulationId, simulatorPatch(latestSummary.simulator));
         const trades = (latestSummary.trades ?? []).map(mapTradeRecord);
         const decisions = mapDecisions(latestSummary.decisions);
         setSimulations((prev) =>
@@ -225,55 +189,11 @@ export default function SimulatorClient({
     ) => {
         if (!activeSimulationId) return false;
         if (activeSimulationId === DEMO_SIMULATION_ID) return false;
-
-        if (isGuest) {
-            const target = simulations.find((s) => s.id === activeSimulationId) as
-                | (Simulation & { _localId?: string })
-                | undefined;
-            const localId = target?._localId;
-            // Mirror the server: switching strategy without new params resets to defaults.
-            const strategyChanged =
-                !!payload.strategy_name && payload.strategy_name !== target?.strategy_name;
-            const strategyParams =
-                payload.strategy_params ?? (strategyChanged ? {} : undefined);
-            if (localId) {
-                updateGuestSimulator(localId, {
-                    ...(payload.frequency && { frequency: payload.frequency }),
-                    ...(payload.strategy_name && { strategy_name: payload.strategy_name }),
-                    ...(strategyParams && { strategy_params: strategyParams }),
-                    ...("max_position_pct" in payload && {
-                        max_position_pct: payload.max_position_pct ?? null,
-                    }),
-                    ...("max_daily_loss_pct" in payload && {
-                        max_daily_loss_pct: payload.max_daily_loss_pct ?? null,
-                    }),
-                });
-            }
-            setSimulations((prev) =>
-                prev.map((sim) =>
-                    sim.id === activeSimulationId
-                        ? {
-                              ...sim,
-                              ...payload,
-                              ...(strategyParams && { strategy_params: strategyParams }),
-                          }
-                        : sim,
-                ),
-            );
-            if (successMessage) toast.success(successMessage);
-            return true;
-        }
-
-        const token = await requireToken();
-        if (!token) return false;
+        const target = simulations.find((s) => s.id === activeSimulationId);
+        if (!target) return false;
 
         try {
-            const updated = await updateSimulatorSettings(
-                activeSimulationId,
-                payload,
-                token,
-            );
-            updateSimulationFromResponse(updated);
+            patchSimulation(activeSimulationId, await store.updateSettings(target, payload));
             if (successMessage) {
                 toast.success(successMessage);
             }
@@ -291,7 +211,7 @@ export default function SimulatorClient({
 
     const beginRiskEdit = (field: EditableRiskField) => {
         if (!activeSimulation) return;
-        if (isGuest && activeSimulation.id === DEMO_SIMULATION_ID) return;
+        if (activeSimulation.id === DEMO_SIMULATION_ID) return;
         setEditingRiskField(field);
         const currentValue = activeSimulation[field];
         setRiskDraft(
@@ -457,23 +377,9 @@ export default function SimulatorClient({
             return false;
         }
 
-        if (isGuest) {
-            const target = simulations.find((s) => s.id === id) as
-                | (Simulation & { _localId?: string })
-                | undefined;
-            const localId = target?._localId;
-            if (localId) deleteGuestSimulator(localId);
-            if (activeSimulationId === id) setSummary(null);
-            toast.success("Simulator deleted");
-            return true;
-        }
-
-        const token = await requireToken();
-        if (!token) return false;
-
         setIsBusy(true);
         try {
-            await deleteSimulator(id, token);
+            await store.remove(id);
             if (activeSimulationId === id) {
                 setSummary(null);
             }
@@ -499,79 +405,26 @@ export default function SimulatorClient({
         );
     };
 
-    const handleAddTrackedStock = async (stock: Stock) => {
+    const handleAddTrackedStock = (stock: Stock) => {
         if (!activeSimulation) return;
-        if (activeSimulation.id === DEMO_SIMULATION_ID) return;
         updateSimulationStocks(activeSimulation.id, [
             ...activeSimulation.stocks,
             stock,
         ]);
-        if (isGuest) {
-            const target = simulations.find((s) => s.id === activeSimulation.id) as
-                | (Simulation & { _localId?: string })
-                | undefined;
-            const localId = target?._localId;
-            if (localId) {
-                const stored = getGuestSimulators().find((s) => s.local_id === localId);
-                if (stored && !stored.tracked_tickers.includes(stock.symbol)) {
-                    updateGuestSimulator(localId, {
-                        tracked_tickers: [...stored.tracked_tickers, stock.symbol],
-                    });
-                }
-            }
-        }
     };
 
-    const handleRemoveTrackedStock = async (
-        trackedId: number | null,
-        symbol: string,
-    ) => {
+    const handleRemoveTrackedStock = async (stock: Stock) => {
         if (!activeSimulation) return;
         if (activeSimulation.id === DEMO_SIMULATION_ID) return;
 
-        if (isGuest) {
-            const target = simulations.find((s) => s.id === activeSimulation.id) as
-                | (Simulation & { _localId?: string })
-                | undefined;
-            const localId = target?._localId;
-            if (localId) {
-                const stored = getGuestSimulators().find((s) => s.local_id === localId);
-                if (stored) {
-                    updateGuestSimulator(localId, {
-                        tracked_tickers: stored.tracked_tickers.filter((t) => t !== symbol),
-                    });
-                }
-            }
-            updateSimulationStocks(
-                activeSimulation.id,
-                activeSimulation.stocks.filter((s) => s.symbol !== symbol),
-            );
-            toast.success(`${symbol} removed from simulator watchlist`);
-            return;
-        }
-
-        const token = await requireToken();
-        if (!token) return;
-
-        if (!trackedId) {
-            toast.error("No tracked stock id found for this item.");
-            return;
-        }
-
         setIsBusy(true);
         try {
-            await deleteTrackedStock(
-                Number(activeSimulation.id),
-                trackedId,
-                token,
-            );
+            await store.removeTrackedStock(activeSimulation.id, stock);
             updateSimulationStocks(
                 activeSimulation.id,
-                activeSimulation.stocks.filter(
-                    (stock) => stock.symbol !== symbol,
-                ),
+                activeSimulation.stocks.filter((s) => s.symbol !== stock.symbol),
             );
-            toast.success(`${symbol} removed from simulator watchlist`);
+            toast.success(`${stock.symbol} removed from simulator watchlist`);
         } catch (error) {
             const message =
                 error instanceof Error
@@ -584,67 +437,16 @@ export default function SimulatorClient({
     };
 
     const handleAddSimulation = async () => {
-        // Guest: +1 for the demo slot
-        const guestMax = MAX_SIMULATIONS + 1;
-        if (isGuest && simulations.length >= guestMax) {
+        // The guest demo doesn't count toward the limit.
+        const ownSimulations = simulations.filter((sim) => sim.id !== DEMO_SIMULATION_ID);
+        if (ownSimulations.length >= MAX_SIMULATIONS) {
             toast.error(`Max ${MAX_SIMULATIONS} simulators reached`);
             return;
         }
-        if (!isGuest && simulations.length >= MAX_SIMULATIONS) {
-            toast.error(`Max ${MAX_SIMULATIONS} simulations reached`);
-            return;
-        }
-
-        if (isGuest) {
-            const localId = crypto.randomUUID();
-            const draft: GuestSimulator = {
-                local_id: localId,
-                name: "My Simulator",
-                starting_cash: 10000,
-                status: "draft",
-                frequency: "daily",
-                strategy_name: "sma_crossover",
-                max_position_pct: null,
-                max_daily_loss_pct: null,
-                tracked_tickers: [],
-                created_at: new Date().toISOString(),
-            };
-            addGuestSimulator(draft);
-            const newSim = guestSimToSimulation(draft);
-            setSimulations((prev) => [...prev, newSim]);
-            setActiveSimulation(newSim);
-            toast.success("Simulator created");
-            return;
-        }
-
-        const token = await requireToken();
-        if (!token) return;
 
         setIsBusy(true);
         try {
-            const simulator = await createSimulator(
-                { name: "My Simulator", starting_cash: 10000 },
-                token,
-            );
-            const newId = simulator.simulator_id;
-            const newSimulation: Simulation = {
-                id: newId,
-                name: simulator.name,
-                starting_cash: simulator.starting_cash,
-                cash_balance: simulator.cash_balance,
-                status: simulator.status || "Active Trading",
-                frequency: simulator.frequency || "daily",
-                last_run_at: simulator.last_run_at ?? null,
-                next_run_at: simulator.next_run_at ?? null,
-                max_position_pct: simulator.max_position_pct ?? null,
-                max_daily_loss_pct: simulator.max_daily_loss_pct ?? null,
-                stopped_reason: simulator.stopped_reason ?? null,
-                strategy_name: simulator.strategy_name || "sma_crossover",
-                strategy_params: simulator.strategy_params ?? {},
-                stocks: [],
-                trades: [],
-                decisions: {},
-            };
+            const newSimulation = await store.create();
             setSimulations((prev) => [...prev, newSimulation]);
             setActiveSimulation(newSimulation);
             toast.success("Simulator created");
@@ -662,23 +464,8 @@ export default function SimulatorClient({
     const handleRenameSimulation = async (id: number, name: string) => {
         if (id === DEMO_SIMULATION_ID) return;
 
-        if (isGuest) {
-            const target = simulations.find((s) => s.id === id) as
-                | (Simulation & { _localId?: string })
-                | undefined;
-            const localId = target?._localId;
-            if (localId) updateGuestSimulator(localId, { name });
-            setSimulations((prev) =>
-                prev.map((sim) => (sim.id === id ? { ...sim, name } : sim)),
-            );
-            return;
-        }
-
-        const token = await requireToken();
-        if (!token) return;
-
         try {
-            await renameSimulator(id, name, token);
+            await store.rename(id, name);
             setSimulations((prev) =>
                 prev.map((sim) => (sim.id === id ? { ...sim, name } : sim)),
             );
@@ -762,7 +549,7 @@ export default function SimulatorClient({
                     {/* Main Content */}
                     <div className='flex-1 overflow-auto bg-light/30'>
                         <div className='max-w-7xl mx-auto p-6 space-y-6'>
-                            {isGuest && <GuestBanner />}
+                            <GuestBanner />
                             {activeSimulation && (
                                 <>
                                     {/* Robot and Watchlist Section */}
@@ -789,7 +576,7 @@ export default function SimulatorClient({
                                                         </p>
                                                     </div>
                                                     <div className='mt-3 flex flex-col gap-2'>
-                                                        {isGuest ? (
+                                                        {!isAuthenticated ? (
                                                             <div className='flex flex-col items-center gap-2 py-3 text-center'>
                                                                 <p className='text-xs text-gray leading-snug'>
                                                                     {activeSimulation.id === DEMO_SIMULATION_ID
@@ -1086,7 +873,7 @@ export default function SimulatorClient({
 
                                         {/* Watchlist */}
                                         <div>
-                                            {(!isGuest || activeSimulation.id !== DEMO_SIMULATION_ID) && (
+                                            {activeSimulation.id !== DEMO_SIMULATION_ID && (
                                                 <TrackedStockSearch
                                                     simulatorId={activeSimulationId}
                                                     existingSymbols={
@@ -1102,11 +889,7 @@ export default function SimulatorClient({
                                             <StockWatchlist
                                                 stocks={activeSimulation.stocks}
                                                 decisions={activeSimulation.decisions}
-                                                onRemove={
-                                                    isGuest && activeSimulation.id === DEMO_SIMULATION_ID
-                                                        ? () => {}
-                                                        : handleRemoveTrackedStock
-                                                }
+                                                onRemove={handleRemoveTrackedStock}
                                             />
                                         </div>
                                     </div>
@@ -1119,13 +902,13 @@ export default function SimulatorClient({
                                         params={activeSimulation.strategy_params}
                                         disabled={isBusy}
                                         readOnly={
-                                            isGuest && activeSimulation.id === DEMO_SIMULATION_ID
+                                            activeSimulation.id === DEMO_SIMULATION_ID
                                         }
                                         onSave={saveStrategyParams}
                                     />
 
                                     {/* Trading Sandbox Section — hidden for guests (requires backend) */}
-                                    {!isGuest && activeSimulationId && (
+                                    {isAuthenticated && activeSimulationId && (
                                         <TradingSandboxSection
                                             key={activeSimulationId}
                                             simulatorId={activeSimulationId}

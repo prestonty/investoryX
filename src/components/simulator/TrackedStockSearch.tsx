@@ -6,14 +6,9 @@ import toast from "react-hot-toast";
 
 import type { Item } from "@/types/item";
 import type { Stock } from "@/components/simulator/StockWatchlist";
-import {
-    addTrackedStock,
-    getStockPrice,
-    searchStocks,
-    stockExist,
-} from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
-import { useGuest } from "@/contexts/GuestContext";
+import { getStockPrice, searchStocks, stockExist } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSimulatorStore } from "@/lib/data/simulators";
 import { parseNumber } from "@/lib/utils/helper";
 
 interface TrackedStockSearchProps {
@@ -34,7 +29,7 @@ export function TrackedStockSearch({
     maxItems = DEFAULT_MAX_ITEMS,
     targetAllocation = DEFAULT_TARGET_ALLOCATION,
 }: TrackedStockSearchProps) {
-    const { isGuest } = useGuest();
+    const { isAuthenticated } = useAuth();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<Item[]>([]);
     const [isFocused, setIsFocused] = useState(false);
@@ -95,53 +90,6 @@ export function TrackedStockSearch({
             return;
         }
 
-        if (isGuest) {
-            setIsSubmitting(true);
-            try {
-                let exists = false;
-                try {
-                    const result = await stockExist(ticker);
-                    exists = result.exists === true;
-                } catch {
-                    toast.error("Ticker not found");
-                    return;
-                }
-                if (!exists) {
-                    toast.error("Ticker not found");
-                    return;
-                }
-                let priceData;
-                try {
-                    priceData = await getStockPrice(ticker);
-                } catch {
-                    // price is optional
-                }
-                const stock: Stock = {
-                    symbol: ticker,
-                    companyName: priceData?.companyName ?? item?.label ?? ticker,
-                    trackedId: null,
-                    price: parseNumber(priceData?.stockPrice),
-                    change: parseNumber(priceData?.priceChange),
-                    changePercent: parseNumber(priceData?.priceChangePercent),
-                };
-                onAddStock(stock);
-                setQuery("");
-                setResults([]);
-                toast.success(`${ticker} added to watchlist`);
-            } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Failed to add stock");
-            } finally {
-                setIsSubmitting(false);
-            }
-            return;
-        }
-
-        const token = await getTokenWithRefresh();
-        if (!token) {
-            toast.error("You must be logged in.");
-            return;
-        }
-
         setIsSubmitting(true);
         try {
             let exists = false;
@@ -150,19 +98,16 @@ export function TrackedStockSearch({
                 exists = result.exists === true;
             } catch (err) {
                 console.error("ticker validation error:", err);
-                toast.error("Ticker not found");
-                return;
             }
-
             if (!exists) {
                 toast.error("Ticker not found");
                 return;
             }
 
-            const tracked = await addTrackedStock(
+            const trackedId = await getSimulatorStore(isAuthenticated).addTrackedStock(
                 simulatorId,
-                { ticker, target_allocation: targetAllocation },
-                token,
+                ticker,
+                targetAllocation,
             );
             let priceData;
             try {
@@ -170,15 +115,14 @@ export function TrackedStockSearch({
             } catch (priceError) {
                 console.error("Price lookup failed:", priceError);
             }
-            let stock: Stock = {
+            onAddStock({
                 symbol: ticker,
                 companyName: priceData?.companyName ?? item?.label ?? ticker,
-                trackedId: tracked.tracked_id ?? null,
+                trackedId,
                 price: parseNumber(priceData?.stockPrice),
                 change: parseNumber(priceData?.priceChange),
                 changePercent: parseNumber(priceData?.priceChangePercent),
-            };
-            onAddStock(stock);
+            });
             setQuery("");
             setResults([]);
             toast.success(`${ticker} added to watchlist`);

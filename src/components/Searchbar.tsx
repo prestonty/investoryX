@@ -133,6 +133,15 @@ export default function Searchbar({
                         setIsFocused(true);
                         onOpen?.();
                     }}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Enter") return;
+                        // While typing, only jump to a real search result, not the
+                        // default suggestions shown before results arrive.
+                        const first = filterString.trim()
+                            ? results[0]
+                            : optionsToShow[0];
+                        if (first) handleSelect(first);
+                    }}
                     onBlur={() => setIsFocused(false)}
                     className='text-lg w-full text-dark border-none focus:outline-none focus:ring-0'
                 />

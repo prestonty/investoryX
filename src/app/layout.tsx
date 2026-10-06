@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { GuestProvider } from "@/contexts/GuestContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 // import Cursor from "@/components/Cursor";
 
 const geistSans = Geist({
@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
                 suppressHydrationWarning
             >
                 {/* <Cursor /> */}
-                <GuestProvider>{children}</GuestProvider>
+                <AuthProvider>{children}</AuthProvider>
             </body>
         </html>
     );
