@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 
 import UnderlineWrapper from "@/components/animations/UnderlineWrapper";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Searchbar from "@/components/Searchbar";
-import { logout, isAuthenticated } from "@/lib/auth";
-import { useGuest } from "@/contexts/GuestContext";
+import { logout } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
     search?: boolean;
@@ -16,18 +16,15 @@ interface NavbarProps {
 
 export default function Navbar(props: NavbarProps) {
     const { search = false } = props;
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const { isGuest } = useGuest();
+    const { status } = useAuth();
+    const isLoggedIn = status === "authenticated";
+    const isGuest = status === "guest";
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [searchStock, setSearchStock] = useState<{
         label: string;
         value: string;
     } | null>(null);
-
-    useEffect(() => {
-        setIsLoggedIn(isAuthenticated());
-    }, []);
 
     const handleLogout = () => {
         logout();

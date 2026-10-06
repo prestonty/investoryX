@@ -1,6 +1,6 @@
 "use client";
 
-import type { WatchlistQuoteItem } from "@/lib/api";
+import type { WatchlistQuote } from "@/lib/data/watchlist";
 import Link from "next/link";
 import { FaTrash } from "react-icons/fa";
 import { formatPrice, formatChange, formatPercent } from "@/lib/utils/helper";
@@ -10,8 +10,8 @@ export default function StockWatchItem({
     onRemove,
     isRemoving,
 }: {
-    item: WatchlistQuoteItem;
-    onRemove: (watchlistId: number) => void;
+    item: WatchlistQuote;
+    onRemove: (stockId: number) => void;
     isRemoving: boolean;
 }) {
     const isPositive = (item.priceChange ?? 0) >= 0;
@@ -45,7 +45,7 @@ export default function StockWatchItem({
 
                 <button
                     type="button"
-                    onClick={() => onRemove(item.watchlist_id)}
+                    onClick={() => onRemove(item.stock_id)}
                     disabled={isRemoving}
                     aria-label={`Remove ${item.ticker} from watchlist`}
                     className="p-2 rounded-full text-gray hover:text-red hover:bg-red/10 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useGuest } from "@/contexts/GuestContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function GuestBanner() {
-    const { isGuest } = useGuest();
+    const { status, isAuthenticated } = useAuth();
     const [dismissed, setDismissed] = useState(false);
 
-    if (!isGuest || dismissed) return null;
+    if (status === "loading" || isAuthenticated || dismissed) return null;
 
     return (
         <div className='bg-blue/10 border border-blue/30 rounded-xl px-4 py-3 flex items-center justify-between text-sm text-dark'>

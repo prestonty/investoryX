@@ -10,18 +10,8 @@ import TradingViewChart, {
 import toast, { Toaster } from "react-hot-toast";
 import { FaCheck, FaPlus } from "react-icons/fa";
 
-import {
-    addToWatchlist,
-    getWatchlist,
-    removeFromWatchlist,
-} from "@/lib/api";
-import { getToken, getTokenWithRefresh } from "@/lib/auth";
-import { useGuest } from "@/contexts/GuestContext";
-import {
-    addGuestWatchlistItem,
-    getGuestWatchlist,
-    removeGuestWatchlistItemByStock,
-} from "@/lib/guestStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { getWatchlistStore } from "@/lib/data/watchlist";
 
 interface BasicStockData {
     companyName: string;
@@ -63,7 +53,8 @@ export default function StockClient({
     basicStockData: BasicStockData;
     advancedStockData: AdvanceStockData;
 }) {
-    const { isGuest } = useGuest();
+    const { status, isAuthenticated } = useAuth();
+    const watchlist = getWatchlistStore(isAuthenticated);
     const [chartView, setChartView] = useState<TimeframeKey | "ALL">("D");
     const [showInfo, setShowInfo] = useState(true);
     const [allLayout, setAllLayout] = useState<"horizontal" | "vertical">(
@@ -86,21 +77,10 @@ export default function StockClient({
 
     // Show whether this stock is already on the user's (or guest's) watchlist
     useEffect(() => {
-        const token = getToken();
-        if (!token) {
-            setIsInWatchlist(
-                getGuestWatchlist().some((item) => item.stock_id === stock_id),
-            );
-            return;
-        }
-        getWatchlist(token)
-            .then((items) =>
-                setIsInWatchlist(
-                    items.some((item) => item.stock_id === stock_id),
-                ),
-            )
-            .catch(() => {});
-    }, [stock_id]);
+        if (status === "loading") return;
+        watchlist.contains(stock_id).then(setIsInWatchlist).catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, stock_id]);
 
     // Split advanced data into first 4 (single column) and the rest (grid)
     const advancedEntries = Object.entries(advancedStockData || {});
@@ -109,35 +89,16 @@ export default function StockClient({
         if (watchlistBusy) return;
         setWatchlistBusy(true);
         try {
-            const token = await getTokenWithRefresh();
-            if (!token) {
-                if (!isGuest) {
-                    toast.error("Please log in to add to watchlist.");
-                    return;
-                }
-                if (isInWatchlist) {
-                    removeGuestWatchlistItemByStock(stock_id);
-                    setIsInWatchlist(false);
-                    toast.success("Removed from guest watchlist");
-                } else {
-                    addGuestWatchlistItem({
-                        local_id: crypto.randomUUID(),
-                        ticker,
-                        company_name: basicStockData.companyName,
-                        stock_id,
-                        added_at: new Date().toISOString(),
-                    });
-                    setIsInWatchlist(true);
-                    toast.success("Added to guest watchlist");
-                }
-                return;
-            }
             if (isInWatchlist) {
-                await removeFromWatchlist(stock_id, token);
+                await watchlist.remove(stock_id);
                 setIsInWatchlist(false);
                 toast.success("Removed from Watchlist");
             } else {
-                await addToWatchlist(stock_id, token);
+                await watchlist.add({
+                    stock_id,
+                    ticker,
+                    company_name: basicStockData.companyName,
+                });
                 setIsInWatchlist(true);
                 toast.success("Added to Watchlist");
             }

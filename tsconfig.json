@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
-        "baseUrl": ".",
         "paths": {
-            "@/*": ["./src/*"] // This sets relative directory to src if you put "@/" in front of your path, so useful
+            "@/*": ["./src/*"]
         },
         "target": "ES2017",
         "lib": ["dom", "dom.iterable", "esnext"],
@@ -13,15 +12,11 @@
         "incremental": true,
         "module": "esnext",
         "esModuleInterop": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "jsx": "preserve", // Allows tsx and jsx to be compiled like in older React versions
-        "plugins": [
-            {
-                "name": "next"
-            }
-        ]
+        "jsx": "preserve",
+        "plugins": [{ "name": "next" }]
     },
     "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
     "exclude": ["node_modules"]

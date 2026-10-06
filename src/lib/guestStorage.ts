@@ -68,12 +68,6 @@ export function addGuestWatchlistItem(item: GuestWatchlistItem): void {
     writeWatchlistStore(store);
 }
 
-export function removeGuestWatchlistItem(localId: string): void {
-    const store = readWatchlistStore();
-    store.items = store.items.filter((i) => i.local_id !== localId);
-    writeWatchlistStore(store);
-}
-
 export function removeGuestWatchlistItemByStock(stockId: number): void {
     const store = readWatchlistStore();
     store.items = store.items.filter((i) => i.stock_id !== stockId);
