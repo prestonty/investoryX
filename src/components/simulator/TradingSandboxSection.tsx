@@ -48,7 +48,8 @@ export function TradingSandboxSection({
     isBusy,
     onBacktestComplete,
 }: TradingSandboxSectionProps) {
-    const defaults = getDefaultDates();
+    // Computed once on mount; the latest selectable date is defaults.end.
+    const [defaults] = useState(getDefaultDates);
     const [startDate, setStartDate] = useState(defaults.start);
     const [endDate, setEndDate] = useState(defaults.end);
     const [isRunning, setIsRunning] = useState(false);
@@ -57,10 +58,15 @@ export function TradingSandboxSection({
     const [error, setError] = useState<string | null>(null);
 
     const pollCountRef = useRef(0);
+    // Latest callback, so the polling effect doesn't restart when it changes.
+    const onBacktestCompleteRef = useRef(onBacktestComplete);
+    useEffect(() => {
+        onBacktestCompleteRef.current = onBacktestComplete;
+    });
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Max date = yesterday
-    const yesterday = toISODate(nearestWeekdayBefore(new Date(Date.now() - 86400000)));
+    // Max date = yesterday (nearest weekday)
+    const yesterday = defaults.end;
 
     const dateError =
         startDate && endDate && startDate >= endDate
@@ -100,7 +106,7 @@ export function TradingSandboxSection({
                     setTaskId(null);
                     if (status.result) {
                         setLastResult(status.result);
-                        onBacktestComplete(status.result);
+                        onBacktestCompleteRef.current(status.result);
                     }
                 } else if (status.status === "failure") {
                     clearInterval(intervalRef.current!);
@@ -116,7 +122,7 @@ export function TradingSandboxSection({
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [taskId]);
+    }, [taskId, simulatorId]);
 
     async function handleRunBacktest() {
         setError(null);
@@ -145,7 +151,7 @@ export function TradingSandboxSection({
             : "text-red-500";
 
     return (
-        <div className='bg-white rounded-lg border border-light shadow-sm p-4 mb-6'>
+        <div className='bg-white rounded-lg border border-light shadow-xs p-4 mb-6'>
             {/* Header */}
             <div className='flex items-center gap-2 mb-4'>
                 <h2 className='text-dark'>Trading Sandbox</h2>
@@ -175,7 +181,7 @@ export function TradingSandboxSection({
                         max={yesterday}
                         onChange={(e) => setStartDate(e.target.value)}
                         disabled={isRunning}
-                        className='border border-light rounded-md px-3 py-2 text-sm text-dark focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:opacity-50'
+                        className='border border-light rounded-md px-3 py-2 text-sm text-dark focus:outline-hidden focus:ring-1 focus:ring-blue-400 disabled:opacity-50'
                     />
                 </div>
                 <div className='flex flex-col gap-1'>
@@ -186,7 +192,7 @@ export function TradingSandboxSection({
                         max={yesterday}
                         onChange={(e) => setEndDate(e.target.value)}
                         disabled={isRunning}
-                        className='border border-light rounded-md px-3 py-2 text-sm text-dark focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:opacity-50'
+                        className='border border-light rounded-md px-3 py-2 text-sm text-dark focus:outline-hidden focus:ring-1 focus:ring-blue-400 disabled:opacity-50'
                     />
                 </div>
                 <button

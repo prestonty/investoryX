@@ -9,7 +9,7 @@ import { resetPassword } from "@/lib/api";
 import { PASSWORD_RULE_TEXT, passwordPolicyError } from "@/lib/passwordPolicy";
 
 const inputClass =
-    "w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500";
+    "w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-hidden transition-colors duration-500";
 
 export default function ResetPasswordClient() {
     const searchParams = useSearchParams();
@@ -69,7 +69,7 @@ export default function ResetPasswordClient() {
                     style: { background: "#363636", color: "#fff" },
                 }}
             />
-            <div className='relative bg-light h-screen flex items-center justify-center font-[family-name:var(--font-geist-sans)]'>
+            <div className='relative bg-light h-screen flex items-center justify-center font-(family-name:--font-geist-sans)'>
                 <div className='w-3/4 xl:w-1/2 mx-auto flex flex-col justify-center z-5'>
                     <h1 className='text-dark text-6xl font-extrabold text-center'>
                         Reset Password

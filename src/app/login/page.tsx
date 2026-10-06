@@ -8,13 +8,24 @@ import "./login.css";
 import "@/styles/animations.css";
 
 // import { google } from "@/lib/googleClient";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { loginUser, type LoginData } from "@/lib/api";
 import { ApiError } from "@/lib/errors";
 import { enterGuestMode, exitGuestMode, isGuestMode } from "@/lib/auth";
 import { migrateGuestData, hasGuestData } from "@/lib/guestMigration";
 import toast, { Toaster } from "react-hot-toast";
 import PasswordInput from "@/components/PasswordInput";
+
+// Where to go after logging in, from the ?redirectTo= query param.
+function getRedirectTo(): string {
+    const redirect = new URLSearchParams(window.location.search).get("redirectTo");
+    // Only same-site paths: "//evil.com" or "https://..." would send the
+    // user to another site right after they log in.
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+        return redirect;
+    }
+    return "/dashboard";
+}
 
 export default function Login() {
     const [isEmailFocused, setIsEmailFocused] = useState<boolean>(false);
@@ -26,22 +37,6 @@ export default function Login() {
     const [password, setPassword] = useState<string>("");
 
     const router = useRouter();
-
-    // Get redirect URL from query params
-    const [redirectTo, setRedirectTo] = useState<string>("/dashboard");
-
-    useEffect(() => {
-        // Check for redirect parameter in URL
-        if (typeof window !== "undefined") {
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get("redirectTo");
-            // Only same-site paths: "//evil.com" or "https://..." would send the
-            // user to another site right after they log in.
-            if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
-                setRedirectTo(redirect);
-            }
-        }
-    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,7 +70,7 @@ export default function Login() {
 
             // Small delay for user to see the success message
             setTimeout(() => {
-                router.push(redirectTo);
+                router.push(getRedirectTo());
             }, 1000);
         } catch (error) {
             const errorMessage =
@@ -128,7 +123,7 @@ export default function Login() {
                     },
                 }}
             />
-            <div className='relative bg-light h-screen flex items-center justify-center font-[family-name:var(--font-geist-sans)]'>
+            <div className='relative bg-light h-screen flex items-center justify-center font-(family-name:--font-geist-sans)'>
                 {/* Triangle Animations */}
                 <div className='absolute inset-0 overflow-hidden pointer-events-none'>
                     {/* Blue triangles */}
@@ -137,13 +132,13 @@ export default function Login() {
                             <div
                                 className='login-top-blue-tri absolute -top-12 -right-20 h-[16vmax]
                     w-[60vmax] origin-top-right
-                    bg-blue rotate-[14deg] blue-triangle'
+                    bg-blue rotate-14 blue-triangle'
                             ></div>
 
                             <div
                                 className='login-bot-blue-tri absolute -bottom-12 -left-20 h-[16vmax]
                     w-[60vmax] origin-bottom-left
-                    bg-blue rotate-[14deg] blue-triangle'
+                    bg-blue rotate-14 blue-triangle'
                             ></div>
                         </>
                     )}
@@ -154,13 +149,13 @@ export default function Login() {
                             <div
                                 className='login-bot-black-tri absolute -bottom-10 right-56 h-[86vmax]
                     w-[50vmax] origin-bottom-left
-                    bg-dark rotate-[76deg] black-triangle'
+                    bg-dark rotate-76 black-triangle'
                             ></div>
 
                             <div
                                 className='login-top-black-tri absolute -top-10 left-56 h-[86vmax]
                     w-[50vmax] origin-top-right
-                    bg-dark rotate-[76deg] black-triangle'
+                    bg-dark rotate-76 black-triangle'
                             ></div>
                         </>
                     )}
@@ -207,13 +202,13 @@ export default function Login() {
                     </h1>
 
                     {/* Google Button (adding nested tags may affect css styling in login.css) */}
-                    {/* <div className="google-container flex justify-center mt-[8%] mr-[2rem]">
+                    {/* <div className="google-container flex justify-center mt-[8%] mr-8">
                     <GoogleButton
                         onClick={() => {
                             google.signIn();
                         }}
                     />
-                    <p className="relative top-[28%] ml-[-11rem] text-dark">
+                    <p className="relative top-[28%] -ml-44 text-dark">
                         Sign in With Google
                     </p>
                 </div> */}
@@ -235,7 +230,7 @@ export default function Login() {
                                     Email
                                 </label>
                                 <input
-                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-hidden transition-colors duration-500'
                                     type='text'
                                     id='email'
                                     name='email'
@@ -259,7 +254,7 @@ export default function Login() {
                                 </label>
 
                                 <PasswordInput
-                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-hidden transition-colors duration-500'
                                     id='password'
                                     name='password'
                                     value={password}
@@ -308,7 +303,7 @@ export default function Login() {
                                 type='button'
                                 onClick={() => {
                                     enterGuestMode();
-                                    router.push(redirectTo || "/dashboard");
+                                    router.push(getRedirectTo());
                                 }}
                                 className='text-gray text-sm hover:text-dark underline transition-colors duration-300'
                             >

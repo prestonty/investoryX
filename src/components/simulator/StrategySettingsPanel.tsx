@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type {
     StrategyOption,
     StrategyParamSpec,
@@ -77,7 +77,12 @@ export function StrategySettingsPanel({
     const [saving, setSaving] = useState(false);
 
     // Show the saved values whenever the strategy or its stored settings change.
-    useEffect(() => setDraft(savedDraft), [savedDraft]);
+    // (Adjusted during render rather than in an effect to avoid an extra render.)
+    const [prevSavedDraft, setPrevSavedDraft] = useState(savedDraft);
+    if (savedDraft !== prevSavedDraft) {
+        setPrevSavedDraft(savedDraft);
+        setDraft(savedDraft);
+    }
 
     if (!strategy || specs.length === 0) return null;
 
@@ -108,7 +113,7 @@ export function StrategySettingsPanel({
     };
 
     return (
-        <div className='bg-white rounded-lg border border-light p-4 shadow-sm'>
+        <div className='bg-white rounded-lg border border-light p-4 shadow-xs'>
             <div className='flex flex-wrap items-baseline justify-between gap-2 mb-3'>
                 <h2 className='text-dark'>Strategy Settings</h2>
                 <p className='text-xs text-gray'>

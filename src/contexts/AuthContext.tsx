@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useRef,
+    useSyncExternalStore,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { getAuthState, type AuthState } from "@/lib/auth";
@@ -21,16 +27,37 @@ const AuthContext = createContext<AuthContextValue>({
     isAuthenticated: false,
 });
 
+// Auth state lives in cookies. It is re-read on every render of the provider
+// (which includes every navigation, since login and logout both change the
+// route); listeners are only needed for changes outside a navigation.
+const authListeners = new Set<() => void>();
+
+function subscribeAuth(listener: () => void) {
+    authListeners.add(listener);
+    return () => {
+        authListeners.delete(listener);
+    };
+}
+
+function notifyAuthChanged() {
+    authListeners.forEach((listener) => listener());
+}
+
+const getServerAuthStatus = (): AuthStatus => "loading";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [status, setStatus] = useState<AuthStatus>("loading");
+    const status = useSyncExternalStore<AuthStatus>(
+        subscribeAuth,
+        getAuthState,
+        getServerAuthStatus,
+    );
     const pathname = usePathname();
     const router = useRouter();
     // Several requests can fail at once; send the user to log in only once.
     const redirectingRef = useRef(false);
 
-    // Re-read on navigation: login and logout both change the route.
+    // A new route means any earlier session-expired redirect has finished.
     useEffect(() => {
-        setStatus(getAuthState());
         redirectingRef.current = false;
     }, [pathname]);
 
@@ -38,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         setSessionExpiredHandler(() => {
             // The failed refresh already cleared the session cookies.
-            setStatus(getAuthState());
+            notifyAuthChanged();
             const here = window.location.pathname + window.location.search;
             if (redirectingRef.current || window.location.pathname === "/login") return;
             redirectingRef.current = true;

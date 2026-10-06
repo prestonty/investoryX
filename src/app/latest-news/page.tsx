@@ -77,7 +77,7 @@ export default function Dashboard() {
     const isLastPage = !hasMore && (page + 1) * PAGE_SIZE >= allArticles.length;
 
     return (
-        <div className='bg-light font-[family-name:var(--font-geist-sans)] mb-6'>
+        <div className='bg-light font-(family-name:--font-geist-sans) mb-6'>
             <div className='mb-4'>
                 <Navbar search={true} />
             </div>

@@ -54,7 +54,7 @@ function DecisionLine({ decision }: { decision?: SimulatorDecisionResponse }) {
     <div className="mt-1 text-[11px] leading-snug">
       <div className="flex flex-wrap items-center gap-1.5">
         <span
-          className={`rounded px-1.5 py-0.5 font-semibold uppercase ${ACTION_STYLES[decision.action]}`}
+          className={`rounded-sm px-1.5 py-0.5 font-semibold uppercase ${ACTION_STYLES[decision.action]}`}
         >
           {decision.action}
           {quantity}
@@ -73,7 +73,7 @@ function DecisionLine({ decision }: { decision?: SimulatorDecisionResponse }) {
 
 export function StockWatchlist({ stocks, decisions = {}, onRemove }: StockWatchlistProps) {
   return (
-    <div className="bg-white rounded-lg p-4 border border-light shadow-sm">
+    <div className="bg-white rounded-lg p-4 border border-light shadow-xs">
       <h3 className="text-dark mb-3">Watchlist ({stocks.length}/5)</h3>
       <div className="space-y-2">
         {stocks.map((stock) => (

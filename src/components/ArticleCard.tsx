@@ -9,7 +9,7 @@ export default function ArticleCard({ article }: { article: Article }) {
                     src={article.image}
                     width={160}
                     height={105}
-                    className="w-[160px] h-[105px] object-cover rounded-xl flex-shrink-0"
+                    className="w-[160px] h-[105px] object-cover rounded-xl shrink-0"
                     alt="article thumbnail"
                 />
                 <div className="flex flex-col justify-between flex-1 py-1">

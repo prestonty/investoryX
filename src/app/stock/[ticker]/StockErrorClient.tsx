@@ -3,7 +3,7 @@
 export default function StockErrorClient() {
 
     return (
-        <div className='min-h-screen flex items-center justify-center bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
+        <div className='min-h-screen flex items-center justify-center bg-gray-50 font-(family-name:--font-geist-sans)'>
             <div className='max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg text-dark'>
                 <div className='text-center'>
                     <h1 className='text-2xl font-bold mb-4'>
@@ -21,13 +21,13 @@ export default function StockErrorClient() {
                     <div className='space-y-3'>
                         <button
                             onClick={() => window.location.reload()}
-                            className='w-full px-4 py-2 bg-blue text-white font-semibold rounded hover:bg-blue-700 transition-colors'
+                            className='w-full px-4 py-2 bg-blue text-white font-semibold rounded-sm hover:bg-blue-700 transition-colors'
                         >
                             Try Again
                         </button>
                         <button
                             onClick={() => window.history.back()}
-                            className='w-full px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded hover:bg-gray-300 transition-colors'
+                            className='w-full px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-sm hover:bg-gray-300 transition-colors'
                         >
                             Go Back
                         </button>

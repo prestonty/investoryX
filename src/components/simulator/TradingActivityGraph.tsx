@@ -16,6 +16,39 @@ interface TradingActivityGraphProps {
     records: TradeRecord[];
 }
 
+function CustomTooltip({ active, payload }: any) {
+    if (active && payload && payload.length) {
+        return (
+            <div className='bg-white border border-light rounded-lg p-3 shadow-lg'>
+                <p className='text-dark font-medium'>
+                    {payload[0].payload.symbol}
+                </p>
+                <p className='text-sm text-gray'>
+                    Date: {payload[0].payload.name}
+                </p>
+                <p className='text-sm text-gray'>
+                    Price: ${Number(payload[0].payload.price).toFixed(2)}
+                </p>
+                <p className='text-sm text-gray'>
+                    Volume: {payload[0].payload.shares?.toLocaleString()}
+                </p>
+                <p
+                    className={`text-sm ${
+                        payload[0].payload.action === "BUY"
+                            ? "text-green"
+                            : payload[0].payload.action === "SELL"
+                              ? "text-red"
+                              : "text-blue"
+                    }`}
+                >
+                    Action: {payload[0].payload.action}
+                </p>
+            </div>
+        );
+    }
+    return null;
+}
+
 export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
     // Group records by symbol and aggregate data
     const chartData = records.reduce((acc, record) => {
@@ -51,49 +84,16 @@ export function TradingActivityGraph({ records }: TradingActivityGraphProps) {
         action: record.action,
     }));
 
-    const CustomTooltip = ({ active, payload }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className='bg-white border border-light rounded-lg p-3 shadow-lg'>
-                    <p className='text-dark font-medium'>
-                        {payload[0].payload.symbol}
-                    </p>
-                    <p className='text-sm text-gray'>
-                        Date: {payload[0].payload.name}
-                    </p>
-                    <p className='text-sm text-gray'>
-                        Price: ${Number(payload[0].payload.price).toFixed(2)}
-                    </p>
-                    <p className='text-sm text-gray'>
-                        Volume: {payload[0].payload.shares?.toLocaleString()}
-                    </p>
-                    <p
-                        className={`text-sm ${
-                            payload[0].payload.action === "BUY"
-                                ? "text-green"
-                                : payload[0].payload.action === "SELL"
-                                  ? "text-red"
-                                  : "text-blue"
-                        }`}
-                    >
-                        Action: {payload[0].payload.action}
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
-
     if (records.length === 0) {
         return (
-            <div className='bg-white rounded-lg border border-light p-12 flex items-center justify-center shadow-sm'>
+            <div className='bg-white rounded-lg border border-light p-12 flex items-center justify-center shadow-xs'>
                 <p className='text-gray'>No trading data to display</p>
             </div>
         );
     }
 
     return (
-        <div className='bg-white rounded-lg border border-light p-6 space-y-6 shadow-sm'>
+        <div className='bg-white rounded-lg border border-light p-6 space-y-6 shadow-xs'>
             {/* Trading Volume Over Time */}
             <div>
                 <h4 className='text-dark mb-4'>Trading Volume Over Time</h4>

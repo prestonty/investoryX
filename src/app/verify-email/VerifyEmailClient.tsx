@@ -7,19 +7,14 @@ import { verifyEmail } from "@/lib/api";
 export default function VerifyEmailClient() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [status, setStatus] = useState<"loading" | "success" | "error">(
+    const [verifyStatus, setStatus] = useState<"loading" | "success" | "error">(
         "loading",
     );
-    const [message, setMessage] = useState("");
+    const [verifyMessage, setMessage] = useState("");
+    const token = searchParams.get("token");
 
     useEffect(() => {
-        const token = searchParams.get("token");
-
-        if (!token) {
-            setStatus("error");
-            setMessage("No verification token found");
-            return;
-        }
+        if (!token) return;
 
         const verify = async () => {
             try {
@@ -39,10 +34,14 @@ export default function VerifyEmailClient() {
         };
 
         verify();
-    }, [searchParams, router]);
+    }, [token, router]);
+
+    // Without a token there is nothing to verify.
+    const status = token ? verifyStatus : "error";
+    const message = token ? verifyMessage : "No verification token found";
 
     return (
-        <div className='min-h-screen flex items-center justify-center bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
+        <div className='min-h-screen flex items-center justify-center bg-gray-50 font-(family-name:--font-geist-sans)'>
             <div className='max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg text-dark'>
                 <div className='text-center'>
                     <h1 className='text-2xl font-bold'>Email Verification</h1>
@@ -69,7 +68,7 @@ export default function VerifyEmailClient() {
                             <p className='text-red font-semibold'>{message}</p>
                             <button
                                 onClick={() => router.push("/login")}
-                                className='mt-4 px-4 py-2 bg-blue text-white font-semibold rounded hover:bg-blue-700'
+                                className='mt-4 px-4 py-2 bg-blue text-white font-semibold rounded-sm hover:bg-blue-700'
                             >
                                 Go to Login
                             </button>

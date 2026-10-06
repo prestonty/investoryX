@@ -14,8 +14,8 @@ export default function Landing() {
                     {/* Black Triangle */}
                     <div
                         className='z-1 black-in absolute bottom-0 left-[12%] h-[200vmax]
-                    w-[200vmax] origin-bottom-left rotate-[30deg]
-                    bg-dark md:rotate-[60deg] black-triangle'
+                    w-[200vmax] origin-bottom-left rotate-30
+                    bg-dark md:rotate-60 black-triangle'
                     ></div>
 
                     {/* Blue Triangle */}
@@ -24,7 +24,7 @@ export default function Landing() {
 
                 <MagneticWrapper>
                     <motion.img
-                        className='ml-[18rem] mt-[5rem] w-[18%] z-20'
+                        className='ml-72 mt-20 w-[18%] z-20'
                         src='/landing/ani-bull.webp'
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}

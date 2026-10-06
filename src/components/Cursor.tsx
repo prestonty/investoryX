@@ -23,7 +23,7 @@ const Cursor = () => {
 
     return (
         <div
-            className='fixed top-0 left-0 z-[9999] pointer-events-none w-4 h-4'
+            className='fixed top-0 left-0 z-9999 pointer-events-none w-4 h-4'
             style={{
                 transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
             }}

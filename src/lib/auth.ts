@@ -56,7 +56,9 @@ export async function logout(): Promise<void> {
     document.cookie =
         "guest_mode=;path=/;expires=Thu, 01 Jan 1970 00:00:00 UTC;";
 
-    // Redirect to login page
+    // Full page load (not a client-side navigation) so no in-memory state from
+    // the logged-in session survives.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/login";
 }
 

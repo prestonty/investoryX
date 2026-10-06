@@ -49,7 +49,7 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
     };
 
     return (
-        <div className='bg-white rounded-lg border border-light overflow-hidden shadow-sm'>
+        <div className='bg-white rounded-lg border border-light overflow-hidden shadow-xs'>
             <div className='overflow-x-auto'>
                 <table className='w-full'>
                     <thead className='bg-light/50 border-b border-light'>
@@ -89,7 +89,7 @@ export function TradingActivityTable({ records }: TradingActivityTableProps) {
                                             {record.action}
                                         </span>
                                         {record.source === "backtest" && (
-                                            <span className='text-xs font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded'>
+                                            <span className='text-xs font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-sm'>
                                                 BACKTEST
                                             </span>
                                         )}
