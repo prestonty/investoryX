@@ -89,7 +89,7 @@ export default function Register() {
     };
 
     return (
-        <div className='font-[family-name:var(--font-geist-sans)]'>
+        <div className='font-(family-name:--font-geist-sans)'>
             <Toaster
                 position='top-center'
                 reverseOrder={false}
@@ -127,13 +127,13 @@ export default function Register() {
                             <div
                                 className='login-top-blue-tri absolute -top-12 -right-20 h-[16vmax]
                     w-[60vmax] origin-top-right
-                    bg-blue rotate-[14deg] blue-triangle'
+                    bg-blue rotate-14 blue-triangle'
                             ></div>
 
                             <div
                                 className='login-bot-blue-tri absolute -bottom-12 -left-20 h-[16vmax]
                     w-[60vmax] origin-bottom-left
-                    bg-blue rotate-[14deg] blue-triangle'
+                    bg-blue rotate-14 blue-triangle'
                             ></div>
                         </>
                     )}
@@ -144,13 +144,13 @@ export default function Register() {
                             <div
                                 className='login-bot-black-tri absolute -bottom-10 right-56 h-[86vmax]
                     w-[50vmax] origin-bottom-left
-                    bg-dark rotate-[76deg] black-triangle'
+                    bg-dark rotate-76 black-triangle'
                             ></div>
 
                             <div
                                 className='login-top-black-tri absolute -top-10 left-56 h-[86vmax]
                     w-[50vmax] origin-top-right
-                    bg-dark rotate-[76deg] black-triangle'
+                    bg-dark rotate-76 black-triangle'
                             ></div>
                         </>
                     )}
@@ -162,13 +162,13 @@ export default function Register() {
                     </h1>
 
                     {/* Google Button (adding nested tags may affect css styling in login.css) */}
-                    {/* <div className="google-container flex justify-center mt-[8%] mr-[2rem]">
+                    {/* <div className="google-container flex justify-center mt-[8%] mr-8">
                     <GoogleButton
                         onClick={() => {
                             google.signIn();
                         }}
                     />
-                    <p className="relative top-[28%] ml-[-11rem] text-dark">
+                    <p className="relative top-[28%] -ml-44 text-dark">
                         Sign in With Google
                     </p>
                 </div> */}
@@ -190,7 +190,7 @@ export default function Register() {
                                     Name
                                 </label>
                                 <input
-                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-hidden transition-colors duration-500'
                                     type='text'
                                     id='name'
                                     name='name'
@@ -213,7 +213,7 @@ export default function Register() {
                                     Email
                                 </label>
                                 <input
-                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-hidden transition-colors duration-500'
                                     type='text'
                                     id='email'
                                     name='email'
@@ -237,7 +237,7 @@ export default function Register() {
                                 </label>
 
                                 <PasswordInput
-                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-none transition-colors duration-500'
+                                    className='w-72 border-2 border-livid px-4 py-2 rounded-[30px] bg-transparent focus:border-blue focus:outline-hidden transition-colors duration-500'
                                     id='password'
                                     name='password'
                                     value={password}

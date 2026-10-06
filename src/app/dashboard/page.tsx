@@ -63,7 +63,7 @@ export default function Dashboard() {
     const activeStocks = tabData[activeTab];
 
     return (
-        <div className='bg-light font-[family-name:var(--font-geist-sans)]'>
+        <div className='bg-light font-(family-name:--font-geist-sans)'>
             <div className='mb-4'>
                 <Navbar search={true} />
             </div>

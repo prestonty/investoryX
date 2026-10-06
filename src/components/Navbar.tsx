@@ -43,9 +43,9 @@ export default function Navbar(props: NavbarProps) {
     ];
 
     return (
-        <div className="relative z-[9999]">
+        <div className="relative z-9999">
             <div
-                className={`flex items-center px-[3%] min-h-[2rem] py-2 ${
+                className={`flex items-center px-[3%] min-h-8 py-2 ${
                     search ? "" : "justify-between"
                 }`}
             >

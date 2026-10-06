@@ -1,7 +1,9 @@
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
     reactStrictMode: true, // Adhere to good practice to learn standards better
     images: {
-        domains: ["cdn.snapi.dev"],
+        remotePatterns: [{ protocol: "https", hostname: "cdn.snapi.dev" }],
     },
 };
 

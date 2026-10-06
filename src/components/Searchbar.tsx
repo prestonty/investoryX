@@ -106,7 +106,7 @@ export default function Searchbar({
 
     return (
         <div
-            className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full ml-6 px-4 py-2 transition-colors duration-500 outline-none`}
+            className={`min-w-24 flex justify-center items-center fit relative bg-white border-2 ${borderColor} rounded-full ml-6 px-4 py-2 transition-colors duration-500 outline-hidden`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -143,14 +143,14 @@ export default function Searchbar({
                         if (first) handleSelect(first);
                     }}
                     onBlur={() => setIsFocused(false)}
-                    className='text-lg w-full text-dark border-none focus:outline-none focus:ring-0'
+                    className='text-lg w-full text-dark border-none focus:outline-hidden focus:ring-0'
                 />
             </div>
 
             <AnimatePresence>
                 {isFocused && (
                     <motion.ul
-                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-[9999] max-h-60 shadow-lg border border-light`}
+                        className={`absolute left-0 top-12 w-full bg-white rounded-xl overflow-y-scroll z-9999 max-h-60 shadow-lg border border-light`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}

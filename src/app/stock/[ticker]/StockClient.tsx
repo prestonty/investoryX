@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { dateConverter } from "@/lib/utils/helper";
 import Navbar from "@/components/Navbar";
 import TradingViewChart, {
@@ -61,7 +61,12 @@ export default function StockClient({
         "vertical",
     );
     const isSideBySide = chartView === "ALL" && allLayout === "horizontal";
-    const [isMounted, setIsMounted] = useState(false);
+    // false during server render and hydration, true afterwards
+    const isMounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false,
+    );
     const [isInWatchlist, setIsInWatchlist] = useState(false);
     const [watchlistBusy, setWatchlistBusy] = useState(false);
 
@@ -70,10 +75,6 @@ export default function StockClient({
         : true;
     const priceChangeColor = priceDirection ? "text-green" : "text-red";
     const directionSymbol = priceDirection ? "+" : "";
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
 
     // Show whether this stock is already on the user's (or guest's) watchlist
     useEffect(() => {
@@ -111,7 +112,7 @@ export default function StockClient({
     };
 
     return (
-        <div className='bg-light font-[family-name:var(--font-geist-sans)] h-screen flex flex-col'>
+        <div className='bg-light font-(family-name:--font-geist-sans) h-screen flex flex-col'>
             <div className='flex flex-col justify-evenly mb-4'>
                 <Navbar search={true} />
             </div>
@@ -151,7 +152,7 @@ export default function StockClient({
                 }}
             />
 
-            <div className='mx-[6%] grid gap-10 flex-1 px-4 sm:px-8 lg:px-16 pt-4 pb-10 max-[1580px]:grid-cols-1 min-[1580px]:[grid-template-columns:minmax(600px,3fr)_minmax(200px,2fr)]'>
+            <div className='mx-[6%] grid gap-10 flex-1 px-4 sm:px-8 lg:px-16 pt-4 pb-10 max-[1580px]:grid-cols-1 min-[1580px]:grid-cols-[minmax(600px,3fr)_minmax(200px,2fr)]'>
                 {/* Top left */}
                 <div className='bg-white rounded-[20px] shadow-dark-md min-[1580px]:col-start-1 min-[1580px]:col-end-2 min-[1580px]:row-start-1 min-[1580px]:row-end-4'>
                     <div className='flex flex-col justify-center h-full py-4 px-8'>
@@ -200,7 +201,7 @@ export default function StockClient({
                             >
                                 Sentiment
                             </button>
-                            <span className='absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-800 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+                            <span className='absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-800 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
                                 Coming Soon
                             </span>
                         </div>
@@ -209,7 +210,7 @@ export default function StockClient({
 
                 {/* Bottom left */}
                 <div
-                    className={`bg-white rounded-[20px] shadow-dark-md min-[1580px]:col-start-1 min-[1580px]:row-start-4 min-[1580px]:row-end-13 min-[1580px]:[min-width:750px] ${
+                    className={`bg-white rounded-[20px] shadow-dark-md min-[1580px]:col-start-1 min-[1580px]:row-start-4 min-[1580px]:row-end-13 min-[1580px]:min-w-[750px] ${
                         showInfo
                             ? "min-[1580px]:col-end-2"
                             : "min-[1580px]:col-end-3"
@@ -285,7 +286,7 @@ export default function StockClient({
                                 <div key={preset.key}>
                                     <div className='flex flex-wrap items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-dark/70'>
                                         <span
-                                            className={`px-2 py-0.5 rounded border ${preset.badgeClass}`}
+                                            className={`px-2 py-0.5 rounded-sm border ${preset.badgeClass}`}
                                         >
                                             {preset.label}
                                         </span>
@@ -324,8 +325,8 @@ export default function StockClient({
                                         preset={preset}
                                         className={
                                             chartView === "ALL" && !isSideBySide
-                                                ? "h-[26rem]"
-                                                : "h-[34rem]"
+                                                ? "h-104"
+                                                : "h-136"
                                         }
                                     />
                                 </div>

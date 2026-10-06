@@ -144,7 +144,7 @@ export function TrackedStockSearch({
     };
 
     return (
-        <div className='bg-white rounded-lg border border-light p-4 shadow-sm mb-4'>
+        <div className='bg-white rounded-lg border border-light p-4 shadow-xs mb-4'>
             <form onSubmit={handleSubmit} className='flex gap-2 items-center'>
                 <input
                     value={query}
@@ -152,7 +152,7 @@ export function TrackedStockSearch({
                     placeholder='Search'
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className='flex-[1] min-w-[140px] max-w-[200px] rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-none focus:ring-2 focus:ring-blue/40'
+                    className='flex-1 min-w-[140px] max-w-[200px] rounded-md border border-light px-3 py-2 text-sm text-dark placeholder:text-gray focus:outline-hidden focus:ring-2 focus:ring-blue/40'
                 />
                 <button
                     type='submit'

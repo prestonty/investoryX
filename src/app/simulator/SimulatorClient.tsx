@@ -110,39 +110,27 @@ export default function SimulatorClient({
     });
     const [simulations, setSimulations] =
         useState<Simulation[]>(initialSimulations);
-    const [activeSimulation, setActiveSimulation] = useState<Simulation | null>(
+    // Only the id is stored; the simulation itself is read from `simulations`
+    // so it always reflects the latest data (and disappears when deleted).
+    const [activeSimulationId, setActiveSimulationId] = useState<number | null>(
         () => {
             if (initialSimulations.length === 0) return null;
-            if (initialActiveSimulationId !== null) {
-                return (
-                    initialSimulations.find(
-                        (sim) => sim.id === initialActiveSimulationId,
-                    ) ?? initialSimulations[0]
-                );
+            if (
+                initialActiveSimulationId !== null &&
+                initialSimulations.some(
+                    (sim) => sim.id === initialActiveSimulationId,
+                )
+            ) {
+                return initialActiveSimulationId;
             }
-            return initialSimulations[0];
+            return initialSimulations[0].id;
         },
     );
-    const activeSimulationId = activeSimulation?.id ?? null;
+    const activeSimulation =
+        simulations.find((sim) => sim.id === activeSimulationId) ?? null;
+    const setActiveSimulation = (simulation: Simulation | null) =>
+        setActiveSimulationId(simulation?.id ?? null);
     const hasInitialSimulations = initialSimulations.length > 0;
-
-    useEffect(() => {
-        if (!activeSimulationId) {
-            if (activeSimulation) {
-                setActiveSimulation(null);
-            }
-            return;
-        }
-        const refreshed =
-            simulations.find((sim) => sim.id === activeSimulationId) ?? null;
-        if (!refreshed) {
-            setActiveSimulation(null);
-            return;
-        }
-        if (refreshed !== activeSimulation) {
-            setActiveSimulation(refreshed);
-        }
-    }, [simulations, activeSimulationId, activeSimulation]);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -535,7 +523,7 @@ export default function SimulatorClient({
                                     {/* Robot and Watchlist Section */}
                                     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
                                         {/* Robot */}
-                                        <div className='lg:col-span-2 bg-white rounded-lg border border-light p-4 shadow-sm'>
+                                        <div className='lg:col-span-2 bg-white rounded-lg border border-light p-4 shadow-xs'>
                                             <div className='grid grid-cols-1 xl:grid-cols-5 gap-4'>
                                                 <div className='xl:col-span-2 rounded-md border border-light bg-light/20 p-3'>
                                                     <RobotTrader
@@ -747,7 +735,7 @@ export default function SimulatorClient({
                                                                         cancelRiskEdit();
                                                                     }
                                                                 }}
-                                                                className='mt-1 w-full rounded border border-light px-2 py-1 text-sm'
+                                                                className='mt-1 w-full rounded-sm border border-light px-2 py-1 text-sm'
                                                             />
                                                         ) : (
                                                             <>
@@ -810,7 +798,7 @@ export default function SimulatorClient({
                                                                         cancelRiskEdit();
                                                                     }
                                                                 }}
-                                                                className='mt-1 w-full rounded border border-light px-2 py-1 text-sm'
+                                                                className='mt-1 w-full rounded-sm border border-light px-2 py-1 text-sm'
                                                             />
                                                         ) : (
                                                             <>
@@ -903,7 +891,7 @@ export default function SimulatorClient({
                                             <h2 className='text-dark'>
                                                 Trading Activity
                                             </h2>
-                                            <div className='flex gap-2 bg-white rounded-lg p-1 border border-light shadow-sm'>
+                                            <div className='flex gap-2 bg-white rounded-lg p-1 border border-light shadow-xs'>
                                                 <button
                                                     disabled={isBusy}
                                                     onClick={() =>
@@ -965,7 +953,7 @@ export default function SimulatorClient({
     };
 
     return (
-        <div className='bg-light font-[family-name:var(--font-geist-sans)] min-h-screen'>
+        <div className='bg-light font-(family-name:--font-geist-sans) min-h-screen'>
             <Navbar />
             <Toaster position='top-center' />
             <div className='mx-auto max-w-6xl px-6 pb-10 pt-16 xl:pt-10 text-dark'>

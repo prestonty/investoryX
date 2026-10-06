@@ -86,7 +86,7 @@ export function SimulationTabs({
                 min-w-[140px] max-w-[200px]
                 ${
                   activeSimulationId === simulation.id
-                    ? 'bg-white text-dark shadow-sm'
+                    ? 'bg-white text-dark shadow-xs'
                     : 'bg-light text-gray hover:bg-white/50'
                 }
               `}
@@ -107,7 +107,7 @@ export function SimulationTabs({
                       cancelEditing();
                     }
                   }}
-                  className="flex-1 min-w-0 rounded-sm bg-white/90 px-1.5 py-0.5 text-[13px] text-dark outline-none ring-1 ring-blue/60"
+                  className="flex-1 min-w-0 rounded-xs bg-white/90 px-1.5 py-0.5 text-[13px] text-dark outline-hidden ring-1 ring-blue/60"
                   maxLength={40}
                 />
               ) : (

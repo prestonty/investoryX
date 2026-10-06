@@ -59,7 +59,7 @@ export default function Dropdown({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
-        className="min-w-[84px] w-full flex items-center justify-between gap-2 rounded-md border border-light bg-white px-3 py-1.5 text-left text-sm text-dark shadow-sm hover:bg-light/40 disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-w-[84px] w-full flex items-center justify-between gap-2 rounded-md border border-light bg-white px-3 py-1.5 text-left text-sm text-dark shadow-xs hover:bg-light/40 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {displayText}
         <RiArrowDropDownLine />
