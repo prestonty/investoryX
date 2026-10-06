@@ -164,7 +164,9 @@ export default function WatchlistClient({
                     return;
                 }
 
-                await removeFromWatchlist(watchlistId, token);
+                const target = items.find((i) => i.watchlist_id === watchlistId);
+                if (!target) return;
+                await removeFromWatchlist(target.stock_id, token);
                 setItems((prev) =>
                     prev.filter((item) => item.watchlist_id !== watchlistId),
                 );

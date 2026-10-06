@@ -575,6 +575,24 @@ export async function addToWatchlist(
     return data as WatchlistItemResponse;
 }
 
+export async function getWatchlist(
+    token: string,
+): Promise<WatchlistItemResponse[]> {
+    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+        const msg = data?.detail ?? data?.message ?? `Failed: ${res.status}`;
+        throw new Error(msg);
+    }
+    return data as WatchlistItemResponse[];
+}
+
 export async function getWatchlistQuotes(
     token: string,
 ): Promise<WatchlistQuoteItem[]> {
@@ -606,12 +624,13 @@ export async function getWatchlistQuotes(
     return res.json();
 }
 
+// Each user has at most one row per stock, so stock_id identifies it
 export async function removeFromWatchlist(
-    watchlistId: number,
+    stockId: number,
     token: string,
 ): Promise<void> {
     const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/watchlist/${watchlistId}`,
+        `${process.env.NEXT_PUBLIC_URL}/api/watchlist/by-stock/${stockId}`,
         {
             method: "DELETE",
             headers: {
