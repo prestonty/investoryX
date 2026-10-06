@@ -10,7 +10,7 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState, useEffect } from "react";
 import { loginUser, type LoginData } from "@/lib/api";
-import { enterGuestMode, exitGuestMode, getToken, isGuestMode } from "@/lib/auth";
+import { enterGuestMode, exitGuestMode, isGuestMode } from "@/lib/auth";
 import { migrateGuestData, hasGuestData } from "@/lib/guestMigration";
 import toast, { Toaster } from "react-hot-toast";
 import PasswordInput from "@/components/PasswordInput";
@@ -62,9 +62,8 @@ export default function Login() {
             await loginUser(loginData);
 
             // Migrate any guest localStorage data to the backend
-            const sessionToken = getToken();
-            if (sessionToken && (isGuestMode() || hasGuestData())) {
-                await migrateGuestData(sessionToken);
+            if (isGuestMode() || hasGuestData()) {
+                await migrateGuestData();
                 exitGuestMode();
             }
 

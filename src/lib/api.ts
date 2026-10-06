@@ -1,5 +1,18 @@
 // BFF
 
+const API_URL = process.env.NEXT_PUBLIC_URL;
+
+// An API request that failed; `status` is the HTTP status (0 if unreachable).
+export class ApiError extends Error {
+    constructor(
+        message: string,
+        public status: number,
+    ) {
+        super(message);
+        this.name = "ApiError";
+    }
+}
+
 // FastAPI errors are {detail: string} or, for validation failures,
 // {detail: [{msg: "Value error, ..."}]}. Returns a readable message or null.
 export function errorDetail(body: unknown): string | null {
@@ -15,16 +28,11 @@ export function errorDetail(body: unknown): string | null {
     return null;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_URL;
-
-// Public market data uses `next: { revalidate }` so the Next.js server reuses
-// responses for a short time instead of hitting the API (and Yahoo) per view.
-
-// Auth tokens live in httpOnly cookies that JavaScript can't read. In the
-// browser, authenticated requests just send cookies; a 401 triggers one refresh
-// (shared by all concurrent requests) and a single retry. On the Next.js server
-// there are no browser cookies, so pages forward the access token explicitly
-// as a Bearer header, which is kept only there.
+// Auth tokens live in httpOnly cookies that JavaScript can't read, so browser
+// requests just send cookies; for endpoints that need a session, a 401 triggers
+// one refresh (shared by all concurrent requests) and a single retry. On the
+// Next.js server there are no browser cookies, so server pages pass the access
+// cookie's value as `token` and it's forwarded as a Bearer header.
 let refreshInFlight: Promise<boolean> | null = null;
 
 export function refreshSession(): Promise<boolean> {
@@ -42,189 +50,145 @@ export function refreshSession(): Promise<boolean> {
     return refreshInFlight;
 }
 
-export async function authFetch(
-    url: string,
-    init: RequestInit = {},
-): Promise<Response> {
-    const isBrowser = typeof window !== "undefined";
-    const headers = new Headers(init.headers);
-    if (isBrowser) headers.delete("Authorization");
-    const request: RequestInit = { ...init, headers, credentials: "include" };
-
-    const res = await fetch(url, request);
-    if (res.status !== 401 || !isBrowser) return res;
-    if (!(await refreshSession())) return res;
-    return fetch(url, request);
+interface RequestOptions {
+    method?: "GET" | "POST" | "PATCH" | "DELETE";
+    // Sent as JSON, or as-is when it's FormData.
+    body?: unknown;
+    // Message used when the API doesn't explain the failure.
+    error?: string;
+    // The endpoint needs a session: refresh and retry once on a 401.
+    auth?: boolean;
+    // Server-side only: the access token to forward.
+    token?: string;
+    // Public market data sets `revalidate` so the Next.js server reuses
+    // responses for a while instead of hitting the API (and Yahoo) per view.
+    revalidate?: number;
+    signal?: AbortSignal;
 }
 
-export async function searchStocks(filterString: string, signal?: AbortSignal) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/stocks/search/${filterString}`,
-        { signal, cache: "no-store" },
-    );
-    if (!res.ok) throw new Error("Failed to search stocks");
-    return res.json();
-}
+// T defaults to any for the untyped market-data endpoints (they were before too).
+async function request<T = any>(path: string, options: RequestOptions = {}): Promise<T> {
+    const { method = "GET", body, auth = false, token, revalidate, signal } = options;
+    const headers = new Headers();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const isForm = body instanceof FormData;
+    if (body !== undefined && !isForm) headers.set("Content-Type", "application/json");
 
-export async function stockExist(ticker: string): Promise<{ exists: boolean }> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/stocks/exists/${ticker}`,
-        { cache: "no-store" },
-    );
+    const init: RequestInit & { next?: { revalidate: number } } = {
+        method,
+        headers,
+        body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
+        credentials: "include",
+        signal,
+        ...(revalidate !== undefined ? { next: { revalidate } } : { cache: "no-store" }),
+    };
 
-    if (!res.ok) {
-        throw new Error("Failed to check if ticker exists");
+    const url = `${API_URL}${path}`;
+    let res = await fetch(url, init);
+    if (res.status === 401 && auth && typeof window !== "undefined") {
+        if (await refreshSession()) res = await fetch(url, init);
     }
-    return res.json();
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+        throw new ApiError(
+            errorDetail(data) ?? options.error ?? `Request failed (${res.status})`,
+            res.status,
+        );
+    }
+    return data as T;
+}
+
+const enc = encodeURIComponent;
+
+export function searchStocks(filterString: string, signal?: AbortSignal) {
+    return request(`/api/stocks/search/${enc(filterString)}`, {
+        signal,
+        error: "Failed to search stocks",
+    });
+}
+
+export function stockExist(ticker: string): Promise<{ exists: boolean }> {
+    return request(`/api/stocks/exists/${enc(ticker)}`, {
+        error: "Failed to check if ticker exists",
+    });
 }
 
 // Fetch stock history for candlestick charts
-export async function getStockHistory(
+export function getStockHistory(
     ticker: string,
     period: string = "1mo",
     interval: string = "1d",
 ) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/stock-history/${ticker}?period=${period}&interval=${interval}`,
-        {
-            next: { revalidate: 60 },
-        },
+    return request(
+        `/stock-history/${enc(ticker)}?period=${enc(period)}&interval=${enc(interval)}`,
+        { revalidate: 60, error: "Failed to fetch stock history" },
     );
-
-    if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        throw new Error(
-            `Failed to fetch stock history: ${res.status} ${res.statusText} — ${body}`,
-        );
-    }
-
-    return res.json();
 }
 
 // Fetch general stock information to populate stock page
-export async function getStockPrice(ticker: string) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/stocks/${ticker}`, {
-        next: { revalidate: 30 },
+export function getStockPrice(ticker: string) {
+    return request(`/stocks/${enc(ticker)}`, {
+        revalidate: 30,
+        error: "Failed to fetch basic stock data",
     });
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch basic stock data");
-    }
-
-    return res.json();
 }
 
 // Fetch stock information from database by ticker (includes stock_id)
-export async function getStockInfo(ticker: string) {
-    const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/ticker/${ticker}`;
-    const res = await fetch(url, {
-        next: { revalidate: 3600 },
+export function getStockInfo(ticker: string) {
+    return request(`/api/stocks/ticker/${enc(ticker)}`, {
+        revalidate: 3600,
+        error: "Failed to fetch stock info",
     });
-
-    if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        const details = {
-            url,
-            status: res.status,
-            statusText: res.statusText,
-            body,
-        };
-        console.error("getStockInfo failed:", JSON.stringify(details));
-        throw new Error("Failed to fetch stock info");
-    }
-
-    return res.json();
 }
 
 // MARKET MOVERS API FUNCTIONS
 
 // Fetch top gainers (stocks with highest percentage gains)
-export async function getTopGainers(limit: number = 8, minPrice: number = 4.0) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/top-gainers?limit=${limit}&min_price=${minPrice}`,
-        { next: { revalidate: 60 } },
-    );
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch top gainers");
-    }
-
-    return res.json();
+export function getTopGainers(limit: number = 8, minPrice: number = 4.0) {
+    return request(`/top-gainers?limit=${limit}&min_price=${minPrice}`, {
+        revalidate: 60,
+        error: "Failed to fetch top gainers",
+    });
 }
 
 // Fetch top losers (stocks with highest percentage losses)
-export async function getTopLosers(limit: number = 8, minPrice: number = 4.0) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/top-losers?limit=${limit}&min_price=${minPrice}`,
-        { next: { revalidate: 60 } },
-    );
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch top losers");
-    }
-
-    return res.json();
+export function getTopLosers(limit: number = 8, minPrice: number = 4.0) {
+    return request(`/top-losers?limit=${limit}&min_price=${minPrice}`, {
+        revalidate: 60,
+        error: "Failed to fetch top losers",
+    });
 }
 
 // Fetch most actively traded stocks (highest volume)
-export async function getMostActive(limit: number = 8, minPrice: number = 4.0) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/most-active?limit=${limit}&min_price=${minPrice}`,
-        { next: { revalidate: 60 } },
-    );
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch most active stocks");
-    }
-
-    return res.json();
+export function getMostActive(limit: number = 8, minPrice: number = 4.0) {
+    return request(`/most-active?limit=${limit}&min_price=${minPrice}`, {
+        revalidate: 60,
+        error: "Failed to fetch most active stocks",
+    });
 }
 
 // Fetch stock news
-export async function getStockNews(maxArticles: number = 20) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/stock-news?max_articles=${maxArticles}`,
-        {
-            next: { revalidate: 300 },
-        },
-    );
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch stock news");
-    }
-
-    return res.json();
+export function getStockNews(maxArticles: number = 20) {
+    return request(`/stock-news?max_articles=${maxArticles}`, {
+        revalidate: 300,
+        error: "Failed to fetch stock news",
+    });
 }
 
 // Fetch default market indexes/ETFs
-export async function getDefaultIndexes() {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/get-default-indexes`,
-        {
-            next: { revalidate: 30 },
-        },
-    );
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch default indexes");
-    }
-
-    return res.json();
+export function getDefaultIndexes() {
+    return request(`/get-default-indexes`, {
+        revalidate: 30,
+        error: "Failed to fetch default indexes",
+    });
 }
 
-export async function getStockOverview(ticker: string) {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/stock-overview/${ticker}`,
-        {
-            next: { revalidate: 300 },
-        },
-    );
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch advanced stock data");
-    }
-
-    return res.json();
+export function getStockOverview(ticker: string) {
+    return request(`/stock-overview/${enc(ticker)}`, {
+        revalidate: 300,
+        error: "Failed to fetch advanced stock data",
+    });
 }
 
 // AUTH API FUNCTIONS
@@ -411,482 +375,201 @@ export interface SimulatorRunRequest {
     frequency?: "daily" | "twice_daily";
 }
 
-// Register a new user
-export async function registerUser(
-    userData: RegisterData,
-): Promise<UserResponse> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/auth/register`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userData),
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(errorDetail(error) || "Registration failed");
-    }
-
-    const user = await res.json();
-
-    // Backend already sends verification email during registration
-    // No need to send another one from frontend
-    return user;
+// Register a new user. The backend sends the verification email.
+export function registerUser(userData: RegisterData): Promise<UserResponse> {
+    return request("/api/auth/register", {
+        method: "POST",
+        body: userData,
+        error: "Registration failed",
+    });
 }
 
 // Verify email with token
-export async function verifyEmail(token: string): Promise<{ message: string }> {
-    const res = await fetch(
-        `${
-            process.env.NEXT_PUBLIC_URL
-        }/api/auth/verify-email?token=${encodeURIComponent(token)}`,
-        {
-            method: "GET",
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Email verification failed");
-    }
-
-    return res.json();
+export function verifyEmail(token: string): Promise<{ message: string }> {
+    return request(`/api/auth/verify-email?token=${enc(token)}`, {
+        error: "Email verification failed",
+    });
 }
 
 // Request a password reset email. The response is the same whether or not
 // an account exists for the email.
-export async function requestPasswordReset(
-    email: string,
-): Promise<{ message: string }> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/auth/forgot-password`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(
-            errorDetail(error) || "Could not send reset email. Please try again.",
-        );
-    }
-
-    return res.json();
+export function requestPasswordReset(email: string): Promise<{ message: string }> {
+    return request("/api/auth/forgot-password", {
+        method: "POST",
+        body: { email },
+        error: "Could not send reset email. Please try again.",
+    });
 }
 
 // Set a new password using the token from a reset email
-export async function resetPassword(
+// (the API also clears any old session cookies).
+export function resetPassword(
     token: string,
     password: string,
 ): Promise<{ message: string }> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/auth/reset-password`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token, password }),
-            credentials: "include", // the API clears any old session cookies
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(errorDetail(error) || "Password reset failed");
-    }
-
-    return res.json();
+    return request("/api/auth/reset-password", {
+        method: "POST",
+        body: { token, password },
+        error: "Password reset failed",
+    });
 }
 
-// Login user and get access token
+// Log in; the API sets the httpOnly auth cookies.
 export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
     // FastAPI OAuth2PasswordRequestForm expects form data, not JSON
     const formData = new FormData();
     formData.append("username", loginData.username);
     formData.append("password", loginData.password);
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/token`, {
-        method: "POST",
-        body: formData,
-        credentials: "include", // the API sets the httpOnly auth cookies
-    });
-
-    if (!res.ok) {
-        const error = await res.json();
-
-        // Check for specific email verification error
-        if (error.detail && error.detail.includes("Email not verified")) {
-            throw new Error(
+    try {
+        return await request("/api/auth/token", {
+            method: "POST",
+            body: formData,
+            error: "Login failed",
+        });
+    } catch (error) {
+        if (error instanceof ApiError && error.message.includes("Email not verified")) {
+            throw new ApiError(
                 "Email not verified. A new verification email has been sent to your inbox.",
+                error.status,
             );
         }
-
-        throw new Error(error.detail || "Login failed");
-    }
-
-    return res.json();
-}
-
-// Get current user info (requires token)
-export async function getCurrentUser(token: string): Promise<UserResponse> {
-    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/auth/me`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-
-    if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        const error = new Error(errorDetail(body) || "Failed to get user info") as Error & {
-            status?: number;
-        };
-        error.status = res.status;
         throw error;
     }
-
-    return res.json();
 }
 
 // Watchlist
-export async function addToWatchlist(
-    stockId: number,
-    token: string,
-): Promise<WatchlistItemResponse> {
-    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
+
+export function addToWatchlist(stockId: number): Promise<WatchlistItemResponse> {
+    return request("/api/watchlist/", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ stock_id: stockId }),
+        body: { stock_id: stockId },
+        auth: true,
+        error: "Failed to add to watchlist",
     });
-
-    const data = await res.json().catch(() => null); // read once
-    if (!res.ok) {
-        const msg = data?.detail ?? data?.message ?? `Failed: ${res.status}`;
-        throw new Error(msg); // <-- carries "Stock already in watchlist"
-    }
-    return data as WatchlistItemResponse;
 }
 
-export async function getWatchlist(
-    token: string,
-): Promise<WatchlistItemResponse[]> {
-    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/watchlist/`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-    });
-
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-        const msg = data?.detail ?? data?.message ?? `Failed: ${res.status}`;
-        throw new Error(msg);
-    }
-    return data as WatchlistItemResponse[];
+export function getWatchlist(): Promise<WatchlistItemResponse[]> {
+    return request("/api/watchlist/", { auth: true, error: "Failed to load watchlist" });
 }
 
-export async function getWatchlistQuotes(
-    token: string,
-): Promise<WatchlistQuoteItem[]> {
-    const url = `${process.env.NEXT_PUBLIC_URL}/api/stocks/watchlist/quotes`;
-    const res = await authFetch(url, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
+// `token` is for the server-rendered watchlist page; the browser uses cookies.
+export function getWatchlistQuotes(token?: string): Promise<WatchlistQuoteItem[]> {
+    return request("/api/stocks/watchlist/quotes", {
+        auth: true,
+        token,
+        error: "Failed to fetch watchlist quotes",
     });
-
-    if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        const message = body || "Failed to fetch watchlist quotes";
-        console.error(
-            "getWatchlistQuotes failed:",
-            JSON.stringify({
-                url,
-                status: res.status,
-                statusText: res.statusText,
-                body,
-            }),
-        );
-        const error = new Error(message) as Error & { status?: number };
-        error.status = res.status;
-        throw error;
-    }
-
-    return res.json();
 }
 
 // Each user has at most one row per stock, so stock_id identifies it
-export async function removeFromWatchlist(
-    stockId: number,
-    token: string,
-): Promise<void> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/watchlist/by-stock/${stockId}`,
-        {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        },
-    );
-
-    if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        const msg = data?.detail ?? data?.message ?? "Failed to remove item";
-        throw new Error(msg);
-    }
+export async function removeFromWatchlist(stockId: number): Promise<void> {
+    await request(`/api/watchlist/by-stock/${stockId}`, {
+        method: "DELETE",
+        auth: true,
+        error: "Failed to remove item",
+    });
 }
 
 // Simulator
-export async function createSimulator(
+
+export function createSimulator(
     payload: CreateSimulatorRequest,
-    token: string,
 ): Promise<SimulatorResponse> {
-    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
+    return request("/api/simulator", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+        body: payload,
+        auth: true,
+        error: "Failed to create simulator",
     });
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to create simulator");
-    }
-
-    return res.json();
 }
 
-export async function renameSimulator(
+export function renameSimulator(
     simulatorId: number,
     name: string,
-    token: string,
 ): Promise<SimulatorResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/rename/${simulatorId}`,
-        {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ name }),
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to rename simulator");
-    }
-
-    return res.json();
+    return request(`/api/simulator/rename/${simulatorId}`, {
+        method: "PATCH",
+        body: { name },
+        auth: true,
+        error: "Failed to rename simulator",
+    });
 }
 
-export async function updateSimulatorSettings(
+export function updateSimulatorSettings(
     simulatorId: number,
     payload: UpdateSimulatorSettingsRequest,
-    token: string,
 ): Promise<SimulatorResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/settings`,
-        {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to update simulator settings");
-    }
-
-    return res.json();
-}
-
-export async function listSimulators(
-    token: string,
-): Promise<SimulatorResponse[]> {
-    const res = await authFetch(`${process.env.NEXT_PUBLIC_URL}/api/simulator`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+    return request(`/api/simulator/${simulatorId}/settings`, {
+        method: "PATCH",
+        body: payload,
+        auth: true,
+        error: "Failed to update simulator settings",
     });
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to load simulators");
-    }
-
-    return res.json();
 }
 
-export async function addTrackedStock(
+export function listSimulators(): Promise<SimulatorResponse[]> {
+    return request("/api/simulator", { auth: true, error: "Failed to load simulators" });
+}
+
+export function addTrackedStock(
     simulatorId: number,
     payload: CreateTrackedStockRequest,
-    token: string,
 ): Promise<SimulatorTrackedStockResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to add tracked stock");
-    }
-
-    return res.json();
+    return request(`/api/simulator/${simulatorId}/tracked-stocks`, {
+        method: "POST",
+        body: payload,
+        auth: true,
+        error: "Failed to add tracked stock",
+    });
 }
 
 export async function deleteTrackedStock(
     simulatorId: number,
     trackedId: number,
-    token: string,
 ): Promise<void> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks/${trackedId}`,
-        {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to remove tracked stock");
-    }
+    await request(`/api/simulator/${simulatorId}/tracked-stocks/${trackedId}`, {
+        method: "DELETE",
+        auth: true,
+        error: "Failed to remove tracked stock",
+    });
 }
 
-export async function deleteTrackedStockByTicker(
-    simulatorId: number,
-    ticker: string,
-    token: string,
-): Promise<void> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/tracked-stocks/by-ticker/${ticker}`,
-        {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to remove tracked stock");
-    }
+export async function deleteSimulator(simulatorId: number): Promise<void> {
+    await request(`/api/simulator/${simulatorId}`, {
+        method: "DELETE",
+        auth: true,
+        error: "Failed to delete simulator",
+    });
 }
 
-export async function deleteSimulator(
+export function getSimulatorSummary(
     simulatorId: number,
-    token: string,
-): Promise<void> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}`,
-        {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to delete simulator");
-    }
-}
-
-export async function getSimulatorSummary(
-    simulatorId: number,
-    token: string,
 ): Promise<SimulatorSummaryResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to load simulator summary");
-    }
-
-    return res.json();
+    return request(`/api/simulator/${simulatorId}`, {
+        auth: true,
+        error: "Failed to load simulator summary",
+    });
 }
 
-export async function runSimulator(
+export function runSimulator(
     simulatorId: number,
     payload: SimulatorRunRequest,
-    token: string,
 ): Promise<SimulatorRunResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/run`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        },
-    );
-
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to run simulator");
-    }
-
-    return res.json();
-}
-
-export async function getDevFlags(): Promise<{ dev_mode: boolean }> {
-    try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/dev/flags`, {
-            cache: "no-store",
-        });
-        if (!res.ok) return { dev_mode: false };
-        return res.json();
-    } catch {
-        return { dev_mode: false };
-    }
-}
-
-export async function getStrategies(): Promise<StrategyOption[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/strategies`, {
-        cache: "no-store",
+    return request(`/api/simulator/${simulatorId}/run`, {
+        method: "POST",
+        body: payload,
+        auth: true,
+        error: "Failed to run simulator",
     });
-    if (!res.ok) return [];
-    return res.json();
+}
+
+export function getDevFlags(): Promise<{ dev_mode: boolean }> {
+    return request<{ dev_mode: boolean }>("/dev/flags").catch(() => ({ dev_mode: false }));
+}
+
+export function getStrategies(): Promise<StrategyOption[]> {
+    return request<StrategyOption[]>("/api/strategies").catch(() => []);
 }
 
 // ---------------------------------------------------------------------------
@@ -937,59 +620,33 @@ export interface BacktestStatusResponse {
     error?: string;
 }
 
-export async function launchBacktest(
+export function launchBacktest(
     simulatorId: number,
     payload: BacktestRequest,
-    token: string,
 ): Promise<BacktestLaunchResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        },
-    );
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to launch backtest");
-    }
-    return res.json();
+    return request(`/api/simulator/${simulatorId}/backtest`, {
+        method: "POST",
+        body: payload,
+        auth: true,
+        error: "Failed to launch backtest",
+    });
 }
 
-export async function getBacktestStatus(
+export function getBacktestStatus(
     simulatorId: number,
     taskId: string,
-    token: string,
 ): Promise<BacktestStatusResponse> {
-    const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/simulator/${simulatorId}/backtest/status/${taskId}`,
-        {
-            headers: { Authorization: `Bearer ${token}` },
-            cache: "no-store",
-        },
-    );
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to get backtest status");
-    }
-    return res.json();
+    return request(`/api/simulator/${simulatorId}/backtest/status/${enc(taskId)}`, {
+        auth: true,
+        error: "Failed to get backtest status",
+    });
 }
 
-export async function runPipeline(token: string, day?: string) {
-    const url = new URL(`${process.env.NEXT_PUBLIC_URL}/dev/run-pipeline`);
-    if (day) url.searchParams.set("day", day);
-    const res = await authFetch(url.toString(), {
+export function runPipeline(day?: string) {
+    const query = day ? `?day=${enc(day)}` : "";
+    return request(`/dev/run-pipeline${query}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
+        auth: true,
+        error: "Failed to run pipeline",
     });
-    if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.detail || "Failed to run pipeline");
-    }
-    return res.json();
 }

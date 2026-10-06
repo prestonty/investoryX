@@ -14,7 +14,6 @@ const MAX_POLLS = 60; // 2 minutes
 interface TradingSandboxSectionProps {
     simulatorId: number;
     isBusy: boolean;
-    getToken: () => Promise<string | null>;
     onBacktestComplete: (result: BacktestResult) => void;
 }
 
@@ -47,7 +46,6 @@ function getDefaultDates(): { start: string; end: string } {
 export function TradingSandboxSection({
     simulatorId,
     isBusy,
-    getToken,
     onBacktestComplete,
 }: TradingSandboxSectionProps) {
     const defaults = getDefaultDates();
@@ -95,9 +93,7 @@ export function TradingSandboxSection({
             }
 
             try {
-                const token = await getToken();
-                if (!token) return;
-                const status = await getBacktestStatus(simulatorId, taskId, token);
+                const status = await getBacktestStatus(simulatorId, taskId);
                 if (status.status === "success") {
                     clearInterval(intervalRef.current!);
                     setIsRunning(false);
@@ -126,12 +122,6 @@ export function TradingSandboxSection({
         setError(null);
         setLastResult(null);
 
-        const token = await getToken();
-        if (!token) {
-            setError("Authentication error — please log in again.");
-            return;
-        }
-
         try {
             setIsRunning(true);
             const response = await launchBacktest(
@@ -141,7 +131,6 @@ export function TradingSandboxSection({
                     end_date: endDate,
                     clear_previous: true,
                 },
-                token,
             );
             setTaskId(response.task_id);
         } catch (err: unknown) {
