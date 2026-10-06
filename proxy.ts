@@ -18,7 +18,7 @@ function getTokenExpiry(token: string): number | null {
     }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const path = request.nextUrl.pathname;
 
     const token = request.cookies.get("access_token");
@@ -48,7 +48,10 @@ export function middleware(request: NextRequest) {
         if (guestMode?.value !== "true") {
             // No token, no guest_mode — first-time visitor, enter guest mode automatically
             const response = NextResponse.next();
-            response.cookies.set("guest_mode", "true", { path: "/", maxAge: 86400 });
+            response.cookies.set("guest_mode", "true", {
+                path: "/",
+                maxAge: 86400,
+            });
             return response;
         }
     }
