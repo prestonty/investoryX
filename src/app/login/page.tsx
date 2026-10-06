@@ -10,6 +10,7 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState, useEffect } from "react";
 import { loginUser, type LoginData } from "@/lib/api";
+import { ApiError } from "@/lib/errors";
 import { enterGuestMode, exitGuestMode, isGuestMode } from "@/lib/auth";
 import { migrateGuestData, hasGuestData } from "@/lib/guestMigration";
 import toast, { Toaster } from "react-hot-toast";
@@ -34,7 +35,9 @@ export default function Login() {
         if (typeof window !== "undefined") {
             const urlParams = new URLSearchParams(window.location.search);
             const redirect = urlParams.get("redirectTo");
-            if (redirect) {
+            // Only same-site paths: "//evil.com" or "https://..." would send the
+            // user to another site right after they log in.
+            if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
                 setRedirectTo(redirect);
             }
         }
@@ -78,18 +81,17 @@ export default function Login() {
             const errorMessage =
                 error instanceof Error ? error.message : "Login failed";
 
-            // Show specific error messages based on the error
-            if (errorMessage.includes("Incorrect email or password")) {
+            // Branch on the backend's stable codes, never on message text.
+            if (error instanceof ApiError && error.hasCode("invalid_credentials")) {
                 toast.error("Incorrect email or password");
-            } else if (
-                errorMessage.includes("User not found") ||
-                errorMessage.includes("email")
-            ) {
-                toast.error("No account with this email");
-            } else if (errorMessage.includes("password")) {
-                toast.error("Incorrect password");
+            } else if (error instanceof ApiError && error.hasCode("email_not_verified")) {
+                toast.error(
+                    "Please verify your email first. Check your inbox for the link we sent when you signed up.",
+                    { duration: 8000 },
+                );
             } else {
-                toast.error("Login failed");
+                // e.g. "Can't reach the server..." or a validation message
+                toast.error(errorMessage);
             }
 
             setError(errorMessage);

@@ -7,6 +7,7 @@ import GuestBanner from "@/components/GuestBanner";
 import Searchbar from "@/components/Searchbar";
 import StockWatchItem from "@/components/StockWatchItem";
 import { getStockInfo } from "@/lib/api";
+import { ApiError } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
 import { getWatchlistStore, type WatchlistQuote } from "@/lib/data/watchlist";
 
@@ -59,11 +60,11 @@ export default function WatchlistClient({
             .listQuotes()
             .then(setItems)
             .catch((error) => {
-                if ((error as { status?: number })?.status === 401) {
-                    window.location.href = "/login?redirectTo=/watchlist";
-                } else {
-                    console.error("Failed to load watchlist quotes:", error);
-                }
+                // An expired session (401) is handled globally by AuthContext.
+                if (error instanceof ApiError && error.status === 401) return;
+                toast.error(
+                    error instanceof Error ? error.message : "Failed to load watchlist",
+                );
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status, loadOnClient]);

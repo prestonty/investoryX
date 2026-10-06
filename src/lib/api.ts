@@ -1,17 +1,12 @@
 // BFF
 
+import { ApiError, NetworkError, TimeoutError, isUnexpected } from "./errors";
+import { reportError } from "./monitoring";
+
 const API_URL = process.env.NEXT_PUBLIC_URL;
 
-// An API request that failed; `status` is the HTTP status (0 if unreachable).
-export class ApiError extends Error {
-    constructor(
-        message: string,
-        public status: number,
-    ) {
-        super(message);
-        this.name = "ApiError";
-    }
-}
+// How long one attempt may take, including reading the body, before giving up.
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 // FastAPI errors are {detail: string} or, for validation failures,
 // {detail: [{msg: "Value error, ..."}]}. Returns a readable message or null.
@@ -35,11 +30,20 @@ export function errorDetail(body: unknown): string | null {
 // cookie's value as `token` and it's forwarded as a Bearer header.
 let refreshInFlight: Promise<boolean> | null = null;
 
+// Called when a login-only request still gets a 401 after trying to refresh:
+// the session is gone. AuthContext registers this to send the user to log in.
+let onSessionExpired: (() => void) | null = null;
+
+export function setSessionExpiredHandler(handler: (() => void) | null): void {
+    onSessionExpired = handler;
+}
+
 export function refreshSession(): Promise<boolean> {
     if (!refreshInFlight) {
         refreshInFlight = fetch(`${API_URL}/api/auth/refresh`, {
             method: "POST",
             credentials: "include",
+            signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
         })
             .then((res) => res.ok)
             .catch(() => false)
@@ -63,12 +67,60 @@ interface RequestOptions {
     // Public market data sets `revalidate` so the Next.js server reuses
     // responses for a while instead of hitting the API (and Yahoo) per view.
     revalidate?: number;
+    // Lets the caller cancel the request (e.g. a search superseded by typing).
     signal?: AbortSignal;
+    // For endpoints that do slow work while the request waits.
+    timeoutMs?: number;
+}
+
+// Combines the caller's cancel signal (if any) with a timeout.
+function withTimeout(signal: AbortSignal | undefined, timeoutMs: number): AbortSignal {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    if (!signal) return timeout;
+    // AbortSignal.any is missing in browsers older than ~2024; keep cancellation there.
+    return typeof AbortSignal.any === "function" ? AbortSignal.any([signal, timeout]) : signal;
+}
+
+// One attempt: send the request and read the body, both within the timeout.
+// Turns "no response" into NetworkError and "too slow" into TimeoutError;
+// deliberate cancellations (AbortError) pass through so callers can ignore them.
+async function send(
+    url: string,
+    init: RequestInit,
+    timeoutMs: number,
+): Promise<{ res: Response; text: string }> {
+    try {
+        const signal = withTimeout(init.signal ?? undefined, timeoutMs);
+        const res = await fetch(url, { ...init, signal });
+        return { res, text: await res.text() };
+    } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") throw error;
+        if (error instanceof DOMException && error.name === "TimeoutError") {
+            throw new TimeoutError({ cause: error });
+        }
+        throw new NetworkError({ cause: error });
+    }
+}
+
+function parseJson(text: string): unknown {
+    try {
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
 }
 
 // T defaults to any for the untyped market-data endpoints (they were before too).
 async function request<T = any>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { method = "GET", body, auth = false, token, revalidate, signal } = options;
+    const {
+        method = "GET",
+        body,
+        auth = false,
+        token,
+        revalidate,
+        signal,
+        timeoutMs = DEFAULT_TIMEOUT_MS,
+    } = options;
     const headers = new Headers();
     if (token) headers.set("Authorization", `Bearer ${token}`);
     const isForm = body instanceof FormData;
@@ -84,19 +136,32 @@ async function request<T = any>(path: string, options: RequestOptions = {}): Pro
     };
 
     const url = `${API_URL}${path}`;
-    let res = await fetch(url, init);
-    if (res.status === 401 && auth && typeof window !== "undefined") {
-        if (await refreshSession()) res = await fetch(url, init);
-    }
+    const inBrowser = typeof window !== "undefined";
+    try {
+        let { res, text } = await send(url, init, timeoutMs);
+        if (res.status === 401 && auth && inBrowser) {
+            if (await refreshSession()) ({ res, text } = await send(url, init, timeoutMs));
+            if (res.status === 401) onSessionExpired?.();
+        }
 
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-        throw new ApiError(
-            errorDetail(data) ?? options.error ?? `Request failed (${res.status})`,
-            res.status,
-        );
+        const data = parseJson(text);
+        if (!res.ok) {
+            const code = (data as { code?: unknown } | null)?.code;
+            throw new ApiError(
+                errorDetail(data) ?? options.error ?? `Request failed (${res.status})`,
+                res.status,
+                {
+                    code: typeof code === "string" ? code : undefined,
+                    // The backend assigns every request an ID that appears in its logs.
+                    requestId: res.headers.get("X-Request-ID") ?? undefined,
+                },
+            );
+        }
+        return data as T;
+    } catch (error) {
+        if (error instanceof ApiError && isUnexpected(error)) reportError(error, path);
+        throw error;
     }
-    return data as T;
 }
 
 const enc = encodeURIComponent;
@@ -414,28 +479,19 @@ export function resetPassword(
     });
 }
 
-// Log in; the API sets the httpOnly auth cookies.
-export async function loginUser(loginData: LoginData): Promise<AuthResponse> {
+// Log in; the API sets the httpOnly auth cookies. Failures carry a code
+// ("invalid_credentials", "email_not_verified") for the login page to branch on.
+export function loginUser(loginData: LoginData): Promise<AuthResponse> {
     // FastAPI OAuth2PasswordRequestForm expects form data, not JSON
     const formData = new FormData();
     formData.append("username", loginData.username);
     formData.append("password", loginData.password);
 
-    try {
-        return await request("/api/auth/token", {
-            method: "POST",
-            body: formData,
-            error: "Login failed",
-        });
-    } catch (error) {
-        if (error instanceof ApiError && error.message.includes("Email not verified")) {
-            throw new ApiError(
-                "Email not verified. A new verification email has been sent to your inbox.",
-                error.status,
-            );
-        }
-        throw error;
-    }
+    return request("/api/auth/token", {
+        method: "POST",
+        body: formData,
+        error: "Login failed",
+    });
 }
 
 // Watchlist
@@ -560,6 +616,8 @@ export function runSimulator(
         method: "POST",
         body: payload,
         auth: true,
+        // Runs the whole trading pipeline (incl. fetching prices) before replying.
+        timeoutMs: 120_000,
         error: "Failed to run simulator",
     });
 }
@@ -647,6 +705,7 @@ export function runPipeline(day?: string) {
     return request(`/dev/run-pipeline${query}`, {
         method: "POST",
         auth: true,
+        timeoutMs: 120_000,
         error: "Failed to run pipeline",
     });
 }
