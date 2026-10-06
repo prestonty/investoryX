@@ -13,13 +13,13 @@ export default function Landing() {
                 <div className='absolute inset-0 overflow-hidden'>
                     {/* Black Triangle */}
                     <div
-                        className='z-1 black-in absolute bottom-0 left-[12%] h-[200vmax]
+                        className='black-in absolute bottom-0 left-[12%] h-[200vmax]
                     w-[200vmax] origin-bottom-left rotate-30
                     bg-dark md:rotate-60 black-triangle'
                     ></div>
 
                     {/* Blue Triangle */}
-                    <div className='z-2 blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-[-30deg] bg-blue outline-dashed outline-offset-[-3.25px] outline-blue md:block'></div>
+                    <div className='blue-in absolute bottom-0 right-[75%] hidden h-[200vmax] w-[200vmax] origin-bottom-right rotate-60 bg-blue outline-dashed outline-offset-[-3.25px] outline-blue md:block'></div>
                 </div>
 
                 <MagneticWrapper>

@@ -40,85 +40,87 @@
     pointer-events: none;
 }
 
-/* Landing Page Animations */
+/* Landing Page Animations
+   Keyframes move the triangles with `translate` only; each element's rotation
+   comes from its Tailwind rotate-* class (the CSS `rotate` property). Putting
+   rotate() in a keyframe `transform` would add to that class and double it. */
 @keyframes spring-top-right {
     0% {
-        transform: translate(-80%, 150%) rotate(60deg);
+        translate: -80% 150%;
     }
 
     50% {
-        transform: translate(-53%, 98%) rotate(60deg);
+        translate: -53% 98%;
     }
 
     100% {
-        transform: translate(-55%, 100%) rotate(60deg);
-        /* transform: translate(-110vw, 437.5vh) rotate(60deg); */
+        translate: -55% 100%;
     }
 }
 
 @keyframes spring-top-left {
     0% {
-        transform: translate(50%, 50%) rotate(60deg);
+        translate: 50% 50%;
     }
 
     50% {
-        transform: translate(-3%, -3%) rotate(60deg);
+        translate: -3% -3%;
     }
 
     100% {
-        transform: translate(0%, 0%) rotate(60deg);
+        translate: 0% 0%;
     }
 }
 
 /* Login Page Animations */
 @keyframes proper-spring-top-left {
     0% {
-        transform: translate(-50%, -50%) rotate(76deg);
+        translate: -50% -50%;
     }
     70% {
         /* Overshoot slightly past the target */
-        transform: translate(2%, 2%) rotate(76deg);
+        translate: 2% 2%;
     }
     100% {
-        transform: translate(0%, 0%) rotate(76deg);
+        translate: 0% 0%;
     }
 }
 
 @keyframes proper-spring-bottom-right {
     0% {
-        transform: translate(50%, 50%) rotate(76deg);
+        translate: 50% 50%;
     }
     70% {
         /* Overshoot slightly past the target */
-        transform: translate(-2%, -2%) rotate(76deg);
+        translate: -2% -2%;
     }
     100% {
-        transform: translate(0%, 0%) rotate(76deg);
+        translate: 0% 0%;
     }
 }
 
 @keyframes proper-spring-top-right {
     0% {
-        transform: translate(50%, -50%) rotate(14deg);
+        translate: 50% -50%;
     }
     70% {
         /* Overshoot slightly past the target */
-        transform: translate(2%, 10%) rotate(14deg);
+        translate: 2% 10%;
     }
     100% {
-        transform: translate(0%, 0%) rotate(14deg);
+        translate: 0% 0%;
     }
 }
 
 @keyframes proper-spring-bottom-left {
     0% {
-        transform: translate(-50%, 50%) rotate(14deg);
+        translate: -50% 50%;
     }
     70% {
         /* Overshoot slightly past the target */
-        transform: translate(-2%, -10%) rotate(14deg);
+        translate: -2% -10%;
     }
     100% {
-        transform: translate(0%, 0%) rotate(14deg);
+        translate: 0% 0%;
     }
 }
