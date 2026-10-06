@@ -10,7 +10,6 @@ import {
     removeFromWatchlist,
     type WatchlistQuoteItem,
 } from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
 import {
     addGuestWatchlistItem,
     getGuestWatchlist,
@@ -33,25 +32,19 @@ export interface WatchlistStore {
     remove(stockId: number): Promise<void>;
 }
 
-async function requireToken(): Promise<string> {
-    const token = await getTokenWithRefresh();
-    if (!token) throw new Error("You must be logged in.");
-    return token;
-}
-
 const remoteWatchlist: WatchlistStore = {
     async contains(stockId) {
-        const items = await getWatchlist(await requireToken());
+        const items = await getWatchlist();
         return items.some((item) => item.stock_id === stockId);
     },
     async listQuotes() {
-        return getWatchlistQuotes(await requireToken());
+        return getWatchlistQuotes();
     },
     async add(stock) {
-        await addToWatchlist(stock.stock_id, await requireToken());
+        await addToWatchlist(stock.stock_id);
     },
     async remove(stockId) {
-        await removeFromWatchlist(stockId, await requireToken());
+        await removeFromWatchlist(stockId);
     },
 };
 

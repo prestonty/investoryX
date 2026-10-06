@@ -8,6 +8,7 @@ import "@/styles/animations.css";
 // import { google } from "@/lib/googleClient";
 import { useState } from "react";
 import { registerUser, type RegisterData } from "@/lib/api";
+import { ApiError } from "@/lib/errors";
 import { PASSWORD_RULE_TEXT, passwordPolicyError } from "@/lib/passwordPolicy";
 import toast, { Toaster } from "react-hot-toast";
 import PasswordInput from "@/components/PasswordInput";
@@ -69,28 +70,16 @@ export default function Register() {
                 router.push("/login");
             }, 3000); // Give user more time to read the message
         } catch (error) {
-            console.error("Registration error:", error);
-
             const errorMessage =
                 error instanceof Error ? error.message : "Registration failed";
 
-            console.log("Error message:", errorMessage);
-
-            // Show specific error messages
-            if (errorMessage.includes("Email already registered")) {
+            if (error instanceof ApiError && error.hasCode("email_taken")) {
                 toast.error(
                     "An account with this email already exists. Please login instead.",
                 );
-            } else if (errorMessage.includes("email")) {
-                toast.error("Please enter a valid email address.");
-            } else if (errorMessage.includes("name")) {
-                toast.error("Please enter a valid name.");
-            } else if (errorMessage.toLowerCase().includes("password")) {
-                toast.error(errorMessage);
-            } else if (errorMessage.includes("required")) {
-                toast.error("All fields are required.");
             } else {
-                toast.error("Registration failed. Please try again.");
+                // The API's own explanation, e.g. which field failed validation.
+                toast.error(errorMessage);
             }
 
             setError(errorMessage);

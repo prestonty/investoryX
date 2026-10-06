@@ -20,7 +20,6 @@ import {
     type SimulatorDecisionResponse,
     type BacktestResult,
 } from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSimulatorStore } from "@/lib/data/simulators";
 import { DEMO_SIMULATION_ID } from "@/lib/demoSimulator";
@@ -152,15 +151,6 @@ export default function SimulatorClient({
         getStrategies().then(setStrategies);
     }, [isAuthenticated]);
 
-    const requireToken = async () => {
-        const token = await getTokenWithRefresh();
-        if (!token) {
-            toast.error("You must be logged in.");
-            return null;
-        }
-        return token;
-    };
-
     const patchSimulation = (id: number, patch: Partial<Simulation>) => {
         setSimulations((prev) =>
             prev.map((sim) => (sim.id === id ? { ...sim, ...patch } : sim)),
@@ -275,19 +265,15 @@ export default function SimulatorClient({
             toast.error("Create or load a simulator first.");
             return;
         }
-        const token = await requireToken();
-        if (!token) return;
 
         setIsBusy(true);
         try {
-            const result = await runSimulator(
-                activeSimulationId,
-                { frequency: activeSimulation.frequency },
-                token,
-            );
+            const result = await runSimulator(activeSimulationId, {
+                frequency: activeSimulation.frequency,
+            });
             applySummary(
                 activeSimulationId,
-                await getSimulatorSummary(activeSimulationId, token),
+                await getSimulatorSummary(activeSimulationId),
             );
             toast.success(
                 `${result.message}: ${result.trades_executed} trades filled, ` +
@@ -305,15 +291,13 @@ export default function SimulatorClient({
     };
 
     const handleRunPipeline = async () => {
-        const token = await requireToken();
-        if (!token) return;
         setIsBusy(true);
         try {
-            const result = await runPipeline(token, pipelineDay);
+            const result = await runPipeline(pipelineDay);
             if (activeSimulationId) {
                 applySummary(
                     activeSimulationId,
-                    await getSimulatorSummary(activeSimulationId, token),
+                    await getSimulatorSummary(activeSimulationId),
                 );
             }
             toast.success(
@@ -330,12 +314,10 @@ export default function SimulatorClient({
 
     const handleBacktestComplete = async (_result: BacktestResult) => {
         if (!activeSimulationId) return;
-        const token = await requireToken();
-        if (!token) return;
         try {
             applySummary(
                 activeSimulationId,
-                await getSimulatorSummary(activeSimulationId, token),
+                await getSimulatorSummary(activeSimulationId),
             );
             toast.success("Backtest complete — trades updated");
         } catch {
@@ -348,12 +330,10 @@ export default function SimulatorClient({
             toast.error("Create or load a simulator first.");
             return;
         }
-        const token = await requireToken();
-        if (!token) return;
 
         setIsBusy(true);
         try {
-            const data = await getSimulatorSummary(activeSimulationId, token);
+            const data = await getSimulatorSummary(activeSimulationId);
             setSummary(data);
             toast.success("Summary loaded");
         } catch (error) {
@@ -913,7 +893,6 @@ export default function SimulatorClient({
                                             key={activeSimulationId}
                                             simulatorId={activeSimulationId}
                                             isBusy={isBusy}
-                                            getToken={requireToken}
                                             onBacktestComplete={handleBacktestComplete}
                                         />
                                     )}

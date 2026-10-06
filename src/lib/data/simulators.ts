@@ -14,7 +14,6 @@ import {
     updateSimulatorSettings,
     type UpdateSimulatorSettingsRequest,
 } from "@/lib/api";
-import { getTokenWithRefresh } from "@/lib/auth";
 import {
     addGuestSimulator,
     deleteGuestSimulator,
@@ -55,12 +54,6 @@ export interface SimulatorStore {
 
 const NEW_SIMULATOR = { name: "My Simulator", starting_cash: 10000 };
 
-async function requireToken(): Promise<string> {
-    const token = await getTokenWithRefresh();
-    if (!token) throw new Error("You must be logged in.");
-    return token;
-}
-
 async function fetchStockWithPrice(
     ticker: string,
     trackedId: number | null,
@@ -83,15 +76,14 @@ async function fetchStockWithPrice(
 
 const remoteSimulators: SimulatorStore = {
     async list() {
-        const token = await requireToken();
-        const simulators = await listSimulators(token);
+        const simulators = await listSimulators();
         return Promise.all(
             simulators.map(async (simulator) => {
                 let stocks: Stock[] = [];
                 let trades: TradeRecord[] = [];
                 let decisions: Simulation["decisions"] = {};
                 try {
-                    const summary = await getSimulatorSummary(simulator.simulator_id, token);
+                    const summary = await getSimulatorSummary(simulator.simulator_id);
                     trades = (summary.trades ?? []).map(mapTradeRecord);
                     decisions = mapDecisions(summary.decisions);
                     stocks = await Promise.all(
@@ -107,34 +99,28 @@ const remoteSimulators: SimulatorStore = {
         );
     },
     async create() {
-        const simulator = await createSimulator(NEW_SIMULATOR, await requireToken());
+        const simulator = await createSimulator(NEW_SIMULATOR);
         return mapSimulatorToSimulation(simulator, [], []);
     },
     async rename(id, name) {
-        await renameSimulator(id, name, await requireToken());
+        await renameSimulator(id, name);
     },
     async updateSettings(simulation, payload) {
-        const updated = await updateSimulatorSettings(
-            simulation.id,
-            payload,
-            await requireToken(),
-        );
-        return simulatorPatch(updated);
+        return simulatorPatch(await updateSimulatorSettings(simulation.id, payload));
     },
     async remove(id) {
-        await deleteSimulator(id, await requireToken());
+        await deleteSimulator(id);
     },
     async addTrackedStock(simulatorId, ticker, targetAllocation) {
-        const tracked = await addTrackedStock(
-            simulatorId,
-            { ticker, target_allocation: targetAllocation },
-            await requireToken(),
-        );
+        const tracked = await addTrackedStock(simulatorId, {
+            ticker,
+            target_allocation: targetAllocation,
+        });
         return tracked.tracked_id ?? null;
     },
     async removeTrackedStock(simulatorId, stock) {
         if (!stock.trackedId) throw new Error("No tracked stock id found for this item.");
-        await deleteTrackedStock(simulatorId, stock.trackedId, await requireToken());
+        await deleteTrackedStock(simulatorId, stock.trackedId);
     },
 };
 
